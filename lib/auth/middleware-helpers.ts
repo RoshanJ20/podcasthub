@@ -25,6 +25,7 @@
 const PUBLIC_EXACT_ROUTES: ReadonlySet<string> = new Set([
   '/',
   '/login',
+  '/register',
   '/unauthorized',
   '/bulletins',
   '/learning-path',
