@@ -10,6 +10,7 @@
  *
  * @route /login
  */
+import Link from 'next/link';
 import { LoginForm } from '@/components/auth/login-form';
 
 /**
@@ -40,6 +41,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <p className="mt-2 text-muted-foreground">Sign in to your account</p>
         </div>
         <LoginForm redirectTo={redirectTo} />
+        <p className="text-center text-sm text-muted-foreground">
+          Don&apos;t have an account?{' '}
+          <Link href="/register" className="font-medium text-primary hover:underline">
+            Create one
+          </Link>
+        </p>
       </div>
     </main>
   );
