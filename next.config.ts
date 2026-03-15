@@ -3,7 +3,8 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  typedRoutes: true,
+  // typedRoutes enabled after all routes are created
+  // typedRoutes: true,
   images: {
     remotePatterns: [
       {
