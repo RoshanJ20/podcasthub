@@ -2,8 +2,7 @@
 // PostgreSQL 16 with pgvector extension for vector similarity search
 
 generator client {
-  provider        = "prisma-client"
-  output          = "../lib/generated/prisma"
+  provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
 }
 

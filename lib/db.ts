@@ -4,22 +4,29 @@
  * Key responsibilities:
  * - Provides a single PrismaClient instance across the application
  * - Prevents connection exhaustion in development (Next.js hot reloading)
- * - Configures query logging per environment
+ * - Configures the PostgreSQL driver adapter for Prisma v7
  *
  * @example
  * import { prisma } from '@/lib/db';
  * const podcasts = await prisma.podcast.findMany();
  */
-import { PrismaClient } from '@/lib/generated/prisma';
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+function createPrismaClient(): PrismaClient {
+  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  const adapter = new PrismaPg(pool);
+  return new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   });
+}
+
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
