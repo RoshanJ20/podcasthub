@@ -15,6 +15,7 @@
 ## Task 1: Bookmark API Routes — TDD
 
 **Files:**
+
 - `app/api/bookmarks/route.ts` — GET (paginated + filtered), POST
 - `app/api/bookmarks/[id]/route.ts` — PUT, DELETE
 - `lib/validations/bookmark.ts` — Zod schemas
@@ -23,7 +24,8 @@
 ### Steps
 
 - [ ] **1.1 — Define Zod schemas**
-  Create `lib/validations/bookmark.ts`:
+      Create `lib/validations/bookmark.ts`:
+
   ```typescript
   import { z } from 'zod';
 
@@ -50,7 +52,8 @@
   ```
 
 - [ ] **1.2 — Write failing integration tests**
-  Create `app/api/bookmarks/__tests__/bookmarks.test.ts`:
+      Create `app/api/bookmarks/__tests__/bookmarks.test.ts`:
+
   ```typescript
   import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 
@@ -74,9 +77,15 @@
       // No auth header -> 401
     });
 
-    it('sorts by newest (default)', async () => { /* ... */ });
-    it('sorts by timestamp_seconds ascending', async () => { /* ... */ });
-    it('paginates correctly', async () => { /* ... */ });
+    it('sorts by newest (default)', async () => {
+      /* ... */
+    });
+    it('sorts by timestamp_seconds ascending', async () => {
+      /* ... */
+    });
+    it('paginates correctly', async () => {
+      /* ... */
+    });
   });
 
   describe('POST /api/bookmarks', () => {
@@ -90,10 +99,18 @@
       // Assert: bookmark has note
     });
 
-    it('returns 400 for invalid podcast_id', async () => { /* ... */ });
-    it('returns 400 for negative timestamp', async () => { /* ... */ });
-    it('returns 401 for unauthenticated request', async () => { /* ... */ });
-    it('returns 404 if podcast does not exist', async () => { /* ... */ });
+    it('returns 400 for invalid podcast_id', async () => {
+      /* ... */
+    });
+    it('returns 400 for negative timestamp', async () => {
+      /* ... */
+    });
+    it('returns 401 for unauthenticated request', async () => {
+      /* ... */
+    });
+    it('returns 404 if podcast does not exist', async () => {
+      /* ... */
+    });
   });
 
   describe('PUT /api/bookmarks/:id', () => {
@@ -102,8 +119,12 @@
       // Assert: updated note returned
     });
 
-    it('clears the note when set to null', async () => { /* ... */ });
-    it('returns 404 for non-existent bookmark', async () => { /* ... */ });
+    it('clears the note when set to null', async () => {
+      /* ... */
+    });
+    it('returns 404 for non-existent bookmark', async () => {
+      /* ... */
+    });
     it('returns 403 when trying to update another users bookmark', async () => {
       // Auth as user B, try to PUT user A's bookmark -> 403
     });
@@ -114,12 +135,17 @@
       // Create bookmark, DELETE it, GET -> not found
     });
 
-    it('returns 404 for non-existent bookmark', async () => { /* ... */ });
-    it('returns 403 when trying to delete another users bookmark', async () => { /* ... */ });
+    it('returns 404 for non-existent bookmark', async () => {
+      /* ... */
+    });
+    it('returns 403 when trying to delete another users bookmark', async () => {
+      /* ... */
+    });
   });
   ```
 
 - [ ] **1.3 — Implement `app/api/bookmarks/route.ts`**
+
   ```typescript
   import { NextRequest, NextResponse } from 'next/server';
   import { prisma } from '@/lib/prisma';
@@ -128,44 +154,85 @@
 
   export async function GET(request: NextRequest) {
     const auth = await verifyAuth(request);
-    if (!auth) return NextResponse.json({ status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' }, { status: 401 });
+    if (!auth)
+      return NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
 
     const searchParams = Object.fromEntries(request.nextUrl.searchParams);
     const parsed = bookmarkQuerySchema.safeParse(searchParams);
     if (!parsed.success) {
-      return NextResponse.json({ status: 400, error_code: 'VALIDATION_FAILED', message: 'Invalid query parameters', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json(
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: 'Invalid query parameters',
+          details: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
     const { page, limit, podcast_id, sort } = parsed.data;
     const where: any = { user_id: auth.userId }; // Scoped to authenticated user
     if (podcast_id) where.podcast_id = podcast_id;
 
-    const orderBy = sort === 'timestamp' ? { timestamp_seconds: 'asc' as const }
-      : sort === 'oldest' ? { created_at: 'asc' as const }
-      : { created_at: 'desc' as const };
+    const orderBy =
+      sort === 'timestamp'
+        ? { timestamp_seconds: 'asc' as const }
+        : sort === 'oldest'
+          ? { created_at: 'asc' as const }
+          : { created_at: 'desc' as const };
 
     const [data, total] = await Promise.all([
-      prisma.bookmark.findMany({ where, orderBy, skip: (page - 1) * limit, take: limit, include: { podcast: { select: { id: true, title: true, thumbnail_url: true } } } }),
+      prisma.bookmark.findMany({
+        where,
+        orderBy,
+        skip: (page - 1) * limit,
+        take: limit,
+        include: { podcast: { select: { id: true, title: true, thumbnail_url: true } } },
+      }),
       prisma.bookmark.count({ where }),
     ]);
 
-    return NextResponse.json({ data, pagination: { page, limit, total, total_pages: Math.ceil(total / limit) } });
+    return NextResponse.json({
+      data,
+      pagination: { page, limit, total, total_pages: Math.ceil(total / limit) },
+    });
   }
 
   export async function POST(request: NextRequest) {
     const auth = await verifyAuth(request);
-    if (!auth) return NextResponse.json({ status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' }, { status: 401 });
+    if (!auth)
+      return NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
 
     const body = await request.json();
     const parsed = bookmarkCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ status: 400, error_code: 'VALIDATION_FAILED', message: 'Invalid request body', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json(
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: 'Invalid request body',
+          details: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
     // Verify podcast exists
-    const podcast = await prisma.podcast.findFirst({ where: { id: parsed.data.podcast_id, is_archived: false } });
+    const podcast = await prisma.podcast.findFirst({
+      where: { id: parsed.data.podcast_id, is_archived: false },
+    });
     if (!podcast) {
-      return NextResponse.json({ status: 404, error_code: 'NOT_FOUND', message: 'Podcast not found' }, { status: 404 });
+      return NextResponse.json(
+        { status: 404, error_code: 'NOT_FOUND', message: 'Podcast not found' },
+        { status: 404 }
+      );
     }
 
     const bookmark = await prisma.bookmark.create({
@@ -177,6 +244,7 @@
   ```
 
 - [ ] **1.4 — Implement `app/api/bookmarks/[id]/route.ts`**
+
   ```typescript
   import { NextRequest, NextResponse } from 'next/server';
   import { prisma } from '@/lib/prisma';
@@ -193,32 +261,65 @@
 
   export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const auth = await verifyAuth(request);
-    if (!auth) return NextResponse.json({ status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' }, { status: 401 });
+    if (!auth)
+      return NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
 
     const { id } = await params;
     const result = await getOwnedBookmark(id, auth.userId);
     if ('error' in result) {
-      return NextResponse.json({ status: result.status, error_code: result.error, message: result.error === 'NOT_FOUND' ? 'Bookmark not found' : 'Access denied' }, { status: result.status });
+      return NextResponse.json(
+        {
+          status: result.status,
+          error_code: result.error,
+          message: result.error === 'NOT_FOUND' ? 'Bookmark not found' : 'Access denied',
+        },
+        { status: result.status }
+      );
     }
 
     const body = await request.json();
     const parsed = bookmarkUpdateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ status: 400, error_code: 'VALIDATION_FAILED', message: 'Invalid request body', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json(
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: 'Invalid request body',
+          details: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
     const updated = await prisma.bookmark.update({ where: { id }, data: parsed.data });
     return NextResponse.json({ data: updated });
   }
 
-  export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) {
     const auth = await verifyAuth(request);
-    if (!auth) return NextResponse.json({ status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' }, { status: 401 });
+    if (!auth)
+      return NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
 
     const { id } = await params;
     const result = await getOwnedBookmark(id, auth.userId);
     if ('error' in result) {
-      return NextResponse.json({ status: result.status, error_code: result.error, message: result.error === 'NOT_FOUND' ? 'Bookmark not found' : 'Access denied' }, { status: result.status });
+      return NextResponse.json(
+        {
+          status: result.status,
+          error_code: result.error,
+          message: result.error === 'NOT_FOUND' ? 'Bookmark not found' : 'Access denied',
+        },
+        { status: result.status }
+      );
     }
 
     await prisma.bookmark.delete({ where: { id } });
@@ -236,6 +337,7 @@
 ## Task 2: Bookmark Panel Component
 
 **Files:**
+
 - `components/audio-player/bookmark-panel.tsx` — bookmark UI for podcast detail page
 - `components/audio-player/__tests__/bookmark-panel.test.tsx` — component tests
 - `stores/bookmark-store.ts` — Zustand store for bookmark state (optional, can also use SWR/React Query)
@@ -243,7 +345,8 @@
 ### Steps
 
 - [ ] **2.1 — Write failing component tests**
-  Create `components/audio-player/__tests__/bookmark-panel.test.tsx`:
+      Create `components/audio-player/__tests__/bookmark-panel.test.tsx`:
+
   ```typescript
   import { describe, it, expect, vi } from 'vitest';
   import { render, screen, waitFor } from '@testing-library/react';
@@ -312,6 +415,7 @@
   ```
 
 - [ ] **2.2 — Implement `components/audio-player/bookmark-panel.tsx`**
+
   ```typescript
   'use client';
   import { useState, useEffect, useCallback } from 'react';
@@ -459,7 +563,8 @@
   ```
 
 - [ ] **2.3 — Add Bookmark tab to podcast detail layout**
-  In `components/audio-player/podcast-detail-layout.tsx`, add a "Bookmarks" tab alongside "Transcript" and "Bulletins":
+      In `components/audio-player/podcast-detail-layout.tsx`, add a "Bookmarks" tab alongside "Transcript" and "Bulletins":
+
   ```typescript
   <TabsContent value="bookmarks">
     <BookmarkPanel podcastId={podcast.id} onSeek={seekTo} />
@@ -476,6 +581,7 @@
 ## Task 3: Progress API Routes — TDD
 
 **Files:**
+
 - `app/api/progress/route.ts` — GET, POST
 - `app/api/progress/[id]/route.ts` — DELETE
 - `lib/validations/progress.ts` — Zod schemas
@@ -484,7 +590,8 @@
 ### Steps
 
 - [ ] **3.1 — Define Zod schemas**
-  Create `lib/validations/progress.ts`:
+      Create `lib/validations/progress.ts`:
+
   ```typescript
   import { z } from 'zod';
 
@@ -504,7 +611,8 @@
   ```
 
 - [ ] **3.2 — Write failing integration tests**
-  Create `app/api/progress/__tests__/progress.test.ts`:
+      Create `app/api/progress/__tests__/progress.test.ts`:
+
   ```typescript
   import { describe, it, expect } from 'vitest';
 
@@ -522,7 +630,9 @@
       // Auth as user A -> only user A progress returned
     });
 
-    it('returns 401 for unauthenticated request', async () => { /* ... */ });
+    it('returns 401 for unauthenticated request', async () => {
+      /* ... */
+    });
 
     it('includes completed_at timestamp', async () => {
       // Assert: each progress entry has completed_at
@@ -539,9 +649,15 @@
       // POST twice with same episode_id -> second returns 200 (or 201), no duplicate
     });
 
-    it('returns 400 for invalid episode_id', async () => { /* ... */ });
-    it('returns 404 if episode does not exist', async () => { /* ... */ });
-    it('returns 401 for unauthenticated request', async () => { /* ... */ });
+    it('returns 400 for invalid episode_id', async () => {
+      /* ... */
+    });
+    it('returns 404 if episode does not exist', async () => {
+      /* ... */
+    });
+    it('returns 401 for unauthenticated request', async () => {
+      /* ... */
+    });
   });
 
   describe('DELETE /api/progress/:id', () => {
@@ -549,12 +665,17 @@
       // Create progress, delete it, GET -> not found
     });
 
-    it('returns 404 for non-existent progress', async () => { /* ... */ });
-    it('returns 403 for another users progress', async () => { /* ... */ });
+    it('returns 404 for non-existent progress', async () => {
+      /* ... */
+    });
+    it('returns 403 for another users progress', async () => {
+      /* ... */
+    });
   });
   ```
 
 - [ ] **3.3 — Implement `app/api/progress/route.ts`**
+
   ```typescript
   import { NextRequest, NextResponse } from 'next/server';
   import { prisma } from '@/lib/prisma';
@@ -563,12 +684,24 @@
 
   export async function GET(request: NextRequest) {
     const auth = await verifyAuth(request);
-    if (!auth) return NextResponse.json({ status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' }, { status: 401 });
+    if (!auth)
+      return NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
 
     const searchParams = Object.fromEntries(request.nextUrl.searchParams);
     const parsed = progressQuerySchema.safeParse(searchParams);
     if (!parsed.success) {
-      return NextResponse.json({ status: 400, error_code: 'VALIDATION_FAILED', message: 'Invalid query', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json(
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: 'Invalid query',
+          details: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
     const { graph_id, page, limit } = parsed.data;
@@ -589,17 +722,32 @@
       prisma.userProgress.count({ where }),
     ]);
 
-    return NextResponse.json({ data, pagination: { page, limit, total, total_pages: Math.ceil(total / limit) } });
+    return NextResponse.json({
+      data,
+      pagination: { page, limit, total, total_pages: Math.ceil(total / limit) },
+    });
   }
 
   export async function POST(request: NextRequest) {
     const auth = await verifyAuth(request);
-    if (!auth) return NextResponse.json({ status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' }, { status: 401 });
+    if (!auth)
+      return NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
 
     const body = await request.json();
     const parsed = progressCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ status: 400, error_code: 'VALIDATION_FAILED', message: 'Invalid request body', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json(
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: 'Invalid request body',
+          details: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
     // Verify episode exists and belongs to the graph
@@ -607,13 +755,24 @@
       where: { id: parsed.data.episode_id, graph_id: parsed.data.graph_id },
     });
     if (!episode) {
-      return NextResponse.json({ status: 404, error_code: 'NOT_FOUND', message: 'Episode not found in the specified learning path' }, { status: 404 });
+      return NextResponse.json(
+        {
+          status: 404,
+          error_code: 'NOT_FOUND',
+          message: 'Episode not found in the specified learning path',
+        },
+        { status: 404 }
+      );
     }
 
     // Upsert to handle idempotency (unique constraint on user_id + episode_id)
     const progress = await prisma.userProgress.upsert({
       where: { user_id_episode_id: { user_id: auth.userId, episode_id: parsed.data.episode_id } },
-      create: { user_id: auth.userId, graph_id: parsed.data.graph_id, episode_id: parsed.data.episode_id },
+      create: {
+        user_id: auth.userId,
+        graph_id: parsed.data.graph_id,
+        episode_id: parsed.data.episode_id,
+      },
       update: {}, // No-op if already exists
     });
 
@@ -622,22 +781,36 @@
   ```
 
 - [ ] **3.4 — Implement `app/api/progress/[id]/route.ts`**
+
   ```typescript
   import { NextRequest, NextResponse } from 'next/server';
   import { prisma } from '@/lib/prisma';
   import { verifyAuth } from '@/lib/auth';
 
-  export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) {
     const auth = await verifyAuth(request);
-    if (!auth) return NextResponse.json({ status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' }, { status: 401 });
+    if (!auth)
+      return NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
 
     const { id } = await params;
     const progress = await prisma.userProgress.findUnique({ where: { id } });
     if (!progress) {
-      return NextResponse.json({ status: 404, error_code: 'NOT_FOUND', message: 'Progress record not found' }, { status: 404 });
+      return NextResponse.json(
+        { status: 404, error_code: 'NOT_FOUND', message: 'Progress record not found' },
+        { status: 404 }
+      );
     }
     if (progress.user_id !== auth.userId) {
-      return NextResponse.json({ status: 403, error_code: 'FORBIDDEN', message: 'Access denied' }, { status: 403 });
+      return NextResponse.json(
+        { status: 403, error_code: 'FORBIDDEN', message: 'Access denied' },
+        { status: 403 }
+      );
     }
 
     await prisma.userProgress.delete({ where: { id } });
@@ -655,6 +828,7 @@
 ## Task 4: Activity Logging API — TDD
 
 **Files:**
+
 - `app/api/activity/route.ts` — POST
 - `lib/validations/activity.ts` — Zod schema
 - `app/api/activity/__tests__/activity.test.ts` — integration tests
@@ -662,7 +836,8 @@
 ### Steps
 
 - [ ] **4.1 — Define Zod schema**
-  Create `lib/validations/activity.ts`:
+      Create `lib/validations/activity.ts`:
+
   ```typescript
   import { z } from 'zod';
 
@@ -686,7 +861,8 @@
   ```
 
 - [ ] **4.2 — Write failing tests**
-  Create `app/api/activity/__tests__/activity.test.ts`:
+      Create `app/api/activity/__tests__/activity.test.ts`:
+
   ```typescript
   import { describe, it, expect } from 'vitest';
 
@@ -696,15 +872,21 @@
       // Assert: 201, activity record created
     });
 
-    it('logs a bookmark activity', async () => { /* ... */ });
-    it('logs a search activity with query metadata', async () => { /* ... */ });
+    it('logs a bookmark activity', async () => {
+      /* ... */
+    });
+    it('logs a search activity with query metadata', async () => {
+      /* ... */
+    });
 
     it('returns 400 for invalid activity_type', async () => {
       // POST with activity_type: 'invalid'
       // Assert: 400
     });
 
-    it('returns 401 for unauthenticated request', async () => { /* ... */ });
+    it('returns 401 for unauthenticated request', async () => {
+      /* ... */
+    });
 
     it('does not block on database write (responds quickly)', async () => {
       // Measure response time — should be fast since we fire-and-forget
@@ -713,6 +895,7 @@
   ```
 
 - [ ] **4.3 — Implement `app/api/activity/route.ts`**
+
   ```typescript
   import { NextRequest, NextResponse } from 'next/server';
   import { prisma } from '@/lib/prisma';
@@ -721,24 +904,38 @@
 
   export async function POST(request: NextRequest) {
     const auth = await verifyAuth(request);
-    if (!auth) return NextResponse.json({ status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' }, { status: 401 });
+    if (!auth)
+      return NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
 
     const body = await request.json();
     const parsed = activityCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ status: 400, error_code: 'VALIDATION_FAILED', message: 'Invalid request body', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json(
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: 'Invalid request body',
+          details: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
     // Fire-and-forget: don't await the database write
     // Use waitUntil if available (Vercel), otherwise just don't block
-    const writePromise = prisma.userActivity.create({
-      data: {
-        user_id: auth.userId,
-        ...parsed.data,
-      },
-    }).catch((err) => {
-      console.error('Failed to log activity:', err);
-    });
+    const writePromise = prisma.userActivity
+      .create({
+        data: {
+          user_id: auth.userId,
+          ...parsed.data,
+        },
+      })
+      .catch((err) => {
+        console.error('Failed to log activity:', err);
+      });
 
     // In environments that support it, use waitUntil
     // Otherwise, we accept that the write may not complete if the process exits
@@ -759,13 +956,15 @@
 ## Task 5: Listen Tracker Hook
 
 **Files:**
+
 - `hooks/use-listen-tracker.ts` — debounced activity logging during playback
 - `hooks/__tests__/use-listen-tracker.test.ts` — hook tests
 
 ### Steps
 
 - [ ] **5.1 — Write failing tests**
-  Create `hooks/__tests__/use-listen-tracker.test.ts`:
+      Create `hooks/__tests__/use-listen-tracker.test.ts`:
+
   ```typescript
   import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
   import { renderHook, act } from '@testing-library/react';
@@ -799,10 +998,13 @@
       });
       renderHook(() => useListenTracker());
       vi.advanceTimersByTime(30000);
-      expect(global.fetch).toHaveBeenCalledWith('/api/activity', expect.objectContaining({
-        method: 'POST',
-        body: expect.stringContaining('listen'),
-      }));
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/activity',
+        expect.objectContaining({
+          method: 'POST',
+          body: expect.stringContaining('listen'),
+        })
+      );
     });
 
     it('includes podcast_id and listen duration in metadata', () => {
@@ -843,6 +1045,7 @@
   ```
 
 - [ ] **5.2 — Implement `hooks/use-listen-tracker.ts`**
+
   ```typescript
   'use client';
   import { useEffect, useRef } from 'react';
@@ -861,7 +1064,9 @@
         listenStartRef.current = Date.now();
 
         intervalRef.current = setInterval(() => {
-          const duration = listenStartRef.current ? (Date.now() - listenStartRef.current) / 1000 : 0;
+          const duration = listenStartRef.current
+            ? (Date.now() - listenStartRef.current) / 1000
+            : 0;
           listenStartRef.current = Date.now(); // Reset for next interval
 
           fetch('/api/activity', {
@@ -888,7 +1093,8 @@
         // Log final listen duration on pause/unmount
         if (listenStartRef.current && currentPodcast) {
           const duration = (Date.now() - listenStartRef.current) / 1000;
-          if (duration > 5) { // Only log if listened more than 5 seconds
+          if (duration > 5) {
+            // Only log if listened more than 5 seconds
             fetch('/api/activity', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -907,7 +1113,8 @@
   ```
 
 - [ ] **5.3 — Add hook to podcast detail layout**
-  In `components/audio-player/podcast-detail-layout.tsx`:
+      In `components/audio-player/podcast-detail-layout.tsx`:
+
   ```typescript
   import { useListenTracker } from '@/hooks/use-listen-tracker';
 
@@ -925,6 +1132,7 @@
 ## Task 6: User Profile Page
 
 **Files:**
+
 - `app/(public)/profile/page.tsx` — profile page (Server Component wrapper)
 - `components/profile/profile-form.tsx` — display name edit form (Client Component)
 - `components/profile/listening-stats.tsx` — stats summary
@@ -933,10 +1141,13 @@
 ### Steps
 
 - [ ] **6.1 — Install next-themes (if not already)**
+
   ```bash
   npm install next-themes
   ```
+
   Add `<ThemeProvider>` to root layout:
+
   ```typescript
   import { ThemeProvider } from 'next-themes';
 
@@ -947,7 +1158,8 @@
   ```
 
 - [ ] **6.2 — Write failing component tests for profile form**
-  Create `components/profile/__tests__/profile-form.test.tsx`:
+      Create `components/profile/__tests__/profile-form.test.tsx`:
+
   ```typescript
   import { describe, it, expect, vi } from 'vitest';
   import { render, screen, waitFor } from '@testing-library/react';
@@ -1008,6 +1220,7 @@
   - Clean card layout with icons
 
 - [ ] **6.5 — Create `app/(public)/profile/page.tsx`**
+
   ```typescript
   import { redirect } from 'next/navigation';
   import { getServerSession } from '@/lib/auth'; // From Stage 1
@@ -1046,6 +1259,7 @@
 ## Task 7: Progress Dashboard Page
 
 **Files:**
+
 - `app/(public)/progress/page.tsx` — progress dashboard (Server Component wrapper)
 - `components/progress/progress-tabs.tsx` — tabbed view (Client Component)
 - `components/progress/in-progress-list.tsx` — learning paths in progress
@@ -1056,6 +1270,7 @@
 ### Steps
 
 - [ ] **7.1 — Create `app/(public)/progress/page.tsx`**
+
   ```typescript
   import { redirect } from 'next/navigation';
   import { getServerSession } from '@/lib/auth';
@@ -1119,6 +1334,7 @@
   ```
 
 - [ ] **7.2 — Implement `components/progress/progress-tabs.tsx`**
+
   ```typescript
   'use client';
   import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -1159,18 +1375,33 @@
   - `listening-history.tsx`: Timeline of recent listening activity with podcast names and durations
 
 - [ ] **7.4 — Write component tests for each tab**
+
   ```typescript
   describe('InProgressList', () => {
-    it('renders learning path cards with progress bars', () => { /* ... */ });
-    it('shows correct completion percentage', () => { /* ... */ });
-    it('links to learning path page', () => { /* ... */ });
-    it('shows empty state', () => { /* ... */ });
+    it('renders learning path cards with progress bars', () => {
+      /* ... */
+    });
+    it('shows correct completion percentage', () => {
+      /* ... */
+    });
+    it('links to learning path page', () => {
+      /* ... */
+    });
+    it('shows empty state', () => {
+      /* ... */
+    });
   });
 
   describe('BookmarkList', () => {
-    it('renders bookmarks with podcast title and timestamp', () => { /* ... */ });
-    it('links to podcast at the bookmarked timestamp', () => { /* ... */ });
-    it('shows empty state', () => { /* ... */ });
+    it('renders bookmarks with podcast title and timestamp', () => {
+      /* ... */
+    });
+    it('links to podcast at the bookmarked timestamp', () => {
+      /* ... */
+    });
+    it('shows empty state', () => {
+      /* ... */
+    });
   });
   ```
 
@@ -1184,6 +1415,7 @@
 ## Task 8: Integration + E2E Tests
 
 **Files:**
+
 - `app/api/bookmarks/__tests__/bookmarks.test.ts` — (from Task 1)
 - `app/api/progress/__tests__/progress.test.ts` — (from Task 3)
 - `app/api/activity/__tests__/activity.test.ts` — (from Task 4)
@@ -1192,11 +1424,13 @@
 ### Steps
 
 - [ ] **8.1 — Verify all API integration tests pass**
+
   ```bash
   npx vitest run app/api/bookmarks/__tests__/ app/api/progress/__tests__/ app/api/activity/__tests__/
   ```
 
 - [ ] **8.2 — Create `e2e/user-features.spec.ts`**
+
   ```typescript
   import { test, expect } from '@playwright/test';
 
@@ -1292,23 +1526,28 @@
 ### Steps
 
 - [ ] **9.1 — Run lint and type check**
+
   ```bash
   npm run lint
   npx tsc --noEmit
   ```
 
 - [ ] **9.2 — Run full test suite (unit + integration)**
+
   ```bash
   npx vitest run --reporter=verbose
   ```
 
 - [ ] **9.3 — Check test coverage**
+
   ```bash
   npx vitest run --coverage
   ```
+
   Target: >80% line coverage for `lib/`, `app/api/`, `stores/`, `hooks/`.
 
 - [ ] **9.4 — Run build**
+
   ```bash
   npm run build
   ```

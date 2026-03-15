@@ -9,39 +9,39 @@
 
 ## Tech Stack
 
-| Layer | Technology | Version | Notes |
-|-------|-----------|---------|-------|
-| **Framework** | Next.js (App Router) | 16.x | Server Components, API routes, middleware, streaming |
-| **Language** | TypeScript | 5.x | Strict mode (`strict: true`), no `any` types |
-| **Runtime** | Node.js | 20 LTS | Native ESM |
-| **Database** | PostgreSQL + Prisma ORM | 16.x | pgvector extension for vector search |
-| **Auth** | Custom JWT | — | bcrypt + jsonwebtoken, HttpOnly cookies |
-| **UI** | React 19 + shadcn/ui (Radix) | Latest | Accessible, composable components |
-| **Styling** | Tailwind CSS | 4.x | Utility-first, design system tokens |
-| **State** | Zustand | Latest | Lightweight state management (PlayerContext, etc.) |
-| **File Storage** | MinIO (dev) → Azure Blob Storage (prod) | — | S3-compatible object storage |
-| **Audio Streaming** | FFmpeg (HLS transcoding) + HLS.js (client) | — | Adaptive bitrate streaming |
-| **Vector Search** | pgvector (PostgreSQL extension) | — | Via Prisma raw queries |
-| **Embeddings** | Azure OpenAI | — | text-embedding-3-large model |
-| **Icons** | Lucide React | Latest | Consistent icon set |
-| **Fonts** | Geist | — | Body font via next/font |
+| Layer               | Technology                                 | Version | Notes                                                |
+| ------------------- | ------------------------------------------ | ------- | ---------------------------------------------------- |
+| **Framework**       | Next.js (App Router)                       | 16.x    | Server Components, API routes, middleware, streaming |
+| **Language**        | TypeScript                                 | 5.x     | Strict mode (`strict: true`), no `any` types         |
+| **Runtime**         | Node.js                                    | 20 LTS  | Native ESM                                           |
+| **Database**        | PostgreSQL + Prisma ORM                    | 16.x    | pgvector extension for vector search                 |
+| **Auth**            | Custom JWT                                 | —       | bcrypt + jsonwebtoken, HttpOnly cookies              |
+| **UI**              | React 19 + shadcn/ui (Radix)               | Latest  | Accessible, composable components                    |
+| **Styling**         | Tailwind CSS                               | 4.x     | Utility-first, design system tokens                  |
+| **State**           | Zustand                                    | Latest  | Lightweight state management (PlayerContext, etc.)   |
+| **File Storage**    | MinIO (dev) → Azure Blob Storage (prod)    | —       | S3-compatible object storage                         |
+| **Audio Streaming** | FFmpeg (HLS transcoding) + HLS.js (client) | —       | Adaptive bitrate streaming                           |
+| **Vector Search**   | pgvector (PostgreSQL extension)            | —       | Via Prisma raw queries                               |
+| **Embeddings**      | Azure OpenAI                               | —       | text-embedding-3-large model                         |
+| **Icons**           | Lucide React                               | Latest  | Consistent icon set                                  |
+| **Fonts**           | Geist                                      | —       | Body font via next/font                              |
 
 ## Key Libraries
 
-| Category | Library | Purpose |
-|----------|---------|---------|
-| **Forms** | React Hook Form + Zod | Form state + runtime validation |
-| **Charts** | Recharts | Analytics visualizations |
-| **PDF** | react-pdf | In-app bulletin viewer |
-| **Drag & Drop** | @dnd-kit | Sortable lists (podcast ordering) |
-| **Graph Viz** | @xyflow/react + Dagre | Learning path graph rendering |
-| **Toast** | Sonner | Notifications |
-| **Theming** | next-themes | Dark/light mode |
-| **Logging** | Pino | Structured JSON logging |
-| **Monitoring** | Sentry | Error tracking + performance |
-| **Testing** | Vitest + RTL + Playwright | Unit/integration/E2E |
-| **Linting** | ESLint 9 (flat config) + Prettier | Code quality |
-| **Git Hooks** | Husky + lint-staged | Pre-commit checks |
+| Category        | Library                           | Purpose                           |
+| --------------- | --------------------------------- | --------------------------------- |
+| **Forms**       | React Hook Form + Zod             | Form state + runtime validation   |
+| **Charts**      | Recharts                          | Analytics visualizations          |
+| **PDF**         | react-pdf                         | In-app bulletin viewer            |
+| **Drag & Drop** | @dnd-kit                          | Sortable lists (podcast ordering) |
+| **Graph Viz**   | @xyflow/react + Dagre             | Learning path graph rendering     |
+| **Toast**       | Sonner                            | Notifications                     |
+| **Theming**     | next-themes                       | Dark/light mode                   |
+| **Logging**     | Pino                              | Structured JSON logging           |
+| **Monitoring**  | Sentry                            | Error tracking + performance      |
+| **Testing**     | Vitest + RTL + Playwright         | Unit/integration/E2E              |
+| **Linting**     | ESLint 9 (flat config) + Prettier | Code quality                      |
+| **Git Hooks**   | Husky + lint-staged               | Pre-commit checks                 |
 
 ## Styling Rules
 
@@ -163,21 +163,21 @@ npm run dev                   # Start Next.js dev server
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `JWT_SECRET` | Secret key for JWT signing |
-| `JWT_REFRESH_SECRET` | Secret key for refresh token signing |
-| `MINIO_ENDPOINT` | MinIO/S3 endpoint URL |
-| `MINIO_ACCESS_KEY` | MinIO/S3 access key |
-| `MINIO_SECRET_KEY` | MinIO/S3 secret key |
+| Variable                       | Description                          |
+| ------------------------------ | ------------------------------------ |
+| `DATABASE_URL`                 | PostgreSQL connection string         |
+| `JWT_SECRET`                   | Secret key for JWT signing           |
+| `JWT_REFRESH_SECRET`           | Secret key for refresh token signing |
+| `MINIO_ENDPOINT`               | MinIO/S3 endpoint URL                |
+| `MINIO_ACCESS_KEY`             | MinIO/S3 access key                  |
+| `MINIO_SECRET_KEY`             | MinIO/S3 secret key                  |
 | `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection (prod) |
-| `AZURE_OPENAI_ENDPOINT` | Azure OpenAI API endpoint |
-| `AZURE_OPENAI_KEY` | Azure OpenAI API key |
-| `AZURE_OPENAI_DEPLOYMENT` | Azure OpenAI deployment name |
-| `SENTRY_DSN` | Sentry error tracking DSN |
-| `NEXT_PUBLIC_APP_URL` | Public app URL |
-| `LOG_LEVEL` | Pino log level (default: `info`) |
+| `AZURE_OPENAI_ENDPOINT`        | Azure OpenAI API endpoint            |
+| `AZURE_OPENAI_KEY`             | Azure OpenAI API key                 |
+| `AZURE_OPENAI_DEPLOYMENT`      | Azure OpenAI deployment name         |
+| `SENTRY_DSN`                   | Sentry error tracking DSN            |
+| `NEXT_PUBLIC_APP_URL`          | Public app URL                       |
+| `LOG_LEVEL`                    | Pino log level (default: `info`)     |
 
 ## Deployment
 

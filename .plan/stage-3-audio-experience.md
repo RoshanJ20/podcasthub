@@ -15,18 +15,21 @@
 ## Task 1: Zustand Player Store
 
 **Files:**
+
 - `stores/player-store.ts` — global audio player state
 - `stores/__tests__/player-store.test.ts` — unit tests for all state transitions
 
 ### Steps
 
 - [ ] **1.1 — Install Zustand**
+
   ```bash
   npm install zustand
   ```
 
 - [ ] **1.2 — Write failing tests first**
-  Create `stores/__tests__/player-store.test.ts`:
+      Create `stores/__tests__/player-store.test.ts`:
+
   ```typescript
   import { describe, it, expect, beforeEach } from 'vitest';
   import { usePlayerStore } from '../player-store';
@@ -52,7 +55,12 @@
 
     describe('loadPodcast', () => {
       it('sets the current podcast and resets playback state', () => {
-        const podcast = { id: '1', title: 'Test', audioShortUrl: '/audio/short.m3u8', audioLongUrl: '/audio/long.m3u8' };
+        const podcast = {
+          id: '1',
+          title: 'Test',
+          audioShortUrl: '/audio/short.m3u8',
+          audioLongUrl: '/audio/long.m3u8',
+        };
         usePlayerStore.getState().loadPodcast(podcast);
         const state = usePlayerStore.getState();
         expect(state.currentPodcast).toEqual(podcast);
@@ -154,6 +162,7 @@
   ```
 
 - [ ] **1.3 — Implement `stores/player-store.ts`**
+
   ```typescript
   import { create } from 'zustand';
 
@@ -208,14 +217,15 @@
   export const usePlayerStore = create<PlayerState & PlayerActions>()((set, get) => ({
     ...initialState,
 
-    loadPodcast: (podcast) => set({
-      currentPodcast: podcast,
-      isPlaying: false,
-      currentTime: 0,
-      duration: 0,
-      audioType: 'short',
-      isMiniPlayerVisible: true,
-    }),
+    loadPodcast: (podcast) =>
+      set({
+        currentPodcast: podcast,
+        isPlaying: false,
+        currentTime: 0,
+        duration: 0,
+        audioType: 'short',
+        isMiniPlayerVisible: true,
+      }),
 
     play: () => set({ isPlaying: true }),
     pause: () => set({ isPlaying: false }),
@@ -233,10 +243,11 @@
       if (ALLOWED_PLAYBACK_RATES.includes(rate)) set({ playbackRate: rate });
     },
 
-    toggleAudioType: () => set((state) => ({
-      audioType: state.audioType === 'short' ? 'long' : 'short',
-      currentTime: 0,
-    })),
+    toggleAudioType: () =>
+      set((state) => ({
+        audioType: state.audioType === 'short' ? 'long' : 'short',
+        currentTime: 0,
+      })),
 
     skipForward: () => {
       const { currentTime, duration } = get();
@@ -250,7 +261,8 @@
 
     setCurrentTime: (time) => set({ currentTime: time }),
 
-    closeMiniPlayer: () => set({ isMiniPlayerVisible: false, isPlaying: false, currentPodcast: null }),
+    closeMiniPlayer: () =>
+      set({ isMiniPlayerVisible: false, isPlaying: false, currentPodcast: null }),
   }));
 
   // For test resetting
@@ -267,6 +279,7 @@
 ## Task 2: Audio Player Component
 
 **Files:**
+
 - `components/audio-player/audio-player.tsx` — full audio player UI
 - `components/audio-player/progress-slider.tsx` — seek slider
 - `components/audio-player/volume-control.tsx` — volume slider with mute
@@ -277,11 +290,13 @@
 ### Steps
 
 - [ ] **2.1 — Install HLS.js**
+
   ```bash
   npm install hls.js
   ```
 
 - [ ] **2.2 — Create `hooks/use-hls-player.ts`**
+
   ```typescript
   'use client';
   import { useRef, useEffect, useCallback } from 'react';
@@ -295,7 +310,9 @@
 
     // Derive the active audio URL
     const audioUrl = currentPodcast
-      ? (audioType === 'long' && currentPodcast.audioLongUrl ? currentPodcast.audioLongUrl : currentPodcast.audioShortUrl)
+      ? audioType === 'long' && currentPodcast.audioLongUrl
+        ? currentPodcast.audioLongUrl
+        : currentPodcast.audioShortUrl
       : null;
 
     // Initialize HLS or native playback
@@ -308,7 +325,10 @@
         hls.loadSource(audioUrl);
         hls.attachMedia(audio);
         hlsRef.current = hls;
-        return () => { hls.destroy(); hlsRef.current = null; };
+        return () => {
+          hls.destroy();
+          hlsRef.current = null;
+        };
       } else {
         // Native playback (Safari HLS support or direct MP3)
         audio.src = audioUrl;
@@ -324,10 +344,14 @@
     }, [isPlaying]);
 
     // Sync volume
-    useEffect(() => { if (audioRef.current) audioRef.current.volume = volume; }, [volume]);
+    useEffect(() => {
+      if (audioRef.current) audioRef.current.volume = volume;
+    }, [volume]);
 
     // Sync playback rate
-    useEffect(() => { if (audioRef.current) audioRef.current.playbackRate = playbackRate; }, [playbackRate]);
+    useEffect(() => {
+      if (audioRef.current) audioRef.current.playbackRate = playbackRate;
+    }, [playbackRate]);
 
     // Time update handler
     const onTimeUpdate = useCallback(() => {
@@ -356,7 +380,8 @@
   ```
 
 - [ ] **2.3 — Write failing component tests**
-  Create `components/audio-player/__tests__/audio-player.test.tsx`:
+      Create `components/audio-player/__tests__/audio-player.test.tsx`:
+
   ```typescript
   import { describe, it, expect, vi, beforeEach } from 'vitest';
   import { render, screen } from '@testing-library/react';
@@ -451,12 +476,14 @@
 ## Task 3: Mini Player (Persistent)
 
 **Files:**
+
 - `components/audio-player/mini-player.tsx` — fixed bottom bar
 - `components/audio-player/__tests__/mini-player.test.tsx` — component tests
 
 ### Steps
 
 - [ ] **3.1 — Write failing tests**
+
   ```typescript
   import { describe, it, expect } from 'vitest';
   import { render, screen } from '@testing-library/react';
@@ -488,6 +515,7 @@
   ```
 
 - [ ] **3.2 — Implement `components/audio-player/mini-player.tsx`**
+
   ```typescript
   'use client';
   import { usePlayerStore } from '@/stores/player-store';
@@ -525,7 +553,8 @@
   ```
 
 - [ ] **3.3 — Add MiniPlayer to root layout**
-  In `app/layout.tsx`, add `<MiniPlayer />` inside the body, after `{children}`:
+      In `app/layout.tsx`, add `<MiniPlayer />` inside the body, after `{children}`:
+
   ```typescript
   import { MiniPlayer } from '@/components/audio-player/mini-player';
 
@@ -543,6 +572,7 @@
 ## Task 4: Transcript Viewer
 
 **Files:**
+
 - `components/audio-player/transcript-viewer.tsx` — timestamped transcript display
 - `components/audio-player/__tests__/transcript-viewer.test.tsx` — component tests
 - `hooks/use-transcript-sync.ts` — hook for syncing transcript with playback
@@ -550,6 +580,7 @@
 ### Steps
 
 - [ ] **4.1 — Write failing tests**
+
   ```typescript
   import { describe, it, expect, vi } from 'vitest';
   import { render, screen } from '@testing-library/react';
@@ -600,6 +631,7 @@
   ```
 
 - [ ] **4.2 — Create `hooks/use-transcript-sync.ts`**
+
   ```typescript
   'use client';
   import { useMemo, useRef, useEffect } from 'react';
@@ -623,7 +655,9 @@
     // Auto-scroll to active segment
     useEffect(() => {
       if (activeIndex < 0 || !containerRef.current) return;
-      const activeElement = containerRef.current.querySelector(`[data-segment-index="${activeIndex}"]`);
+      const activeElement = containerRef.current.querySelector(
+        `[data-segment-index="${activeIndex}"]`
+      );
       if (activeElement) {
         activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -634,6 +668,7 @@
   ```
 
 - [ ] **4.3 — Implement `components/audio-player/transcript-viewer.tsx`**
+
   ```typescript
   'use client';
   import { useTranscriptSync } from '@/hooks/use-transcript-sync';
@@ -701,22 +736,27 @@
 ## Task 5: PDF Bulletin Viewer
 
 **Files:**
+
 - `components/audio-player/bulletin-viewer.tsx` — PDF viewer using react-pdf
 - `components/audio-player/__tests__/bulletin-viewer.test.tsx` — component tests
 
 ### Steps
 
 - [ ] **5.1 — Install react-pdf**
+
   ```bash
   npm install react-pdf
   ```
+
   Configure the PDF.js worker in `app/layout.tsx` or a provider:
+
   ```typescript
   import { pdfjs } from 'react-pdf';
   pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
   ```
 
 - [ ] **5.2 — Write failing tests**
+
   ```typescript
   import { describe, it, expect, vi } from 'vitest';
   import { render, screen } from '@testing-library/react';
@@ -775,6 +815,7 @@
   ```
 
 - [ ] **5.3 — Implement `components/audio-player/bulletin-viewer.tsx`**
+
   ```typescript
   'use client';
   import { useState, useCallback } from 'react';
@@ -838,6 +879,7 @@
 ## Task 6: Podcast Detail Page
 
 **Files:**
+
 - `app/(public)/podcast/[id]/page.tsx` — podcast detail page
 - `app/(public)/podcast/[id]/loading.tsx` — loading skeleton
 - `components/audio-player/podcast-detail-layout.tsx` — layout for player + tabs
@@ -845,6 +887,7 @@
 ### Steps
 
 - [ ] **6.1 — Create `app/(public)/podcast/[id]/page.tsx`**
+
   ```typescript
   import { notFound } from 'next/navigation';
   import { prisma } from '@/lib/prisma';
@@ -886,7 +929,8 @@
   - On mount: calls `usePlayerStore.getState().loadPodcast(...)` to set up the player
 
 - [ ] **6.3 — Create loading skeleton**
-  `app/(public)/podcast/[id]/loading.tsx`:
+      `app/(public)/podcast/[id]/loading.tsx`:
+
   ```typescript
   import { Skeleton } from '@/components/ui/skeleton';
 
@@ -909,6 +953,7 @@
 ## Task 7: Component Tests
 
 **Files:**
+
 - `components/audio-player/__tests__/audio-player.test.tsx` — (from Task 2)
 - `components/audio-player/__tests__/mini-player.test.tsx` — (from Task 3)
 - `components/audio-player/__tests__/transcript-viewer.test.tsx` — (from Task 4)
@@ -919,6 +964,7 @@
 ### Steps
 
 - [ ] **7.1 — Write hook tests for `use-hls-player`**
+
   ```typescript
   import { describe, it, expect, vi } from 'vitest';
   import { renderHook } from '@testing-library/react';
@@ -926,7 +972,9 @@
 
   vi.mock('hls.js', () => ({
     default: class MockHls {
-      static isSupported() { return true; }
+      static isSupported() {
+        return true;
+      }
       loadSource = vi.fn();
       attachMedia = vi.fn();
       destroy = vi.fn();
@@ -952,15 +1000,23 @@
   ```
 
 - [ ] **7.2 — Write hook tests for `use-transcript-sync`**
+
   ```typescript
   describe('useTranscriptSync', () => {
-    it('returns activeIndex of -1 when no segments match', () => { /* ... */ });
-    it('returns correct activeIndex based on currentTime', () => { /* ... */ });
-    it('provides a containerRef', () => { /* ... */ });
+    it('returns activeIndex of -1 when no segments match', () => {
+      /* ... */
+    });
+    it('returns correct activeIndex based on currentTime', () => {
+      /* ... */
+    });
+    it('provides a containerRef', () => {
+      /* ... */
+    });
   });
   ```
 
 - [ ] **7.3 — Run all component and hook tests**
+
   ```bash
   npx vitest run components/audio-player/__tests__/ hooks/__tests__/ stores/__tests__/
   ```
@@ -972,16 +1028,19 @@
 ## Task 8: E2E Test
 
 **Files:**
+
 - `e2e/audio-player.spec.ts` — Playwright end-to-end test
 
 ### Steps
 
 - [ ] **8.1 — Install Playwright (if not already from Stage 1)**
+
   ```bash
   npx playwright install
   ```
 
 - [ ] **8.2 — Create `e2e/audio-player.spec.ts`**
+
   ```typescript
   import { test, expect } from '@playwright/test';
 
@@ -1051,17 +1110,20 @@
 ### Steps
 
 - [ ] **9.1 — Run lint and type check**
+
   ```bash
   npm run lint
   npx tsc --noEmit
   ```
 
 - [ ] **9.2 — Run full test suite**
+
   ```bash
   npx vitest run
   ```
 
 - [ ] **9.3 — Run build**
+
   ```bash
   npm run build
   ```

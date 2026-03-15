@@ -40,6 +40,7 @@ Podcast Hub is an internal enterprise web application for a National Audit Offic
 ### 1.2 Problem Statement
 
 Audit experts produce technical content as PDFs. This content needs to be:
+
 - Converted to audio podcasts (narrative or conversational style, short and long duration)
 - Organized by domain and categorized for discovery
 - Made searchable via smart AI-powered search
@@ -53,14 +54,14 @@ Audit experts produce technical content as PDFs. This content needs to be:
 
 ### 1.4 Terminology
 
-| Term | Meaning |
-|------|---------|
-| **Bulletin** | A PDF document prepared by audit experts (the source content) |
-| **Podcast/Episode** | The audio version of a bulletin (short and long duration) |
-| **Domain** | One of 6 audit practice areas (see Section 5) |
-| **Learning Path** | A curated sequence or graph of episodes for structured learning |
-| **Playlist** | Synonym for learning path (used interchangeably in business context) |
-| **Lake** | External document management system where PDFs are also hosted |
+| Term                | Meaning                                                              |
+| ------------------- | -------------------------------------------------------------------- |
+| **Bulletin**        | A PDF document prepared by audit experts (the source content)        |
+| **Podcast/Episode** | The audio version of a bulletin (short and long duration)            |
+| **Domain**          | One of 6 audit practice areas (see Section 5)                        |
+| **Learning Path**   | A curated sequence or graph of episodes for structured learning      |
+| **Playlist**        | Synonym for learning path (used interchangeably in business context) |
+| **Lake**            | External document management system where PDFs are also hosted       |
 
 ---
 
@@ -68,11 +69,11 @@ Audit experts produce technical content as PDFs. This content needs to be:
 
 ### 2.1 User Roles
 
-| Role | Description | Access Level |
-|------|-------------|-------------|
-| **Public User** | Any authenticated employee | Read all published content, manage own bookmarks/progress/notes |
-| **Admin** | Domain experts from National Audit Offices | All public + create/edit/delete content, manage podcasts and learning paths |
-| **Super Admin** | System administrators | All admin + manage user roles, access analytics, system configuration |
+| Role            | Description                                | Access Level                                                                |
+| --------------- | ------------------------------------------ | --------------------------------------------------------------------------- |
+| **Public User** | Any authenticated employee                 | Read all published content, manage own bookmarks/progress/notes             |
+| **Admin**       | Domain experts from National Audit Offices | All public + create/edit/delete content, manage podcasts and learning paths |
+| **Super Admin** | System administrators                      | All admin + manage user roles, access analytics, system configuration       |
 
 ### 2.2 Role Assignment
 
@@ -87,6 +88,7 @@ Audit experts produce technical content as PDFs. This content needs to be:
 ### 3.1 Admin Workflow
 
 #### 3.1.1 Content Preparation (External)
+
 1. Admin prepares content as a PDF (APB, APMU, ATU, etc.)
 2. Admin uses Copilot to generate a transcript (brief summary + detailed overview)
 3. Admin uses Microsoft Clipchamp to convert transcript to audio (short + long duration)
@@ -95,9 +97,11 @@ Audit experts produce technical content as PDFs. This content needs to be:
 6. Admin sends email with links to Lake content and Podcast Hub audio
 
 #### 3.1.2 Podcast Upload (FR-ADMIN-001)
+
 **Priority:** P0 (Must Have)
 
 Admin can create a new podcast with:
+
 - Title (required, max 200 chars)
 - Description (required, max 2000 chars)
 - Domain (required, single select from 6 domains)
@@ -110,6 +114,7 @@ Admin can create a new podcast with:
 - Transcript text (optional, with timestamped segments)
 
 #### 3.1.3 Podcast Edit/Delete (FR-ADMIN-002)
+
 **Priority:** P0
 
 - Edit all metadata fields of an existing podcast
@@ -118,12 +123,14 @@ Admin can create a new podcast with:
 - Restore archived podcasts
 
 #### 3.1.4 Podcast Ordering (FR-ADMIN-003)
+
 **Priority:** P1
 
 - Drag-and-drop reorder podcasts within the admin dashboard
 - Sort order persists and affects public display order
 
 #### 3.1.5 Learning Path Management (FR-ADMIN-004)
+
 **Priority:** P1
 
 - Create a learning path with: title, description, domain, thumbnail, path type (linear or graph)
@@ -134,6 +141,7 @@ Admin can create a new podcast with:
 - Edit and reorder episodes within a path
 
 #### 3.1.6 User Role Management (FR-ADMIN-005)
+
 **Priority:** P1
 
 - Super Admin can search users by email
@@ -141,6 +149,7 @@ Admin can create a new podcast with:
 - View list of all users with their current roles
 
 #### 3.1.7 Analytics Dashboard (FR-ADMIN-006)
+
 **Priority:** P2
 
 - Total bulletins count, total learning paths count
@@ -152,19 +161,23 @@ Admin can create a new podcast with:
 ### 3.2 Public User Features
 
 #### 3.2.1 Library / Browse (FR-USER-001)
+
 **Priority:** P0
 
 Two main content buckets:
+
 1. **Technical Content** — Individual bulletins/podcasts
 2. **Learning Series** — Curated learning paths
 
 Each bucket supports:
+
 - Domain-wise filtering (Audit Methodology, Accounting and Reporting, Audit Technology, Quality and Risk, LEAP, Auditing)
 - Sort by: newest, oldest, title A-Z
 - Grid/card view with thumbnails
 - Pagination (20 items per page default)
 
 #### 3.2.2 Audio Player (FR-USER-002)
+
 **Priority:** P0
 
 - Play/pause with keyboard shortcut (spacebar)
@@ -177,6 +190,7 @@ Each bucket supports:
 - Remember last position on return
 
 #### 3.2.3 Transcript Viewer (FR-USER-003)
+
 **Priority:** P0
 
 - Display transcript synchronized with audio playback
@@ -186,6 +200,7 @@ Each bucket supports:
 - Full transcript download as text file
 
 #### 3.2.4 Bulletin/PDF Viewer (FR-USER-004)
+
 **Priority:** P1
 
 - View associated PDF bulletin(s) alongside audio
@@ -193,6 +208,7 @@ Each bucket supports:
 - Download option for offline reading
 
 #### 3.2.5 Bookmarks & Notes (FR-USER-005)
+
 **Priority:** P1
 
 - Bookmark at current timestamp with optional note
@@ -202,6 +218,7 @@ Each bucket supports:
 - View all bookmarks across all podcasts (in profile/progress page)
 
 #### 3.2.6 Progress Tracking (FR-USER-006)
+
 **Priority:** P1
 
 - Track episode completion within learning paths
@@ -210,6 +227,7 @@ Each bucket supports:
 - Progress page showing: completed episodes, in-progress paths, listening history
 
 #### 3.2.7 Learning Path Viewer (FR-USER-007)
+
 **Priority:** P1
 
 - Visual rendering: linear path (step-by-step) or graph (node-based with connections)
@@ -218,6 +236,7 @@ Each bucket supports:
 - Navigate between episodes within the path
 
 #### 3.2.8 Search (FR-USER-008)
+
 **Priority:** P2
 
 - **Basic search:** Text search across podcast titles, descriptions, tags
@@ -227,6 +246,7 @@ Each bucket supports:
 - Search results show: podcast title, matching snippet, timestamp link
 
 #### 3.2.9 User Profile (FR-USER-009)
+
 **Priority:** P2
 
 - View/edit display name
@@ -237,6 +257,7 @@ Each bucket supports:
 ### 3.3 Future Features (Out of Scope for v2 Launch)
 
 These are documented for future phases but NOT built in the initial release:
+
 - AI transcript generation (Copilot integration)
 - Text-to-speech conversion within the app
 - AI-generated thumbnail images
@@ -282,14 +303,14 @@ These are documented for future phases but NOT built in the initial release:
 
 ### 4.3 Domains (Categories)
 
-| Domain | Abbreviation |
-|--------|-------------|
-| Audit Methodology | AMG |
-| Accounting and Reporting | ARG |
-| Audit Technology | AITG |
-| Quality and Risk | QRMG |
-| LEAP | LEAP |
-| Auditing (Independence) | Independence |
+| Domain                   | Abbreviation |
+| ------------------------ | ------------ |
+| Audit Methodology        | AMG          |
+| Accounting and Reporting | ARG          |
+| Audit Technology         | AITG         |
+| Quality and Risk         | QRMG         |
+| LEAP                     | LEAP         |
+| Auditing (Independence)  | Independence |
 
 ---
 
@@ -298,12 +319,14 @@ These are documented for future phases but NOT built in the initial release:
 ### 5.1 Database: PostgreSQL 16 + Prisma ORM
 
 Extensions required:
+
 - `pgvector` — vector similarity search for AI-powered search
 - `uuid-ossp` — UUID generation
 
 ### 5.2 Tables
 
 #### `podcasts`
+
 ```sql
 CREATE TABLE podcasts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -327,6 +350,7 @@ CREATE TABLE podcasts (
 ```
 
 #### `transcripts`
+
 ```sql
 CREATE TABLE transcripts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -346,6 +370,7 @@ CREATE INDEX transcripts_embedding_idx ON transcripts
 ```
 
 #### `learning_graphs`
+
 ```sql
 CREATE TABLE learning_graphs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -365,6 +390,7 @@ CREATE TABLE learning_graphs (
 ```
 
 #### `episodes`
+
 ```sql
 CREATE TABLE episodes (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -386,6 +412,7 @@ CREATE INDEX episodes_graph_id_idx ON episodes(graph_id);
 ```
 
 #### `learning_path_edges`
+
 ```sql
 CREATE TABLE learning_path_edges (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -400,6 +427,7 @@ CREATE INDEX edges_graph_id_idx ON learning_path_edges(graph_id);
 ```
 
 #### `bookmarks`
+
 ```sql
 CREATE TABLE bookmarks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -416,6 +444,7 @@ CREATE INDEX bookmarks_podcast_id_idx ON bookmarks(podcast_id);
 ```
 
 #### `user_roles`
+
 ```sql
 CREATE TABLE user_roles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -427,6 +456,7 @@ CREATE TABLE user_roles (
 ```
 
 #### `user_progress`
+
 ```sql
 CREATE TABLE user_progress (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -442,6 +472,7 @@ CREATE INDEX user_progress_graph_id_idx ON user_progress(graph_id);
 ```
 
 #### `user_activity`
+
 ```sql
 CREATE TABLE user_activity (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -465,27 +496,28 @@ CREATE INDEX user_activity_created_at_idx ON user_activity(created_at);
 
 Authorization is enforced at the **application layer** via middleware and Prisma query filters, rather than database-level RLS. The following access rules must be implemented:
 
-| Entity | Read | Write | Delete |
-|--------|------|-------|--------|
-| **Podcasts** | Public (non-archived) | Admin, SuperAdmin | SuperAdmin only |
-| **Bookmarks** | Own user only | Own user only | Own user only |
-| **User Roles** | Own user (or SuperAdmin for all) | SuperAdmin only | SuperAdmin only |
-| **Learning Graphs** | Published = public; all = Admin | Admin, SuperAdmin | Admin, SuperAdmin |
-| **User Progress** | Own user only | Own user only | Own user only |
-| **User Activity** | Own user only | Own user only | — |
+| Entity              | Read                             | Write             | Delete            |
+| ------------------- | -------------------------------- | ----------------- | ----------------- |
+| **Podcasts**        | Public (non-archived)            | Admin, SuperAdmin | SuperAdmin only   |
+| **Bookmarks**       | Own user only                    | Own user only     | Own user only     |
+| **User Roles**      | Own user (or SuperAdmin for all) | SuperAdmin only   | SuperAdmin only   |
+| **Learning Graphs** | Published = public; all = Admin  | Admin, SuperAdmin | Admin, SuperAdmin |
+| **User Progress**   | Own user only                    | Own user only     | Own user only     |
+| **User Activity**   | Own user only                    | Own user only     | —                 |
 
 These rules are enforced via:
+
 1. **Middleware** (`middleware.ts`) — JWT verification, route protection
 2. **API route handlers** — Role-based access checks before database operations
 3. **Prisma query filters** — `where` clauses scoped to the authenticated user
 
 ### 5.4 Storage Buckets (MinIO / Azure Blob Storage)
 
-| Bucket | Access | Contents |
-|--------|--------|----------|
-| `audio` | Private (presigned URLs) | MP3/WAV/M4A → HLS segments (after FFmpeg transcoding) |
-| `thumbnails` | Public | JPEG/PNG/WebP images |
-| `bulletins` | Private (signed URLs) | PDF documents |
+| Bucket       | Access                   | Contents                                              |
+| ------------ | ------------------------ | ----------------------------------------------------- |
+| `audio`      | Private (presigned URLs) | MP3/WAV/M4A → HLS segments (after FFmpeg transcoding) |
+| `thumbnails` | Public                   | JPEG/PNG/WebP images                                  |
+| `bulletins`  | Private (signed URLs)    | PDF documents                                         |
 
 ### 5.5 RPC Functions
 
@@ -531,61 +563,61 @@ $$ LANGUAGE sql;
 
 #### Podcasts
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/podcasts` | Public | List podcasts (paginated, filterable by domain/year/tags) |
-| GET | `/api/podcasts/:id` | Public | Get single podcast with transcript |
-| POST | `/api/podcasts` | Admin | Create new podcast |
-| PUT | `/api/podcasts/:id` | Admin | Update podcast metadata |
-| DELETE | `/api/podcasts/:id` | SuperAdmin | Soft-delete (archive) podcast |
-| PATCH | `/api/podcasts/batch` | Admin | Batch update sort order |
-| GET | `/api/podcasts/:id/transcript` | Public | Get transcript for podcast |
-| PUT | `/api/podcasts/:id/transcript` | Admin | Update/upload transcript |
+| Method | Path                           | Auth       | Description                                               |
+| ------ | ------------------------------ | ---------- | --------------------------------------------------------- |
+| GET    | `/api/podcasts`                | Public     | List podcasts (paginated, filterable by domain/year/tags) |
+| GET    | `/api/podcasts/:id`            | Public     | Get single podcast with transcript                        |
+| POST   | `/api/podcasts`                | Admin      | Create new podcast                                        |
+| PUT    | `/api/podcasts/:id`            | Admin      | Update podcast metadata                                   |
+| DELETE | `/api/podcasts/:id`            | SuperAdmin | Soft-delete (archive) podcast                             |
+| PATCH  | `/api/podcasts/batch`          | Admin      | Batch update sort order                                   |
+| GET    | `/api/podcasts/:id/transcript` | Public     | Get transcript for podcast                                |
+| PUT    | `/api/podcasts/:id/transcript` | Admin      | Update/upload transcript                                  |
 
 #### Learning Paths
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/learning-graphs` | Public (published only) | List learning paths |
-| GET | `/api/learning-graphs/:id` | Public (if published) | Get path with episodes and edges |
-| POST | `/api/learning-graphs` | Admin | Create learning path |
-| PUT | `/api/learning-graphs/:id` | Admin | Update learning path metadata |
-| DELETE | `/api/learning-graphs/:id` | Admin | Delete learning path |
-| PUT | `/api/learning-graphs/:id/data` | Admin | Bulk save episodes + edges |
+| Method | Path                            | Auth                    | Description                      |
+| ------ | ------------------------------- | ----------------------- | -------------------------------- |
+| GET    | `/api/learning-graphs`          | Public (published only) | List learning paths              |
+| GET    | `/api/learning-graphs/:id`      | Public (if published)   | Get path with episodes and edges |
+| POST   | `/api/learning-graphs`          | Admin                   | Create learning path             |
+| PUT    | `/api/learning-graphs/:id`      | Admin                   | Update learning path metadata    |
+| DELETE | `/api/learning-graphs/:id`      | Admin                   | Delete learning path             |
+| PUT    | `/api/learning-graphs/:id/data` | Admin                   | Bulk save episodes + edges       |
 
 #### User Data
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/bookmarks` | User | List user's bookmarks (optionally filter by podcast_id) |
-| POST | `/api/bookmarks` | User | Create bookmark |
-| PUT | `/api/bookmarks/:id` | User | Update bookmark note |
-| DELETE | `/api/bookmarks/:id` | User | Delete bookmark |
-| GET | `/api/progress` | User | Get user's progress across all paths |
-| POST | `/api/progress` | User | Mark episode as complete |
-| DELETE | `/api/progress/:id` | User | Unmark episode completion |
-| POST | `/api/activity` | User | Log user activity |
+| Method | Path                 | Auth | Description                                             |
+| ------ | -------------------- | ---- | ------------------------------------------------------- |
+| GET    | `/api/bookmarks`     | User | List user's bookmarks (optionally filter by podcast_id) |
+| POST   | `/api/bookmarks`     | User | Create bookmark                                         |
+| PUT    | `/api/bookmarks/:id` | User | Update bookmark note                                    |
+| DELETE | `/api/bookmarks/:id` | User | Delete bookmark                                         |
+| GET    | `/api/progress`      | User | Get user's progress across all paths                    |
+| POST   | `/api/progress`      | User | Mark episode as complete                                |
+| DELETE | `/api/progress/:id`  | User | Unmark episode completion                               |
+| POST   | `/api/activity`      | User | Log user activity                                       |
 
 #### Admin
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/admin/analytics` | Admin | Aggregated analytics data |
-| GET | `/api/users` | SuperAdmin | List users with roles |
-| PUT | `/api/users/:id/role` | SuperAdmin | Update user role |
+| Method | Path                   | Auth       | Description               |
+| ------ | ---------------------- | ---------- | ------------------------- |
+| GET    | `/api/admin/analytics` | Admin      | Aggregated analytics data |
+| GET    | `/api/users`           | SuperAdmin | List users with roles     |
+| PUT    | `/api/users/:id/role`  | SuperAdmin | Update user role          |
 
 #### Upload
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/upload` | Admin | Generate signed upload URL for file |
+| Method | Path          | Auth  | Description                         |
+| ------ | ------------- | ----- | ----------------------------------- |
+| POST   | `/api/upload` | Admin | Generate signed upload URL for file |
 
 #### Search
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/search?q=...&type=basic` | User | Text search across titles/descriptions/tags |
-| POST | `/api/search` | User | Semantic search (sends query, returns matching transcripts with timestamps) |
+| Method | Path                           | Auth | Description                                                                 |
+| ------ | ------------------------------ | ---- | --------------------------------------------------------------------------- |
+| GET    | `/api/search?q=...&type=basic` | User | Text search across titles/descriptions/tags                                 |
+| POST   | `/api/search`                  | User | Semantic search (sends query, returns matching transcripts with timestamps) |
 
 ### 6.3 Standard Error Response Shape
 
@@ -638,11 +670,11 @@ User visits protected route
 
 ### 7.3 Authorization Layers
 
-| Layer | Mechanism | Purpose |
-|-------|-----------|---------|
-| **Middleware** | Next.js middleware (`middleware.ts`) | Protect `/admin/*` routes, redirect unauthenticated users |
-| **API Route** | JWT verification + role check | Verify auth on every write endpoint |
-| **Database** | Prisma query filters | Scoped queries enforce access at the data layer (defense in depth) |
+| Layer          | Mechanism                            | Purpose                                                            |
+| -------------- | ------------------------------------ | ------------------------------------------------------------------ |
+| **Middleware** | Next.js middleware (`middleware.ts`) | Protect `/admin/*` routes, redirect unauthenticated users          |
+| **API Route**  | JWT verification + role check        | Verify auth on every write endpoint                                |
+| **Database**   | Prisma query filters                 | Scoped queries enforce access at the data layer (defense in depth) |
 
 ### 7.4 Session Management
 
@@ -658,43 +690,43 @@ User visits protected route
 
 ### 8.1 Core Stack
 
-| Layer | Technology | Version | Rationale |
-|-------|-----------|---------|-----------|
-| **Framework** | Next.js (App Router) | 16.x | Server Components, API routes, middleware, streaming |
-| **Language** | TypeScript | 5.x | Strict mode, full type safety |
-| **Runtime** | Node.js | 20 LTS | Long-term support, native ESM |
-| **Database** | PostgreSQL + Prisma ORM | 16.x | pgvector extension for vector search |
-| **UI** | React | 19.x | Server/Client components |
-| **Styling** | Tailwind CSS | 4.x | Utility-first, design system tokens |
-| **Components** | shadcn/ui (Radix) | Latest | Accessible, composable, copy-paste ownership |
+| Layer          | Technology              | Version | Rationale                                            |
+| -------------- | ----------------------- | ------- | ---------------------------------------------------- |
+| **Framework**  | Next.js (App Router)    | 16.x    | Server Components, API routes, middleware, streaming |
+| **Language**   | TypeScript              | 5.x     | Strict mode, full type safety                        |
+| **Runtime**    | Node.js                 | 20 LTS  | Long-term support, native ESM                        |
+| **Database**   | PostgreSQL + Prisma ORM | 16.x    | pgvector extension for vector search                 |
+| **UI**         | React                   | 19.x    | Server/Client components                             |
+| **Styling**    | Tailwind CSS            | 4.x     | Utility-first, design system tokens                  |
+| **Components** | shadcn/ui (Radix)       | Latest  | Accessible, composable, copy-paste ownership         |
 
 ### 8.2 Key Libraries
 
-| Category | Library | Purpose |
-|----------|---------|---------|
-| **Forms** | React Hook Form + Zod | Form state + runtime validation |
-| **Charts** | Recharts | Analytics visualizations |
-| **PDF** | react-pdf | In-app bulletin viewer |
-| **Drag & Drop** | @dnd-kit | Sortable lists (podcast ordering) |
-| **Graph Viz** | @xyflow/react + Dagre | Learning path graph rendering |
-| **Icons** | Lucide React | Consistent icon set |
-| **Toast** | Sonner | Notifications |
-| **Theming** | next-themes | Dark/light mode |
+| Category        | Library               | Purpose                           |
+| --------------- | --------------------- | --------------------------------- |
+| **Forms**       | React Hook Form + Zod | Form state + runtime validation   |
+| **Charts**      | Recharts              | Analytics visualizations          |
+| **PDF**         | react-pdf             | In-app bulletin viewer            |
+| **Drag & Drop** | @dnd-kit              | Sortable lists (podcast ordering) |
+| **Graph Viz**   | @xyflow/react + Dagre | Learning path graph rendering     |
+| **Icons**       | Lucide React          | Consistent icon set               |
+| **Toast**       | Sonner                | Notifications                     |
+| **Theming**     | next-themes           | Dark/light mode                   |
 
 ### 8.3 Development & Quality Tools
 
-| Tool | Purpose |
-|------|---------|
-| **Vitest** | Unit and integration test runner |
-| **React Testing Library** | Component testing |
-| **MSW (Mock Service Worker)** | API mocking in tests |
-| **Playwright** | End-to-end browser testing |
-| **ESLint 9** | Linting (flat config) |
-| **Prettier** | Code formatting |
-| **Husky** | Git hooks |
-| **lint-staged** | Pre-commit checks |
-| **Pino** | Structured logging |
-| **Sentry** | Error tracking and performance monitoring |
+| Tool                          | Purpose                                   |
+| ----------------------------- | ----------------------------------------- |
+| **Vitest**                    | Unit and integration test runner          |
+| **React Testing Library**     | Component testing                         |
+| **MSW (Mock Service Worker)** | API mocking in tests                      |
+| **Playwright**                | End-to-end browser testing                |
+| **ESLint 9**                  | Linting (flat config)                     |
+| **Prettier**                  | Code formatting                           |
+| **Husky**                     | Git hooks                                 |
+| **lint-staged**               | Pre-commit checks                         |
+| **Pino**                      | Structured logging                        |
+| **Sentry**                    | Error tracking and performance monitoring |
 
 ---
 
@@ -812,15 +844,15 @@ podcast-hub-v2/
 
 ### 9.2 Key Architecture Patterns
 
-| Pattern | Implementation |
-|---------|---------------|
-| **Server Components by default** | Pages fetch data server-side; only interactive parts are Client Components |
-| **Route Groups** | `(auth)`, `(public)`, `(admin)` for layout and middleware isolation |
-| **Centralized validation** | Zod schemas in `lib/schemas/`, shared between client forms and API routes |
-| **Error boundary hierarchy** | React ErrorBoundary in root layout + `error.tsx` per route group |
-| **Zustand for cross-cutting state** | PlayerContext (Zustand store) for audio state shared across components |
-| **Service layer separation** | API routes handle HTTP concerns; business logic in lib/ |
-| **Defense in depth** | Middleware (JWT verify) → API auth check → Prisma query filters (3 layers of authorization) |
+| Pattern                             | Implementation                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------------- |
+| **Server Components by default**    | Pages fetch data server-side; only interactive parts are Client Components                  |
+| **Route Groups**                    | `(auth)`, `(public)`, `(admin)` for layout and middleware isolation                         |
+| **Centralized validation**          | Zod schemas in `lib/schemas/`, shared between client forms and API routes                   |
+| **Error boundary hierarchy**        | React ErrorBoundary in root layout + `error.tsx` per route group                            |
+| **Zustand for cross-cutting state** | PlayerContext (Zustand store) for audio state shared across components                      |
+| **Service layer separation**        | API routes handle HTTP concerns; business logic in lib/                                     |
+| **Defense in depth**                | Middleware (JWT verify) → API auth check → Prisma query filters (3 layers of authorization) |
 
 ### 9.3 Component Guidelines
 
@@ -850,26 +882,28 @@ podcast-hub-v2/
 
 **Target: 100% coverage on `lib/` and `schemas/`**
 
-| Module | What to Test |
-|--------|-------------|
-| `lib/schemas/*.ts` | Valid inputs pass, invalid inputs fail with correct error messages |
-| `lib/api/error-response.ts` | Each error builder returns correct status/code/message |
-| `lib/api/pagination.ts` | Page/limit parsing, edge cases (negative, zero, overflow) |
-| `lib/upload.ts` | File size formatting, filename sanitization, MIME type validation |
-| `lib/utils.ts` | All utility functions |
-| `lib/embeddings.ts` | Mocked OpenAI calls, error handling |
+| Module                      | What to Test                                                       |
+| --------------------------- | ------------------------------------------------------------------ |
+| `lib/schemas/*.ts`          | Valid inputs pass, invalid inputs fail with correct error messages |
+| `lib/api/error-response.ts` | Each error builder returns correct status/code/message             |
+| `lib/api/pagination.ts`     | Page/limit parsing, edge cases (negative, zero, overflow)          |
+| `lib/upload.ts`             | File size formatting, filename sanitization, MIME type validation  |
+| `lib/utils.ts`              | All utility functions                                              |
+| `lib/embeddings.ts`         | Mocked OpenAI calls, error handling                                |
 
 ### 10.3 Integration Tests (Vitest + RTL + MSW)
 
 **Target: All API routes and critical components**
 
 #### API Route Tests
+
 - Every endpoint tested for: success path, validation errors, auth failures, not found
 - MSW to mock API responses
 - Test pagination parameters
 - Test rate limiting headers
 
 #### Component Tests
+
 - AudioPlayer: play/pause, seek, volume, duration toggle
 - UploadForm: validation, file selection, submit flow
 - PodcastCard: rendering, click handlers
@@ -880,20 +914,20 @@ podcast-hub-v2/
 
 **Target: Critical user journeys only**
 
-| Test | Flow |
-|------|------|
-| **Auth** | Login → verify session → access protected route → logout |
-| **Browse & Listen** | Home → filter by domain → open podcast → play audio → bookmark |
-| **Admin Upload** | Login as admin → upload form → fill fields → upload files → verify in library |
-| **Learning Path** | Browse paths → open path → play episode → mark complete → verify progress |
-| **Search** | Search query → verify results → click result → verify navigation |
+| Test                | Flow                                                                          |
+| ------------------- | ----------------------------------------------------------------------------- |
+| **Auth**            | Login → verify session → access protected route → logout                      |
+| **Browse & Listen** | Home → filter by domain → open podcast → play audio → bookmark                |
+| **Admin Upload**    | Login as admin → upload form → fill fields → upload files → verify in library |
+| **Learning Path**   | Browse paths → open path → play episode → mark complete → verify progress     |
+| **Search**          | Search query → verify results → click result → verify navigation              |
 
 ### 10.5 Test Configuration
 
 ```typescript
 // vitest.config.ts
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
@@ -913,12 +947,13 @@ export default defineConfig({
       },
     },
   },
-})
+});
 ```
 
 ### 10.6 Test-Driven Development Process
 
 For every new feature or bug fix:
+
 1. Write failing test(s) first
 2. Implement the minimum code to pass
 3. Refactor with tests as safety net
@@ -1048,7 +1083,7 @@ name: E2E Tests
 
 on:
   schedule:
-    - cron: '0 3 * * *'  # 3 AM UTC daily
+    - cron: '0 3 * * *' # 3 AM UTC daily
   workflow_dispatch:
 
 jobs:
@@ -1067,17 +1102,18 @@ jobs:
 
 ### 11.4 Branch Strategy
 
-| Branch | Purpose | Protection |
-|--------|---------|-----------|
-| `main` | Production-ready code | Require PR, CI pass, 1 approval |
-| `develop` | Integration branch (optional) | CI pass |
-| `feat/*` | Feature branches | — |
-| `fix/*` | Bug fix branches | — |
-| `release/*` | Release candidates | CI + E2E pass |
+| Branch      | Purpose                       | Protection                      |
+| ----------- | ----------------------------- | ------------------------------- |
+| `main`      | Production-ready code         | Require PR, CI pass, 1 approval |
+| `develop`   | Integration branch (optional) | CI pass                         |
+| `feat/*`    | Feature branches              | —                               |
+| `fix/*`     | Bug fix branches              | —                               |
+| `release/*` | Release candidates            | CI + E2E pass                   |
 
 ### 11.5 PR Checklist (Enforced)
 
 Every PR must:
+
 - [ ] Pass all CI checks (lint, types, tests, build)
 - [ ] Have test coverage for new/changed code
 - [ ] Not decrease overall coverage below threshold
@@ -1090,36 +1126,36 @@ Every PR must:
 
 ### 12.1 Authentication Security
 
-| Requirement | Implementation |
-|-------------|---------------|
+| Requirement                        | Implementation                                                |
+| ---------------------------------- | ------------------------------------------------------------- |
 | Session tokens in HttpOnly cookies | Custom JWT middleware with HttpOnly, Secure, SameSite cookies |
-| CSRF protection | SameSite=Lax cookie attribute |
-| Redirect validation | Whitelist of allowed redirect paths (no open redirects) |
-| Password policy | Minimum 8 chars, enforced by Zod schema + bcrypt hashing |
-| Rate limit on login | Max 5 attempts per minute per IP |
-| JWT access token expiry | 15 minutes (configurable via JWT_EXPIRY env var) |
+| CSRF protection                    | SameSite=Lax cookie attribute                                 |
+| Redirect validation                | Whitelist of allowed redirect paths (no open redirects)       |
+| Password policy                    | Minimum 8 chars, enforced by Zod schema + bcrypt hashing      |
+| Rate limit on login                | Max 5 attempts per minute per IP                              |
+| JWT access token expiry            | 15 minutes (configurable via JWT_EXPIRY env var)              |
 
 ### 12.2 API Security
 
-| Requirement | Implementation |
-|-------------|---------------|
-| Input validation | Zod schemas on every endpoint |
+| Requirement              | Implementation                                                                     |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| Input validation         | Zod schemas on every endpoint                                                      |
 | SQL injection prevention | Prisma ORM (parameterized queries); `$queryRaw` with tagged templates for pgvector |
-| XSS prevention | React auto-escaping + CSP headers |
-| Rate limiting | Per-endpoint limits (see below) |
-| Request size limits | 10MB default, 500MB for upload endpoint |
-| CORS | Restrict to app domain only |
-| File upload validation | MIME type + extension + size checks server-side |
+| XSS prevention           | React auto-escaping + CSP headers                                                  |
+| Rate limiting            | Per-endpoint limits (see below)                                                    |
+| Request size limits      | 10MB default, 500MB for upload endpoint                                            |
+| CORS                     | Restrict to app domain only                                                        |
+| File upload validation   | MIME type + extension + size checks server-side                                    |
 
 ### 12.3 Rate Limits
 
-| Endpoint Group | Limit | Window |
-|---------------|-------|--------|
-| Authentication | 5 requests | 1 minute |
-| Read endpoints | 100 requests | 1 minute |
-| Write endpoints | 20 requests | 1 minute |
-| Upload | 5 requests | 5 minutes |
-| Search | 30 requests | 1 minute |
+| Endpoint Group  | Limit        | Window    |
+| --------------- | ------------ | --------- |
+| Authentication  | 5 requests   | 1 minute  |
+| Read endpoints  | 100 requests | 1 minute  |
+| Write endpoints | 20 requests  | 1 minute  |
+| Upload          | 5 requests   | 5 minutes |
+| Search          | 30 requests  | 1 minute  |
 
 ### 12.4 HTTP Security Headers
 
@@ -1152,7 +1188,7 @@ Every PR must:
 
 ```typescript
 // lib/logger.ts
-import pino from 'pino'
+import pino from 'pino';
 
 export const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
@@ -1161,7 +1197,7 @@ export const logger = pino({
   },
   // In production, output JSON for Azure Log Analytics
   // In development, use pino-pretty
-})
+});
 ```
 
 **Log levels by context:**
@@ -1190,14 +1226,14 @@ GET /api/health → { status: 'ok', timestamp: ISO, version: '2.0.0' }
 
 ### 13.4 Key Metrics to Track
 
-| Metric | Source | Alert Threshold |
-|--------|--------|----------------|
-| API response time (p95) | Sentry/Azure | > 2 seconds |
-| Error rate (5xx) | Sentry | > 1% of requests |
+| Metric                   | Source                         | Alert Threshold   |
+| ------------------------ | ------------------------------ | ----------------- |
+| API response time (p95)  | Sentry/Azure                   | > 2 seconds       |
+| Error rate (5xx)         | Sentry                         | > 1% of requests  |
 | Database connection pool | Prisma metrics / Azure Monitor | > 80% utilization |
-| Storage usage | MinIO console / Azure Monitor | > 80% of quota |
-| Active users (DAU/WAU) | user_activity table | Informational |
-| Upload failures | Sentry | Any occurrence |
+| Storage usage            | MinIO console / Azure Monitor  | > 80% of quota    |
+| Active users (DAU/WAU)   | user_activity table            | Informational     |
+| Upload failures          | Sentry                         | Any occurrence    |
 
 ---
 
@@ -1205,28 +1241,28 @@ GET /api/health → { status: 'ok', timestamp: ISO, version: '2.0.0' }
 
 ### 14.1 Performance Targets
 
-| Metric | Target |
-|--------|--------|
-| Time to First Byte (TTFB) | < 200ms |
-| Largest Contentful Paint (LCP) | < 2.5s |
-| First Input Delay (FID) | < 100ms |
-| Cumulative Layout Shift (CLS) | < 0.1 |
-| API response time (p95) | < 500ms |
-| Audio start playback | < 1s after click |
-| Search results | < 2s |
+| Metric                         | Target           |
+| ------------------------------ | ---------------- |
+| Time to First Byte (TTFB)      | < 200ms          |
+| Largest Contentful Paint (LCP) | < 2.5s           |
+| First Input Delay (FID)        | < 100ms          |
+| Cumulative Layout Shift (CLS)  | < 0.1            |
+| API response time (p95)        | < 500ms          |
+| Audio start playback           | < 1s after click |
+| Search results                 | < 2s             |
 
 ### 14.2 Optimization Strategies
 
-| Strategy | Implementation |
-|----------|---------------|
-| Server Components | Minimize client JS; fetch data server-side |
-| Image optimization | `next/image` with Azure Front Door CDN |
-| Audio streaming | HLS adaptive streaming via FFmpeg + HLS.js |
-| Database queries | Proper indexes, select only needed columns |
-| Pagination | All list endpoints paginated (no unbounded queries) |
-| Font optimization | `next/font` with subsetting |
-| Bundle analysis | `@next/bundle-analyzer` in CI |
-| Caching | Azure Front Door CDN for public assets, ISR for static pages |
+| Strategy           | Implementation                                               |
+| ------------------ | ------------------------------------------------------------ |
+| Server Components  | Minimize client JS; fetch data server-side                   |
+| Image optimization | `next/image` with Azure Front Door CDN                       |
+| Audio streaming    | HLS adaptive streaming via FFmpeg + HLS.js                   |
+| Database queries   | Proper indexes, select only needed columns                   |
+| Pagination         | All list endpoints paginated (no unbounded queries)          |
+| Font optimization  | `next/font` with subsetting                                  |
+| Bundle analysis    | `@next/bundle-analyzer` in CI                                |
+| Caching            | Azure Front Door CDN for public assets, ISR for static pages |
 
 ---
 
@@ -1234,25 +1270,25 @@ GET /api/health → { status: 'ok', timestamp: ISO, version: '2.0.0' }
 
 ### 15.1 Environments
 
-| Environment | Purpose | URL |
-|-------------|---------|-----|
-| **Local** | Development | `http://localhost:3000` |
-| **Preview** | PR previews (optional) | `https://pr-{number}.preview.podcasthub.com` |
-| **Staging** | Pre-production testing | `https://staging.podcasthub.com` |
-| **Production** | Live application | `https://podcasthub.com` |
+| Environment    | Purpose                | URL                                          |
+| -------------- | ---------------------- | -------------------------------------------- |
+| **Local**      | Development            | `http://localhost:3000`                      |
+| **Preview**    | PR previews (optional) | `https://pr-{number}.preview.podcasthub.com` |
+| **Staging**    | Pre-production testing | `https://staging.podcasthub.com`             |
+| **Production** | Live application       | `https://podcasthub.com`                     |
 
 ### 15.2 Infrastructure Stack
 
-| Component | Service |
-|-----------|---------|
-| **Compute** | Azure Container Apps (Docker) |
-| **Database** | Azure Database for PostgreSQL Flexible Server |
-| **Storage** | MinIO (dev) / Azure Blob Storage (prod) |
-| **CDN** | Azure Front Door |
-| **Secrets** | Azure Key Vault + GitHub Secrets |
-| **Container Registry** | Azure Container Registry |
-| **Monitoring** | Sentry + Azure Monitor |
-| **DNS** | Azure DNS or Cloudflare |
+| Component              | Service                                       |
+| ---------------------- | --------------------------------------------- |
+| **Compute**            | Azure Container Apps (Docker)                 |
+| **Database**           | Azure Database for PostgreSQL Flexible Server |
+| **Storage**            | MinIO (dev) / Azure Blob Storage (prod)       |
+| **CDN**                | Azure Front Door                              |
+| **Secrets**            | Azure Key Vault + GitHub Secrets              |
+| **Container Registry** | Azure Container Registry                      |
+| **Monitoring**         | Sentry + Azure Monitor                        |
+| **DNS**                | Azure DNS or Cloudflare                       |
 
 ### 15.3 Docker Configuration
 
@@ -1351,13 +1387,13 @@ chore: upgrade Next.js to 16.2.0
 
 ### 16.3 Code Standards
 
-| Standard | Tool | Config |
-|----------|------|--------|
-| Formatting | Prettier | `.prettierrc` — semi: false, singleQuote: true, trailingComma: 'es5' |
-| Linting | ESLint 9 | Flat config, eslint-config-next, no-unused-vars as error |
-| Types | TypeScript strict | No `any`, no implicit returns, strict null checks |
-| Validation | Zod | Every API input validated, schemas in `lib/schemas/` |
-| Imports | Absolute | `@/` alias for project root |
+| Standard   | Tool              | Config                                                               |
+| ---------- | ----------------- | -------------------------------------------------------------------- |
+| Formatting | Prettier          | `.prettierrc` — semi: false, singleQuote: true, trailingComma: 'es5' |
+| Linting    | ESLint 9          | Flat config, eslint-config-next, no-unused-vars as error             |
+| Types      | TypeScript strict | No `any`, no implicit returns, strict null checks                    |
+| Validation | Zod               | Every API input validated, schemas in `lib/schemas/`                 |
+| Imports    | Absolute          | `@/` alias for project root                                          |
 
 ### 16.4 Pre-commit Hooks
 
@@ -1372,6 +1408,7 @@ chore: upgrade Next.js to 16.2.0
 ### 16.5 Code Review Standards
 
 Reviewers check:
+
 - [ ] Tests included for new functionality
 - [ ] No `any` types or type assertions without justification
 - [ ] API inputs validated with Zod
@@ -1398,6 +1435,7 @@ Since this is a fresh repo rebuild, data migration involves:
 ### 17.2 Migration Script
 
 Create a `scripts/migrate-v1.ts` that:
+
 1. Connects to v1 PostgreSQL database (read-only)
 2. Reads all podcasts, learning graphs, episodes, edges
 3. Transforms data if schema differs
@@ -1419,6 +1457,7 @@ Create a `scripts/migrate-v1.ts` that:
 ## 18. Feature Roadmap & Phases
 
 ### Phase 1: Foundation (Weeks 1-2)
+
 **Goal:** Project scaffold with enterprise tooling, auth, and database
 
 - [ ] Initialize Next.js project with TypeScript strict mode
@@ -1437,6 +1476,7 @@ Create a `scripts/migrate-v1.ts` that:
 - [ ] Write tests for all foundation code
 
 ### Phase 2: Core Content (Weeks 3-4)
+
 **Goal:** Podcast CRUD, upload, and basic library
 
 - [ ] Podcast API routes (CRUD) with tests
@@ -1451,6 +1491,7 @@ Create a `scripts/migrate-v1.ts` that:
 - [ ] Write component tests for forms and cards
 
 ### Phase 3: Audio Experience (Weeks 5-6)
+
 **Goal:** Full audio player, transcript, and bulletin viewer
 
 - [ ] Audio player component (play, pause, seek, volume, speed)
@@ -1464,6 +1505,7 @@ Create a `scripts/migrate-v1.ts` that:
 - [ ] E2E test: browse → play → transcript sync
 
 ### Phase 4: User Features (Weeks 7-8)
+
 **Goal:** Bookmarks, progress, profile, activity tracking
 
 - [ ] Bookmark API (CRUD) with tests
@@ -1477,6 +1519,7 @@ Create a `scripts/migrate-v1.ts` that:
 - [ ] E2E test: bookmark flow, progress tracking
 
 ### Phase 5: Learning Paths (Weeks 9-10)
+
 **Goal:** Learning path management and viewer
 
 - [ ] Learning graph API routes with tests
@@ -1493,6 +1536,7 @@ Create a `scripts/migrate-v1.ts` that:
 - [ ] E2E test: create path → add episodes → publish → view
 
 ### Phase 6: Analytics & Search (Weeks 11-12)
+
 **Goal:** Admin analytics and search functionality
 
 - [ ] Admin analytics API with aggregation queries
@@ -1505,6 +1549,7 @@ Create a `scripts/migrate-v1.ts` that:
 - [ ] E2E test: search flow
 
 ### Phase 7: Hardening (Weeks 13-14)
+
 **Goal:** Security, performance, and production readiness
 
 - [ ] Rate limiting on all endpoints
@@ -1526,47 +1571,47 @@ These are the specific issues identified in v1 that v2 must address:
 
 ### 19.1 What Went Wrong
 
-| Issue | v1 Problem | v2 Solution |
-|-------|-----------|-------------|
-| **No testing from day 1** | Tests were bolted on late with only 3 test files | TDD from the start; tests written before implementation |
-| **No pre-commit hooks** | Formatting/lint issues made it to PRs | Husky + lint-staged from project initialization |
-| **No structured logging** | Only `console.error()` — impossible to debug in production | Pino with JSON output, request IDs, log levels |
-| **No pagination** | All list endpoints returned unlimited rows | Every list endpoint paginated from day 1 |
-| **No rate limiting** | Upload and write endpoints vulnerable to abuse | Rate limiting middleware on all endpoints |
-| **No error boundaries** | Client-side crashes showed white screens | React ErrorBoundary in root layout + per-route error.tsx |
-| **No monitoring** | No visibility into production errors | Sentry from day 1 with alerting |
-| **CI didn't run tests** | CI only checked lint + types + build | CI runs full test suite with coverage thresholds |
-| **No code formatter** | Inconsistent code style | Prettier enforced via pre-commit hook |
-| **Minimal documentation** | README was boilerplate | Comprehensive README, API docs, setup guide |
-| **No coverage thresholds** | No minimum test coverage enforced | 80% line coverage required to merge |
-| **Console-only error reporting** | Server errors logged to stdout only | Structured logging + Sentry + request tracing |
+| Issue                            | v1 Problem                                                 | v2 Solution                                              |
+| -------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
+| **No testing from day 1**        | Tests were bolted on late with only 3 test files           | TDD from the start; tests written before implementation  |
+| **No pre-commit hooks**          | Formatting/lint issues made it to PRs                      | Husky + lint-staged from project initialization          |
+| **No structured logging**        | Only `console.error()` — impossible to debug in production | Pino with JSON output, request IDs, log levels           |
+| **No pagination**                | All list endpoints returned unlimited rows                 | Every list endpoint paginated from day 1                 |
+| **No rate limiting**             | Upload and write endpoints vulnerable to abuse             | Rate limiting middleware on all endpoints                |
+| **No error boundaries**          | Client-side crashes showed white screens                   | React ErrorBoundary in root layout + per-route error.tsx |
+| **No monitoring**                | No visibility into production errors                       | Sentry from day 1 with alerting                          |
+| **CI didn't run tests**          | CI only checked lint + types + build                       | CI runs full test suite with coverage thresholds         |
+| **No code formatter**            | Inconsistent code style                                    | Prettier enforced via pre-commit hook                    |
+| **Minimal documentation**        | README was boilerplate                                     | Comprehensive README, API docs, setup guide              |
+| **No coverage thresholds**       | No minimum test coverage enforced                          | 80% line coverage required to merge                      |
+| **Console-only error reporting** | Server errors logged to stdout only                        | Structured logging + Sentry + request tracing            |
 
 ### 19.2 What Worked Well (Keep in v2)
 
-| Strength | Details |
-|----------|---------|
-| TypeScript strict mode | No `any` types, full type safety — continue this |
-| Zod runtime validation | Schema-first approach for forms and APIs — expand it |
-| Application-level auth | Role-based access control — expand with Prisma query filters |
-| Centralized error handling | `error-response.ts` pattern — expand with request IDs |
-| App Router architecture | Route groups, server/client component split — same approach |
-| shadcn/ui components | Copy-paste ownership, accessible by default — keep it |
-| Database migrations | Schema-driven migrations — continue with Prisma Migrate |
+| Strength                   | Details                                                      |
+| -------------------------- | ------------------------------------------------------------ |
+| TypeScript strict mode     | No `any` types, full type safety — continue this             |
+| Zod runtime validation     | Schema-first approach for forms and APIs — expand it         |
+| Application-level auth     | Role-based access control — expand with Prisma query filters |
+| Centralized error handling | `error-response.ts` pattern — expand with request IDs        |
+| App Router architecture    | Route groups, server/client component split — same approach  |
+| shadcn/ui components       | Copy-paste ownership, accessible by default — keep it        |
+| Database migrations        | Schema-driven migrations — continue with Prisma Migrate      |
 
 ### 19.3 Architecture Decisions to Revisit
 
-| Decision | v1 Approach | v2 Recommendation |
-|----------|-------------|-------------------|
-| State management | React Context only | Use Zustand for PlayerContext and other cross-cutting state |
-| API layer | Direct database calls in components | Use Prisma in API routes with service layer for business logic |
-| File storage | Supabase Storage only | MinIO (dev) → Azure Blob Storage (prod) with presigned URLs |
-| Search | Placeholder with pgvector schema | Implement fully with Azure OpenAI embeddings via Prisma raw queries |
-| PDF rendering | react-pdf (canvas polyfill needed) | Keep react-pdf but evaluate iframe/embed fallback for simpler implementation |
+| Decision         | v1 Approach                         | v2 Recommendation                                                            |
+| ---------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
+| State management | React Context only                  | Use Zustand for PlayerContext and other cross-cutting state                  |
+| API layer        | Direct database calls in components | Use Prisma in API routes with service layer for business logic               |
+| File storage     | Supabase Storage only               | MinIO (dev) → Azure Blob Storage (prod) with presigned URLs                  |
+| Search           | Placeholder with pgvector schema    | Implement fully with Azure OpenAI embeddings via Prisma raw queries          |
+| PDF rendering    | react-pdf (canvas polyfill needed)  | Keep react-pdf but evaluate iframe/embed fallback for simpler implementation |
 
 ---
 
 ## Document History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 2.0 | 2026-03-15 | Generated from v1 analysis | Initial PRD for complete rebuild |
+| Version | Date       | Author                     | Changes                          |
+| ------- | ---------- | -------------------------- | -------------------------------- |
+| 2.0     | 2026-03-15 | Generated from v1 analysis | Initial PRD for complete rebuild |

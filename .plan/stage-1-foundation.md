@@ -12,34 +12,36 @@
 
 ## Task Overview
 
-| # | Task | Type | Est. |
-|---|------|------|------|
-| 1 | Project scaffold | Setup | 10 min |
-| 2 | Code quality tooling | Setup | 10 min |
-| 3 | Docker Compose + .env | Setup | 5 min |
-| 4 | Testing infrastructure | Setup | 10 min |
-| 5 | Utility foundation | Setup | 5 min |
-| 6 | Prisma schema + DB setup | Setup | 15 min |
-| 7 | API error handling | TDD | 10 min |
-| 8 | Pagination utility | TDD | 10 min |
-| 9 | Zod schemas | TDD | 15 min |
-| 10 | JWT auth utilities | TDD | 15 min |
-| 11 | Auth middleware | TDD | 10 min |
-| 12 | Auth API routes + login page | TDD | 15 min |
-| 13 | Root layout + error boundaries | Setup | 10 min |
-| 14 | Health check endpoint | TDD | 5 min |
-| 15 | CI pipeline | Setup | 10 min |
-| 16 | Sentry setup | Setup | 5 min |
-| 17 | Rate limiting | TDD | 10 min |
+| #   | Task                           | Type  | Est.   |
+| --- | ------------------------------ | ----- | ------ |
+| 1   | Project scaffold               | Setup | 10 min |
+| 2   | Code quality tooling           | Setup | 10 min |
+| 3   | Docker Compose + .env          | Setup | 5 min  |
+| 4   | Testing infrastructure         | Setup | 10 min |
+| 5   | Utility foundation             | Setup | 5 min  |
+| 6   | Prisma schema + DB setup       | Setup | 15 min |
+| 7   | API error handling             | TDD   | 10 min |
+| 8   | Pagination utility             | TDD   | 10 min |
+| 9   | Zod schemas                    | TDD   | 15 min |
+| 10  | JWT auth utilities             | TDD   | 15 min |
+| 11  | Auth middleware                | TDD   | 10 min |
+| 12  | Auth API routes + login page   | TDD   | 15 min |
+| 13  | Root layout + error boundaries | Setup | 10 min |
+| 14  | Health check endpoint          | TDD   | 5 min  |
+| 15  | CI pipeline                    | Setup | 10 min |
+| 16  | Sentry setup                   | Setup | 5 min  |
+| 17  | Rate limiting                  | TDD   | 10 min |
 
 ---
 
 ### Task 1: Project Scaffold
 
 **Files:**
+
 - Create: `package.json`, `tsconfig.json`, `next.config.ts`, `app/layout.tsx`, `app/page.tsx`
 
 - [ ] **Step 1: Create Next.js project**
+
 ```bash
 npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=false --import-alias="@/*" --turbopack --yes
 ```
@@ -47,6 +49,7 @@ npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=fa
 - [ ] **Step 2: Verify TypeScript strict mode in `tsconfig.json`**
 
 Ensure `tsconfig.json` contains:
+
 ```json
 {
   "compilerOptions": {
@@ -101,18 +104,21 @@ export default nextConfig;
 ```
 
 - [ ] **Step 4: Install core dependencies**
+
 ```bash
 npm install pino pino-pretty zod zustand @prisma/client sonner next-themes
 npm install -D prisma @types/node
 ```
 
 - [ ] **Step 5: Verify dev server starts**
+
 ```bash
 npm run dev
 # Visit http://localhost:3000 — should show Next.js default page
 ```
 
 - [ ] **Step 6: Commit**
+
 ```bash
 git add .
 git commit -m "feat: scaffold Next.js 16 project with TypeScript strict mode"
@@ -123,9 +129,11 @@ git commit -m "feat: scaffold Next.js 16 project with TypeScript strict mode"
 ### Task 2: Code Quality Tooling (ESLint 9, Prettier, Husky, lint-staged)
 
 **Files:**
+
 - Create: `eslint.config.mjs`, `.prettierrc`, `.prettierignore`, `.lintstagedrc.js`
 
 - [ ] **Step 1: Install dev dependencies**
+
 ```bash
 npm install -D prettier eslint-config-prettier eslint-plugin-import husky lint-staged
 ```
@@ -133,6 +141,7 @@ npm install -D prettier eslint-config-prettier eslint-plugin-import husky lint-s
 - [ ] **Step 2: Create ESLint 9 flat config**
 
 Create `eslint.config.mjs`:
+
 ```javascript
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -144,11 +153,7 @@ const __dirname = dirname(__filename);
 const compat = new FlatCompat({ baseDirectory: __dirname });
 
 const eslintConfig = [
-  ...compat.extends(
-    'next/core-web-vitals',
-    'next/typescript',
-    'prettier'
-  ),
+  ...compat.extends('next/core-web-vitals', 'next/typescript', 'prettier'),
   {
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -168,6 +173,7 @@ export default eslintConfig;
 - [ ] **Step 3: Create Prettier config**
 
 Create `.prettierrc`:
+
 ```json
 {
   "semi": true,
@@ -182,6 +188,7 @@ Create `.prettierrc`:
 ```
 
 Create `.prettierignore`:
+
 ```
 .next
 node_modules
@@ -193,11 +200,13 @@ prisma/migrations
 ```
 
 - [ ] **Step 4: Setup Husky + lint-staged**
+
 ```bash
 npx husky init
 ```
 
 Create `.lintstagedrc.js`:
+
 ```javascript
 export default {
   '*.{ts,tsx}': ['eslint --fix', 'prettier --write'],
@@ -206,6 +215,7 @@ export default {
 ```
 
 Update `.husky/pre-commit`:
+
 ```bash
 npx lint-staged
 ```
@@ -213,6 +223,7 @@ npx lint-staged
 - [ ] **Step 5: Add scripts to `package.json`**
 
 Add to the `"scripts"` section:
+
 ```json
 {
   "lint": "next lint",
@@ -224,6 +235,7 @@ Add to the `"scripts"` section:
 ```
 
 - [ ] **Step 6: Run lint + format to verify**
+
 ```bash
 npm run lint
 npm run format:check
@@ -231,6 +243,7 @@ npm run typecheck
 ```
 
 - [ ] **Step 7: Commit**
+
 ```bash
 git add .
 git commit -m "feat: add ESLint 9, Prettier, Husky, lint-staged"
@@ -241,11 +254,13 @@ git commit -m "feat: add ESLint 9, Prettier, Husky, lint-staged"
 ### Task 3: Docker Compose + Environment Setup
 
 **Files:**
+
 - Create: `docker-compose.yml`, `.env.local`, `.env.example`
 
 - [ ] **Step 1: Create Docker Compose file**
 
 Create `docker-compose.yml`:
+
 ```yaml
 version: '3.8'
 
@@ -285,6 +300,7 @@ volumes:
 - [ ] **Step 2: Create environment files**
 
 Create `.env.example`:
+
 ```bash
 # Database
 DATABASE_URL="postgresql://podcasthub:podcasthub_dev@localhost:5432/podcasthub"
@@ -315,6 +331,7 @@ LOG_LEVEL="debug"
 ```
 
 Copy `.env.example` to `.env.local`:
+
 ```bash
 cp .env.example .env.local
 ```
@@ -322,6 +339,7 @@ cp .env.example .env.local
 - [ ] **Step 3: Add Docker entries to `.gitignore`**
 
 Append to `.gitignore`:
+
 ```
 # Environment
 .env.local
@@ -333,6 +351,7 @@ minio_data/
 ```
 
 - [ ] **Step 4: Start Docker services and verify**
+
 ```bash
 docker compose up -d
 docker compose ps
@@ -340,6 +359,7 @@ docker compose ps
 ```
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add docker-compose.yml .env.example .gitignore
 git commit -m "feat: add Docker Compose for PostgreSQL 16 + MinIO"
@@ -350,9 +370,11 @@ git commit -m "feat: add Docker Compose for PostgreSQL 16 + MinIO"
 ### Task 4: Testing Infrastructure (Vitest + Playwright)
 
 **Files:**
+
 - Create: `vitest.config.ts`, `vitest.setup.ts`, `playwright.config.ts`, `__tests__/unit/.gitkeep`, `__tests__/e2e/.gitkeep`
 
 - [ ] **Step 1: Install testing dependencies**
+
 ```bash
 npm install -D vitest @vitejs/plugin-react @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom msw
 npx playwright install --with-deps chromium
@@ -362,6 +384,7 @@ npm install -D @playwright/test
 - [ ] **Step 2: Create Vitest config**
 
 Create `vitest.config.ts`:
+
 ```typescript
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
@@ -397,6 +420,7 @@ export default defineConfig({
 - [ ] **Step 3: Create Vitest setup file**
 
 Create `vitest.setup.ts`:
+
 ```typescript
 import '@testing-library/jest-dom/vitest';
 ```
@@ -404,6 +428,7 @@ import '@testing-library/jest-dom/vitest';
 - [ ] **Step 4: Create Playwright config**
 
 Create `playwright.config.ts`:
+
 ```typescript
 import { defineConfig, devices } from '@playwright/test';
 
@@ -434,6 +459,7 @@ export default defineConfig({
 ```
 
 - [ ] **Step 5: Create test directory structure**
+
 ```bash
 mkdir -p __tests__/unit/lib __tests__/unit/components __tests__/unit/api __tests__/e2e
 touch __tests__/unit/.gitkeep __tests__/e2e/.gitkeep
@@ -442,6 +468,7 @@ touch __tests__/unit/.gitkeep __tests__/e2e/.gitkeep
 - [ ] **Step 6: Add test scripts to `package.json`**
 
 Add to `"scripts"`:
+
 ```json
 {
   "test": "vitest run",
@@ -453,11 +480,13 @@ Add to `"scripts"`:
 ```
 
 - [ ] **Step 7: Verify Vitest runs (no tests yet, should exit cleanly)**
+
 ```bash
 npm run test
 ```
 
 - [ ] **Step 8: Commit**
+
 ```bash
 git add .
 git commit -m "feat: add Vitest + Playwright testing infrastructure"
@@ -468,9 +497,11 @@ git commit -m "feat: add Vitest + Playwright testing infrastructure"
 ### Task 5: Utility Foundation (cn, logger)
 
 **Files:**
+
 - Create: `lib/utils.ts`, `lib/logger.ts`
 
 - [ ] **Step 1: Install clsx and tailwind-merge**
+
 ```bash
 npm install clsx tailwind-merge
 ```
@@ -521,6 +552,7 @@ export function createLogger(context: string) {
 ```
 
 - [ ] **Step 4: Commit**
+
 ```bash
 git add lib/utils.ts lib/logger.ts
 git commit -m "feat: add cn() utility and Pino structured logger"
@@ -531,9 +563,11 @@ git commit -m "feat: add cn() utility and Pino structured logger"
 ### Task 6: Prisma Schema + Database Setup
 
 **Files:**
+
 - Create: `prisma/schema.prisma`
 
 - [ ] **Step 1: Initialize Prisma**
+
 ```bash
 npx prisma init
 ```
@@ -541,6 +575,7 @@ npx prisma init
 - [ ] **Step 2: Write the full Prisma schema**
 
 Replace `prisma/schema.prisma` with:
+
 ```prisma
 // prisma/schema.prisma
 generator client {
@@ -742,6 +777,7 @@ model UserActivity {
 - [ ] **Step 3: Create Prisma client singleton**
 
 Create `lib/db.ts`:
+
 ```typescript
 // lib/db.ts
 import { PrismaClient } from '@prisma/client';
@@ -760,6 +796,7 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 ```
 
 - [ ] **Step 4: Generate Prisma client and run initial migration**
+
 ```bash
 # Make sure Docker postgres is running
 docker compose up -d postgres
@@ -768,12 +805,14 @@ npx prisma migrate dev --name init
 ```
 
 - [ ] **Step 5: Verify migration**
+
 ```bash
 npx prisma studio
 # Should open browser showing all tables
 ```
 
 - [ ] **Step 6: Commit**
+
 ```bash
 git add prisma/ lib/db.ts
 git commit -m "feat: add Prisma schema with all models and initial migration"
@@ -784,12 +823,14 @@ git commit -m "feat: add Prisma schema with all models and initial migration"
 ### Task 7: API Error Handling (TDD)
 
 **Files:**
+
 - Create: `lib/api/errors.ts`
 - Test: `__tests__/unit/lib/api/errors.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 Create `__tests__/unit/lib/api/errors.test.ts`:
+
 ```typescript
 import { describe, it, expect } from 'vitest';
 import {
@@ -899,14 +940,17 @@ describe('error factory functions', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
+
 ```bash
 npx vitest run __tests__/unit/lib/api/errors.test.ts
 ```
+
 Expected: FAIL — module `@/lib/api/errors` not found.
 
 - [ ] **Step 3: Write minimal implementation**
 
 Create `lib/api/errors.ts`:
+
 ```typescript
 // lib/api/errors.ts
 import { NextResponse } from 'next/server';
@@ -989,12 +1033,15 @@ export function internalError(message = 'Internal server error'): ApiError {
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
+
 ```bash
 npx vitest run __tests__/unit/lib/api/errors.test.ts
 ```
+
 Expected: PASS — all 10 tests pass.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add lib/api/errors.ts __tests__/unit/lib/api/errors.test.ts
 git commit -m "feat: add API error handling utilities with TDD"
@@ -1005,12 +1052,14 @@ git commit -m "feat: add API error handling utilities with TDD"
 ### Task 8: Pagination Utility (TDD)
 
 **Files:**
+
 - Create: `lib/api/pagination.ts`
 - Test: `__tests__/unit/lib/api/pagination.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 Create `__tests__/unit/lib/api/pagination.test.ts`:
+
 ```typescript
 import { describe, it, expect } from 'vitest';
 import {
@@ -1084,14 +1133,17 @@ describe('createPaginatedResponse', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
+
 ```bash
 npx vitest run __tests__/unit/lib/api/pagination.test.ts
 ```
+
 Expected: FAIL — module `@/lib/api/pagination` not found.
 
 - [ ] **Step 3: Write minimal implementation**
 
 Create `lib/api/pagination.ts`:
+
 ```typescript
 // lib/api/pagination.ts
 
@@ -1119,9 +1171,7 @@ export function parsePaginationParams(url: URL): PaginationParams {
   const rawLimit = parseInt(url.searchParams.get('limit') || '', 10);
 
   const page = Number.isNaN(rawPage) ? DEFAULT_PAGE : Math.max(1, rawPage);
-  const limit = Number.isNaN(rawLimit)
-    ? DEFAULT_LIMIT
-    : Math.min(MAX_LIMIT, Math.max(1, rawLimit));
+  const limit = Number.isNaN(rawLimit) ? DEFAULT_LIMIT : Math.min(MAX_LIMIT, Math.max(1, rawLimit));
 
   return { page, limit };
 }
@@ -1143,12 +1193,15 @@ export function createPaginatedResponse<T>(
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
+
 ```bash
 npx vitest run __tests__/unit/lib/api/pagination.test.ts
 ```
+
 Expected: PASS — all 7 tests pass.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add lib/api/pagination.ts __tests__/unit/lib/api/pagination.test.ts
 git commit -m "feat: add pagination utility with TDD"
@@ -1159,20 +1212,17 @@ git commit -m "feat: add pagination utility with TDD"
 ### Task 9: Zod Schemas (TDD)
 
 **Files:**
+
 - Create: `lib/schemas/common.ts`, `lib/schemas/user.ts`, `lib/schemas/podcast.ts`, `lib/schemas/learning-graph.ts`, `lib/schemas/bookmark.ts`
 - Test: `__tests__/unit/lib/schemas/schemas.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 Create `__tests__/unit/lib/schemas/schemas.test.ts`:
+
 ```typescript
 import { describe, it, expect } from 'vitest';
-import {
-  uuidSchema,
-  domainSchema,
-  paginationQuerySchema,
-  DOMAINS,
-} from '@/lib/schemas/common';
+import { uuidSchema, domainSchema, paginationQuerySchema, DOMAINS } from '@/lib/schemas/common';
 import {
   createUserSchema,
   loginSchema,
@@ -1400,14 +1450,17 @@ describe('bookmark schemas', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
+
 ```bash
 npx vitest run __tests__/unit/lib/schemas/schemas.test.ts
 ```
+
 Expected: FAIL — modules not found.
 
 - [ ] **Step 3: Write implementations**
 
 Create `lib/schemas/common.ts`:
+
 ```typescript
 // lib/schemas/common.ts
 import { z } from 'zod';
@@ -1438,6 +1491,7 @@ export const timestampSchema = z.string().datetime();
 ```
 
 Create `lib/schemas/user.ts`:
+
 ```typescript
 // lib/schemas/user.ts
 import { z } from 'zod';
@@ -1454,9 +1508,11 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-export const updateUserSchema = z.object({
-  displayName: z.string().min(1).max(100).optional(),
-}).strict();
+export const updateUserSchema = z
+  .object({
+    displayName: z.string().min(1).max(100).optional(),
+  })
+  .strict();
 
 export const userResponseSchema = z.object({
   id: uuidSchema,
@@ -1472,6 +1528,7 @@ export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 ```
 
 Create `lib/schemas/podcast.ts`:
+
 ```typescript
 // lib/schemas/podcast.ts
 import { z } from 'zod';
@@ -1514,6 +1571,7 @@ export type UpdatePodcastInput = z.infer<typeof updatePodcastSchema>;
 ```
 
 Create `lib/schemas/learning-graph.ts`:
+
 ```typescript
 // lib/schemas/learning-graph.ts
 import { z } from 'zod';
@@ -1551,11 +1609,15 @@ export const createEpisodeSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
   description: z.string().optional(),
   audioUrl: z.string().url('Invalid audio URL'),
-  transcript: z.array(z.object({
-    start: z.number(),
-    end: z.number(),
-    text: z.string(),
-  })).default([]),
+  transcript: z
+    .array(
+      z.object({
+        start: z.number(),
+        end: z.number(),
+        text: z.string(),
+      })
+    )
+    .default([]),
   positionX: z.number().default(0),
   positionY: z.number().default(0),
   nodeType: nodeTypeSchema.default('default'),
@@ -1575,6 +1637,7 @@ export type CreateEdgeInput = z.infer<typeof createEdgeSchema>;
 ```
 
 Create `lib/schemas/bookmark.ts`:
+
 ```typescript
 // lib/schemas/bookmark.ts
 import { z } from 'zod';
@@ -1586,10 +1649,12 @@ export const createBookmarkSchema = z.object({
   note: z.string().max(500).optional(),
 });
 
-export const updateBookmarkSchema = z.object({
-  timestampSeconds: z.number().min(0).optional(),
-  note: z.string().max(500).optional(),
-}).strict();
+export const updateBookmarkSchema = z
+  .object({
+    timestampSeconds: z.number().min(0).optional(),
+    note: z.string().max(500).optional(),
+  })
+  .strict();
 
 export const bookmarkResponseSchema = z.object({
   id: uuidSchema,
@@ -1606,12 +1671,15 @@ export type UpdateBookmarkInput = z.infer<typeof updateBookmarkSchema>;
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
+
 ```bash
 npx vitest run __tests__/unit/lib/schemas/schemas.test.ts
 ```
+
 Expected: PASS — all tests pass.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add lib/schemas/ __tests__/unit/lib/schemas/
 git commit -m "feat: add Zod validation schemas for all entities with TDD"
@@ -1622,10 +1690,12 @@ git commit -m "feat: add Zod validation schemas for all entities with TDD"
 ### Task 10: JWT Auth Utilities (TDD)
 
 **Files:**
+
 - Create: `lib/auth/jwt.ts`, `lib/auth/password.ts`, `lib/auth/session.ts`, `lib/auth/types.ts`
 - Test: `__tests__/unit/lib/auth/jwt.test.ts`, `__tests__/unit/lib/auth/password.test.ts`, `__tests__/unit/lib/auth/session.test.ts`
 
 - [ ] **Step 1: Install auth dependencies**
+
 ```bash
 npm install jsonwebtoken bcrypt
 npm install -D @types/jsonwebtoken @types/bcrypt
@@ -1634,6 +1704,7 @@ npm install -D @types/jsonwebtoken @types/bcrypt
 - [ ] **Step 2: Create auth types**
 
 Create `lib/auth/types.ts`:
+
 ```typescript
 // lib/auth/types.ts
 export interface JwtPayload {
@@ -1660,9 +1731,17 @@ export interface TokenPair {
 - [ ] **Step 3: Write failing JWT tests**
 
 Create `__tests__/unit/lib/auth/jwt.test.ts`:
+
 ```typescript
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken, setAuthCookies, clearAuthCookies } from '@/lib/auth/jwt';
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+  setAuthCookies,
+  clearAuthCookies,
+} from '@/lib/auth/jwt';
 import type { AuthUser } from '@/lib/auth/types';
 
 // Mock environment variables
@@ -1741,7 +1820,9 @@ describe('cookie helpers', () => {
   it('clearAuthCookies deletes both cookies', () => {
     const deleted: string[] = [];
     const mockCookieStore = {
-      delete: (name: string) => { deleted.push(name); },
+      delete: (name: string) => {
+        deleted.push(name);
+      },
     };
 
     clearAuthCookies(mockCookieStore as never);
@@ -1751,14 +1832,17 @@ describe('cookie helpers', () => {
 ```
 
 - [ ] **Step 4: Run JWT test to verify it fails**
+
 ```bash
 npx vitest run __tests__/unit/lib/auth/jwt.test.ts
 ```
+
 Expected: FAIL — module not found.
 
 - [ ] **Step 5: Implement JWT utilities**
 
 Create `lib/auth/jwt.ts`:
+
 ```typescript
 // lib/auth/jwt.ts
 import jwt from 'jsonwebtoken';
@@ -1844,23 +1928,24 @@ export function setAuthCookies(
   });
 }
 
-export function clearAuthCookies(
-  cookieStore: { delete: (name: string) => void }
-): void {
+export function clearAuthCookies(cookieStore: { delete: (name: string) => void }): void {
   cookieStore.delete('access_token');
   cookieStore.delete('refresh_token');
 }
 ```
 
 - [ ] **Step 6: Run JWT test to verify it passes**
+
 ```bash
 npx vitest run __tests__/unit/lib/auth/jwt.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 7: Write failing password tests**
 
 Create `__tests__/unit/lib/auth/password.test.ts`:
+
 ```typescript
 import { describe, it, expect } from 'vitest';
 import { hashPassword, comparePassword } from '@/lib/auth/password';
@@ -1888,14 +1973,17 @@ describe('password utilities', () => {
 ```
 
 - [ ] **Step 8: Run password test to verify it fails**
+
 ```bash
 npx vitest run __tests__/unit/lib/auth/password.test.ts
 ```
+
 Expected: FAIL
 
 - [ ] **Step 9: Implement password utilities**
 
 Create `lib/auth/password.ts`:
+
 ```typescript
 // lib/auth/password.ts
 import bcrypt from 'bcrypt';
@@ -1906,23 +1994,23 @@ export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, SALT_ROUNDS);
 }
 
-export async function comparePassword(
-  password: string,
-  hash: string
-): Promise<boolean> {
+export async function comparePassword(password: string, hash: string): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
 ```
 
 - [ ] **Step 10: Run password test to verify it passes**
+
 ```bash
 npx vitest run __tests__/unit/lib/auth/password.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 11: Write failing session tests**
 
 Create `__tests__/unit/lib/auth/session.test.ts`:
+
 ```typescript
 import { describe, it, expect, vi } from 'vitest';
 import { createTokenPair, refreshTokenPair } from '@/lib/auth/session';
@@ -1977,21 +2065,20 @@ describe('session management', () => {
 ```
 
 - [ ] **Step 12: Run session test to verify it fails**
+
 ```bash
 npx vitest run __tests__/unit/lib/auth/session.test.ts
 ```
+
 Expected: FAIL
 
 - [ ] **Step 13: Implement session utilities**
 
 Create `lib/auth/session.ts`:
+
 ```typescript
 // lib/auth/session.ts
-import {
-  signAccessToken,
-  signRefreshToken,
-  verifyRefreshToken,
-} from './jwt';
+import { signAccessToken, signRefreshToken, verifyRefreshToken } from './jwt';
 import type { AuthUser, TokenPair } from './types';
 
 export function createTokenPair(user: AuthUser): TokenPair {
@@ -2015,18 +2102,23 @@ export function refreshTokenPair(currentRefreshToken: string): TokenPair {
 ```
 
 - [ ] **Step 14: Run session test to verify it passes**
+
 ```bash
 npx vitest run __tests__/unit/lib/auth/session.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 15: Run all auth tests together**
+
 ```bash
 npx vitest run __tests__/unit/lib/auth/
 ```
+
 Expected: PASS — all auth tests pass.
 
 - [ ] **Step 16: Commit**
+
 ```bash
 git add lib/auth/ __tests__/unit/lib/auth/
 git commit -m "feat: add JWT, password, and session auth utilities with TDD"
@@ -2037,12 +2129,14 @@ git commit -m "feat: add JWT, password, and session auth utilities with TDD"
 ### Task 11: Auth Middleware (TDD)
 
 **Files:**
+
 - Create: `middleware.ts`
 - Test: `__tests__/unit/middleware.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 Create `__tests__/unit/middleware.test.ts`:
+
 ```typescript
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
@@ -2116,14 +2210,17 @@ describe('auth middleware', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
+
 ```bash
 npx vitest run __tests__/unit/middleware.test.ts
 ```
+
 Expected: FAIL
 
 - [ ] **Step 3: Implement middleware**
 
 Create `middleware.ts`:
+
 ```typescript
 // middleware.ts
 import { NextResponse } from 'next/server';
@@ -2138,9 +2235,7 @@ function isPublicPath(pathname: string): boolean {
   if (STATIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) {
     return true;
   }
-  return PUBLIC_PATHS.some(
-    (path) => pathname === path || pathname.startsWith(path + '/')
-  );
+  return PUBLIC_PATHS.some((path) => pathname === path || pathname.startsWith(path + '/'));
 }
 
 function isAdminPath(pathname: string): boolean {
@@ -2202,12 +2297,15 @@ export const config = {
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
+
 ```bash
 npx vitest run __tests__/unit/middleware.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add middleware.ts __tests__/unit/middleware.test.ts
 git commit -m "feat: add auth middleware with route protection and TDD"
@@ -2218,11 +2316,13 @@ git commit -m "feat: add auth middleware with route protection and TDD"
 ### Task 12: Auth API Routes + Login Page
 
 **Files:**
+
 - Create: `app/api/auth/login/route.ts`, `app/api/auth/refresh/route.ts`, `app/api/auth/logout/route.ts`, `app/(auth)/login/page.tsx`
 
 - [ ] **Step 1: Create login API route**
 
 Create `app/api/auth/login/route.ts`:
+
 ```typescript
 // app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from 'next/server';
@@ -2232,7 +2332,12 @@ import { comparePassword } from '@/lib/auth/password';
 import { createTokenPair } from '@/lib/auth/session';
 import { setAuthCookies } from '@/lib/auth/jwt';
 import { loginSchema } from '@/lib/schemas/user';
-import { createErrorResponse, unauthorized, validationFailed, internalError } from '@/lib/api/errors';
+import {
+  createErrorResponse,
+  unauthorized,
+  validationFailed,
+  internalError,
+} from '@/lib/api/errors';
 import { createLogger } from '@/lib/logger';
 
 const logger = createLogger('auth:login');
@@ -2304,6 +2409,7 @@ export async function POST(request: NextRequest) {
 - [ ] **Step 2: Create refresh API route**
 
 Create `app/api/auth/refresh/route.ts`:
+
 ```typescript
 // app/api/auth/refresh/route.ts
 import { NextResponse } from 'next/server';
@@ -2343,6 +2449,7 @@ export async function POST() {
 - [ ] **Step 3: Create logout API route**
 
 Create `app/api/auth/logout/route.ts`:
+
 ```typescript
 // app/api/auth/logout/route.ts
 import { NextResponse } from 'next/server';
@@ -2363,6 +2470,7 @@ export async function POST() {
 - [ ] **Step 4: Create login page**
 
 Create `app/(auth)/login/page.tsx`:
+
 ```tsx
 // app/(auth)/login/page.tsx
 'use client';
@@ -2414,9 +2522,7 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Podcast Hub
           </h1>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Sign in to your account
-          </p>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Sign in to your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
@@ -2428,7 +2534,10 @@ export default function LoginPage() {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Email address
               </label>
               <input
@@ -2443,7 +2552,10 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Password
               </label>
               <input
@@ -2475,6 +2587,7 @@ export default function LoginPage() {
 - [ ] **Step 5: Create unauthorized page**
 
 Create `app/unauthorized/page.tsx`:
+
 ```tsx
 // app/unauthorized/page.tsx
 import Link from 'next/link';
@@ -2500,6 +2613,7 @@ export default function UnauthorizedPage() {
 ```
 
 - [ ] **Step 6: Commit**
+
 ```bash
 git add app/api/auth/ app/(auth)/ app/unauthorized/
 git commit -m "feat: add auth API routes (login, refresh, logout) and login page"
@@ -2510,12 +2624,14 @@ git commit -m "feat: add auth API routes (login, refresh, logout) and login page
 ### Task 13: Root Layout + Error Boundaries
 
 **Files:**
+
 - Modify: `app/layout.tsx`
 - Create: `app/error.tsx`, `app/not-found.tsx`, `app/loading.tsx`, `components/providers.tsx`
 
 - [ ] **Step 1: Create providers component**
 
 Create `components/providers.tsx`:
+
 ```tsx
 // components/providers.tsx
 'use client';
@@ -2536,6 +2652,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 - [ ] **Step 2: Update root layout**
 
 Update `app/layout.tsx`:
+
 ```tsx
 // app/layout.tsx
 import type { Metadata } from 'next';
@@ -2553,11 +2670,7 @@ export const metadata: Metadata = {
   description: 'Enterprise podcast platform for audit professionals',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
@@ -2571,6 +2684,7 @@ export default function RootLayout({
 - [ ] **Step 3: Create error boundary**
 
 Create `app/error.tsx`:
+
 ```tsx
 // app/error.tsx
 'use client';
@@ -2591,9 +2705,7 @@ export default function Error({
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-          Something went wrong
-        </h1>
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Something went wrong</h1>
         <p className="mt-4 text-gray-600 dark:text-gray-400">
           An unexpected error occurred. Please try again.
         </p>
@@ -2612,6 +2724,7 @@ export default function Error({
 - [ ] **Step 4: Create not-found page**
 
 Create `app/not-found.tsx`:
+
 ```tsx
 // app/not-found.tsx
 import Link from 'next/link';
@@ -2621,9 +2734,7 @@ export default function NotFound() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="text-center">
         <h1 className="text-6xl font-bold text-gray-900 dark:text-white">404</h1>
-        <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-          Page not found
-        </p>
+        <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">Page not found</p>
         <Link
           href="/"
           className="mt-6 inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500"
@@ -2639,6 +2750,7 @@ export default function NotFound() {
 - [ ] **Step 5: Create loading component**
 
 Create `app/loading.tsx`:
+
 ```tsx
 // app/loading.tsx
 export default function Loading() {
@@ -2651,6 +2763,7 @@ export default function Loading() {
 ```
 
 - [ ] **Step 6: Commit**
+
 ```bash
 git add app/layout.tsx app/error.tsx app/not-found.tsx app/loading.tsx components/providers.tsx
 git commit -m "feat: add root layout, providers, error boundaries, and loading states"
@@ -2661,12 +2774,14 @@ git commit -m "feat: add root layout, providers, error boundaries, and loading s
 ### Task 14: Health Check Endpoint (TDD)
 
 **Files:**
+
 - Create: `app/api/health/route.ts`
 - Test: `__tests__/unit/api/health.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 Create `__tests__/unit/api/health.test.ts`:
+
 ```typescript
 import { describe, it, expect, vi } from 'vitest';
 import { GET } from '@/app/api/health/route';
@@ -2704,14 +2819,17 @@ describe('GET /api/health', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
+
 ```bash
 npx vitest run __tests__/unit/api/health.test.ts
 ```
+
 Expected: FAIL
 
 - [ ] **Step 3: Implement health check route**
 
 Create `app/api/health/route.ts`:
+
 ```typescript
 // app/api/health/route.ts
 import { NextResponse } from 'next/server';
@@ -2743,12 +2861,15 @@ export async function GET() {
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
+
 ```bash
 npx vitest run __tests__/unit/api/health.test.ts
 ```
+
 Expected: PASS
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add app/api/health/ __tests__/unit/api/health.test.ts
 git commit -m "feat: add health check endpoint with TDD"
@@ -2759,11 +2880,13 @@ git commit -m "feat: add health check endpoint with TDD"
 ### Task 15: CI Pipeline (GitHub Actions)
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Create CI workflow**
 
 Create `.github/workflows/ci.yml`:
+
 ```yaml
 name: CI
 
@@ -2898,6 +3021,7 @@ jobs:
 ```
 
 - [ ] **Step 2: Commit**
+
 ```bash
 git add .github/
 git commit -m "feat: add GitHub Actions CI pipeline"
@@ -2908,10 +3032,12 @@ git commit -m "feat: add GitHub Actions CI pipeline"
 ### Task 16: Sentry Setup
 
 **Files:**
+
 - Create: `lib/sentry.ts`, `app/global-error.tsx`
 - Modify: `next.config.ts`
 
 - [ ] **Step 1: Install Sentry**
+
 ```bash
 npm install @sentry/nextjs
 ```
@@ -2919,6 +3045,7 @@ npm install @sentry/nextjs
 - [ ] **Step 2: Create Sentry config**
 
 Create `lib/sentry.ts`:
+
 ```typescript
 // lib/sentry.ts
 import * as Sentry from '@sentry/nextjs';
@@ -2941,6 +3068,7 @@ export function initSentry() {
 - [ ] **Step 3: Create global error page for Sentry**
 
 Create `app/global-error.tsx`:
+
 ```tsx
 // app/global-error.tsx
 'use client';
@@ -2962,7 +3090,14 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <div style={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+        <div
+          style={{
+            display: 'flex',
+            minHeight: '100vh',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <div style={{ textAlign: 'center' }}>
             <h1>Something went wrong</h1>
             <p>An unexpected error occurred.</p>
@@ -2978,6 +3113,7 @@ export default function GlobalError({
 - [ ] **Step 4: Create Sentry config files**
 
 Create `sentry.client.config.ts`:
+
 ```typescript
 // sentry.client.config.ts
 import * as Sentry from '@sentry/nextjs';
@@ -2993,6 +3129,7 @@ Sentry.init({
 ```
 
 Create `sentry.server.config.ts`:
+
 ```typescript
 // sentry.server.config.ts
 import * as Sentry from '@sentry/nextjs';
@@ -3006,6 +3143,7 @@ Sentry.init({
 ```
 
 Create `sentry.edge.config.ts`:
+
 ```typescript
 // sentry.edge.config.ts
 import * as Sentry from '@sentry/nextjs';
@@ -3021,6 +3159,7 @@ Sentry.init({
 - [ ] **Step 5: Update `next.config.ts` to include Sentry**
 
 Update `next.config.ts`:
+
 ```typescript
 // next.config.ts
 import { withSentryConfig } from '@sentry/nextjs';
@@ -3054,6 +3193,7 @@ export default withSentryConfig(nextConfig, {
 ```
 
 - [ ] **Step 6: Commit**
+
 ```bash
 git add lib/sentry.ts app/global-error.tsx sentry.*.config.ts next.config.ts
 git commit -m "feat: add Sentry error tracking integration"
@@ -3064,12 +3204,14 @@ git commit -m "feat: add Sentry error tracking integration"
 ### Task 17: Rate Limiting Utility (TDD)
 
 **Files:**
+
 - Create: `lib/api/rate-limit.ts`
 - Test: `__tests__/unit/lib/api/rate-limit.test.ts`
 
 - [ ] **Step 1: Write the failing test**
 
 Create `__tests__/unit/lib/api/rate-limit.test.ts`:
+
 ```typescript
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { rateLimit, type RateLimitConfig } from '@/lib/api/rate-limit';
@@ -3130,14 +3272,17 @@ describe('rateLimit', () => {
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
+
 ```bash
 npx vitest run __tests__/unit/lib/api/rate-limit.test.ts
 ```
+
 Expected: FAIL — module not found.
 
 - [ ] **Step 3: Write minimal implementation**
 
 Create `lib/api/rate-limit.ts`:
+
 ```typescript
 // lib/api/rate-limit.ts
 
@@ -3217,12 +3362,15 @@ export const authLimiter = rateLimit({
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
+
 ```bash
 npx vitest run __tests__/unit/lib/api/rate-limit.test.ts
 ```
+
 Expected: PASS — all 6 tests pass.
 
 - [ ] **Step 5: Commit**
+
 ```bash
 git add lib/api/rate-limit.ts __tests__/unit/lib/api/rate-limit.test.ts
 git commit -m "feat: add in-memory rate limiting utility with TDD"
@@ -3235,42 +3383,54 @@ git commit -m "feat: add in-memory rate limiting utility with TDD"
 After completing all 17 tasks, run the full verification suite:
 
 - [ ] **Run all unit tests**
+
 ```bash
 npm run test
 ```
+
 Expected: All tests pass.
 
 - [ ] **Run linting**
+
 ```bash
 npm run lint
 ```
+
 Expected: No errors.
 
 - [ ] **Run type checking**
+
 ```bash
 npm run typecheck
 ```
+
 Expected: No errors.
 
 - [ ] **Run format check**
+
 ```bash
 npm run format:check
 ```
+
 Expected: All files formatted.
 
 - [ ] **Build the project**
+
 ```bash
 npm run build
 ```
+
 Expected: Build succeeds.
 
 - [ ] **Start dev server and verify health check**
+
 ```bash
 docker compose up -d
 npm run dev &
 sleep 5
 curl http://localhost:3000/api/health
 ```
+
 Expected: `{ "status": "ok", "database": "connected", ... }`
 
 ---

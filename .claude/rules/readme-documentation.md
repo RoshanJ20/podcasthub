@@ -61,17 +61,17 @@ Step-by-step instructions:
 
 This section must be **comprehensive enough for a first-time deployer**:
 
-| Sub-section | Contents |
-|-------------|----------|
-| **Build** | Exact build commands, Docker build instructions, artifact output locations. |
-| **Environment Configuration** | All environment variables, secrets management, config files per environment. |
-| **Database Migrations** | How to run migrations, rollback procedures, data seeding. |
-| **Deployment Steps** | Step-by-step deployment procedure for each target environment (staging, production). |
-| **Infrastructure** | Required infrastructure resources, IaC references (Terraform, CloudFormation, etc.). |
-| **CI/CD Pipeline** | Overview of the pipeline, trigger conditions, manual approval gates. |
-| **Health Checks** | Endpoints to verify successful deployment (`/health`, `/ready`). |
-| **Rollback Procedure** | Exact steps to revert to the previous version. |
-| **Monitoring & Alerts** | Where to find logs, dashboards, and alert configurations. |
+| Sub-section                   | Contents                                                                             |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
+| **Build**                     | Exact build commands, Docker build instructions, artifact output locations.          |
+| **Environment Configuration** | All environment variables, secrets management, config files per environment.         |
+| **Database Migrations**       | How to run migrations, rollback procedures, data seeding.                            |
+| **Deployment Steps**          | Step-by-step deployment procedure for each target environment (staging, production). |
+| **Infrastructure**            | Required infrastructure resources, IaC references (Terraform, CloudFormation, etc.). |
+| **CI/CD Pipeline**            | Overview of the pipeline, trigger conditions, manual approval gates.                 |
+| **Health Checks**             | Endpoints to verify successful deployment (`/health`, `/ready`).                     |
+| **Rollback Procedure**        | Exact steps to revert to the previous version.                                       |
+| **Monitoring & Alerts**       | Where to find logs, dashboards, and alert configurations.                            |
 
 #### 3.1.9 API Documentation
 
@@ -102,10 +102,10 @@ This section must be **comprehensive enough for a first-time deployer**:
 
 ### 3.2 README Quality Rules
 
-| # | Rule |
-|---|------|
-| 3.2.1 | All commands must be **copy-pasteable**. No placeholder syntax without explanation. |
+| #     | Rule                                                                                                              |
+| ----- | ----------------------------------------------------------------------------------------------------------------- |
+| 3.2.1 | All commands must be **copy-pasteable**. No placeholder syntax without explanation.                               |
 | 3.2.2 | Every environment variable must list: name, description, format, example, and whether it is required or optional. |
-| 3.2.3 | Version numbers must be **specific** (e.g., `Node.js >= 20.11.0`), not vague (e.g., "latest"). |
-| 3.2.4 | The README must be kept **in sync** with the codebase. Outdated docs are worse than no docs. |
-| 3.2.5 | Use code blocks with language identifiers for all commands and configuration examples. |
+| 3.2.3 | Version numbers must be **specific** (e.g., `Node.js >= 20.11.0`), not vague (e.g., "latest").                    |
+| 3.2.4 | The README must be kept **in sync** with the codebase. Outdated docs are worse than no docs.                      |
+| 3.2.5 | Use code blocks with language identifiers for all commands and configuration examples.                            |

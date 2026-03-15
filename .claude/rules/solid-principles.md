@@ -6,16 +6,16 @@ All generated code **must** strictly adhere to the five SOLID principles of obje
 
 ### 1.1 Single Responsibility Principle (SRP)
 
-> *A module, class, or function should have one — and only one — reason to change.*
+> _A module, class, or function should have one — and only one — reason to change._
 
 #### Sub-rules
 
-| # | Rule | Rationale |
-|---|------|-----------|
-| 1.1.1 | Every function must do **exactly one thing**. If a function name requires the word "and", it must be split. | Keeps units testable and comprehensible. |
-| 1.1.2 | Every class/module must own **one cohesive area of responsibility**. | Prevents god-objects that become maintenance bottlenecks. |
-| 1.1.3 | Side effects (I/O, logging, metrics) must be **separated** from pure business logic. | Enables unit testing without mocking infrastructure. |
-| 1.1.4 | Configuration loading, validation, and usage must reside in **separate layers**. | Prevents environment-specific logic from leaking into domain code. |
+| #     | Rule                                                                                                        | Rationale                                                          |
+| ----- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 1.1.1 | Every function must do **exactly one thing**. If a function name requires the word "and", it must be split. | Keeps units testable and comprehensible.                           |
+| 1.1.2 | Every class/module must own **one cohesive area of responsibility**.                                        | Prevents god-objects that become maintenance bottlenecks.          |
+| 1.1.3 | Side effects (I/O, logging, metrics) must be **separated** from pure business logic.                        | Enables unit testing without mocking infrastructure.               |
+| 1.1.4 | Configuration loading, validation, and usage must reside in **separate layers**.                            | Prevents environment-specific logic from leaking into domain code. |
 
 #### Do's and Don'ts
 
@@ -26,15 +26,15 @@ All generated code **must** strictly adhere to the five SOLID principles of obje
 
 ### 1.2 Open/Closed Principle (OCP)
 
-> *Software entities should be open for extension but closed for modification.*
+> _Software entities should be open for extension but closed for modification._
 
 #### Sub-rules
 
-| # | Rule | Rationale |
-|---|------|-----------|
-| 1.2.1 | Use **abstractions** (interfaces, abstract classes, protocols) to define extension points. | New behaviour is added by writing new code, not editing existing code. |
-| 1.2.2 | Prefer **strategy/plugin patterns** over `if/else` or `switch` chains that grow with new cases. | Eliminates shotgun surgery when adding new variants. |
-| 1.2.3 | Configuration-driven behaviour (feature flags, rule engines) must be preferred over hard-coded branches where applicable. | Reduces deployment risk when toggling features. |
+| #     | Rule                                                                                                                      | Rationale                                                              |
+| ----- | ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 1.2.1 | Use **abstractions** (interfaces, abstract classes, protocols) to define extension points.                                | New behaviour is added by writing new code, not editing existing code. |
+| 1.2.2 | Prefer **strategy/plugin patterns** over `if/else` or `switch` chains that grow with new cases.                           | Eliminates shotgun surgery when adding new variants.                   |
+| 1.2.3 | Configuration-driven behaviour (feature flags, rule engines) must be preferred over hard-coded branches where applicable. | Reduces deployment risk when toggling features.                        |
 
 #### Do's and Don'ts
 
@@ -45,15 +45,15 @@ All generated code **must** strictly adhere to the five SOLID principles of obje
 
 ### 1.3 Liskov Substitution Principle (LSP)
 
-> *Subtypes must be substitutable for their base types without altering correctness.*
+> _Subtypes must be substitutable for their base types without altering correctness._
 
 #### Sub-rules
 
-| # | Rule | Rationale |
-|---|------|-----------|
-| 1.3.1 | Subclasses must **honour the contract** (preconditions, postconditions, invariants) of their parent. | Prevents runtime surprises when polymorphism is used. |
-| 1.3.2 | Never throw unexpected exceptions or return incompatible types in overridden methods. | Callers relying on the base type contract must not break. |
-| 1.3.3 | Prefer **composition over inheritance** when the "is-a" relationship is not semantically accurate. | Avoids fragile base-class problems. |
+| #     | Rule                                                                                                 | Rationale                                                 |
+| ----- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 1.3.1 | Subclasses must **honour the contract** (preconditions, postconditions, invariants) of their parent. | Prevents runtime surprises when polymorphism is used.     |
+| 1.3.2 | Never throw unexpected exceptions or return incompatible types in overridden methods.                | Callers relying on the base type contract must not break. |
+| 1.3.3 | Prefer **composition over inheritance** when the "is-a" relationship is not semantically accurate.   | Avoids fragile base-class problems.                       |
 
 #### Do's and Don'ts
 
@@ -64,15 +64,15 @@ All generated code **must** strictly adhere to the five SOLID principles of obje
 
 ### 1.4 Interface Segregation Principle (ISP)
 
-> *Clients should not be forced to depend on interfaces they do not use.*
+> _Clients should not be forced to depend on interfaces they do not use._
 
 #### Sub-rules
 
-| # | Rule | Rationale |
-|---|------|-----------|
-| 1.4.1 | Interfaces must be **small and role-specific**. | Prevents "fat interfaces" that force dummy implementations. |
-| 1.4.2 | If a class implements an interface but leaves methods as no-ops or raises `NotImplementedError`, the interface **must be split**. | A clear signal that ISP is being violated. |
-| 1.4.3 | Favour multiple small interfaces over a single large one. A class may implement many interfaces. | Keeps coupling low and intent explicit. |
+| #     | Rule                                                                                                                              | Rationale                                                   |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| 1.4.1 | Interfaces must be **small and role-specific**.                                                                                   | Prevents "fat interfaces" that force dummy implementations. |
+| 1.4.2 | If a class implements an interface but leaves methods as no-ops or raises `NotImplementedError`, the interface **must be split**. | A clear signal that ISP is being violated.                  |
+| 1.4.3 | Favour multiple small interfaces over a single large one. A class may implement many interfaces.                                  | Keeps coupling low and intent explicit.                     |
 
 #### Do's and Don'ts
 
@@ -83,15 +83,15 @@ All generated code **must** strictly adhere to the five SOLID principles of obje
 
 ### 1.5 Dependency Inversion Principle (DIP)
 
-> *High-level modules must not depend on low-level modules. Both should depend on abstractions.*
+> _High-level modules must not depend on low-level modules. Both should depend on abstractions._
 
 #### Sub-rules
 
-| # | Rule | Rationale |
-|---|------|-----------|
-| 1.5.1 | All external dependencies (databases, APIs, file systems, message queues) must be accessed through **abstractions** (interfaces/ports). | Enables swapping implementations and simplifies testing. |
-| 1.5.2 | Use **dependency injection** (constructor injection preferred) to provide concrete implementations. | Makes dependencies explicit and testable. |
-| 1.5.3 | Never instantiate infrastructure classes inside domain/business logic. | Preserves the independence of the core domain. |
+| #     | Rule                                                                                                                                     | Rationale                                                           |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 1.5.1 | All external dependencies (databases, APIs, file systems, message queues) must be accessed through **abstractions** (interfaces/ports).  | Enables swapping implementations and simplifies testing.            |
+| 1.5.2 | Use **dependency injection** (constructor injection preferred) to provide concrete implementations.                                      | Makes dependencies explicit and testable.                           |
+| 1.5.3 | Never instantiate infrastructure classes inside domain/business logic.                                                                   | Preserves the independence of the core domain.                      |
 | 1.5.4 | A **composition root** (entry point, DI container, or factory) must be the only place where concrete implementations are wired together. | Single place to change wiring; the rest of the code stays abstract. |
 
 #### Do's and Don'ts

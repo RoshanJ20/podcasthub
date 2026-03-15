@@ -15,6 +15,7 @@
 ## Task 1: Learning Graph API Routes — TDD
 
 **Files:**
+
 - `app/api/learning-graphs/route.ts`
 - `app/api/learning-graphs/[id]/route.ts`
 - `app/api/learning-graphs/[id]/data/route.ts`
@@ -30,6 +31,7 @@
   - Test: supports `?page=1&limit=10` query params
   - Test: supports `?domain=engineering` filter
   - Test: returns 200 with `{ data: LearningGraph[], total: number, page: number, limit: number }`
+
   ```ts
   // __tests__/api/learning-graphs.test.ts
   import { describe, it, expect, beforeEach } from 'vitest';
@@ -42,8 +44,20 @@
       await prisma.learningGraph.deleteMany();
       await prisma.learningGraph.createMany({
         data: [
-          { title: 'Published Path', domain: 'engineering', isPublished: true, pathType: 'graph', createdById: adminId },
-          { title: 'Draft Path', domain: 'design', isPublished: false, pathType: 'linear', createdById: adminId },
+          {
+            title: 'Published Path',
+            domain: 'engineering',
+            isPublished: true,
+            pathType: 'graph',
+            createdById: adminId,
+          },
+          {
+            title: 'Draft Path',
+            domain: 'design',
+            isPublished: false,
+            pathType: 'linear',
+            createdById: adminId,
+          },
         ],
       });
     });
@@ -58,7 +72,11 @@
     });
 
     it('returns all paths for admin users', async () => {
-      const req = createMockRequest({ method: 'GET', url: '/api/learning-graphs', headers: { Authorization: `Bearer ${adminToken}` } });
+      const req = createMockRequest({
+        method: 'GET',
+        url: '/api/learning-graphs',
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
       const res = await GET(req);
       const body = await res.json();
       expect(body.data).toHaveLength(2);
@@ -71,6 +89,7 @@
   - Test: returns 400 for missing required fields (title, pathType)
   - Test: returns 401 for unauthenticated users
   - Test: returns 403 for non-admin users
+
   ```ts
   describe('POST /api/learning-graphs', () => {
     it('creates a learning graph for admin', async () => {
@@ -78,7 +97,12 @@
         method: 'POST',
         url: '/api/learning-graphs',
         headers: { Authorization: `Bearer ${adminToken}` },
-        body: { title: 'New Path', description: 'A learning path', domain: 'engineering', pathType: 'graph' },
+        body: {
+          title: 'New Path',
+          description: 'A learning path',
+          domain: 'engineering',
+          pathType: 'graph',
+        },
       });
       const res = await POST(req);
       const body = await res.json();
@@ -88,7 +112,11 @@
     });
 
     it('returns 401 for unauthenticated', async () => {
-      const req = createMockRequest({ method: 'POST', url: '/api/learning-graphs', body: { title: 'X', pathType: 'graph' } });
+      const req = createMockRequest({
+        method: 'POST',
+        url: '/api/learning-graphs',
+        body: { title: 'X', pathType: 'graph' },
+      });
       const res = await POST(req);
       expect(res.status).toBe(401);
     });
@@ -107,6 +135,7 @@
   ```
 
 - [ ] **1.3 — Implement `app/api/learning-graphs/route.ts`**
+
   ```ts
   // app/api/learning-graphs/route.ts
   import { NextRequest, NextResponse } from 'next/server';
@@ -170,6 +199,7 @@
   - Test: DELETE returns 404 for non-existent ID
 
 - [ ] **1.5 — Implement `app/api/learning-graphs/[id]/route.ts`**
+
   ```ts
   // app/api/learning-graphs/[id]/route.ts
   import { NextRequest, NextResponse } from 'next/server';
@@ -187,7 +217,8 @@
     });
 
     if (!graph) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    if (!graph.isPublished && !isAdmin) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!graph.isPublished && !isAdmin)
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     return NextResponse.json(graph);
   }
@@ -238,6 +269,7 @@
   - Test: admin only — 401/403 for unauthorized
 
 - [ ] **1.7 — Implement `app/api/learning-graphs/[id]/data/route.ts`**
+
   ```ts
   // app/api/learning-graphs/[id]/data/route.ts
   import { NextRequest, NextResponse } from 'next/server';
@@ -257,7 +289,10 @@
     const episodeIds = new Set(episodes.map((e: any) => e.tempId ?? e.id));
     for (const edge of edges ?? []) {
       if (!episodeIds.has(edge.source) || !episodeIds.has(edge.target)) {
-        return NextResponse.json({ error: 'Edge references non-existent episode' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Edge references non-existent episode' },
+          { status: 400 }
+        );
       }
     }
 
@@ -313,12 +348,14 @@
 ## Task 2: Graph Editor Store (Zustand)
 
 **Files:**
+
 - `stores/graph-editor-store.ts`
 - `__tests__/stores/graph-editor-store.test.ts`
 
 ### Steps
 
 - [ ] **2.1 — Write unit tests for graph editor store**
+
   ```ts
   // __tests__/stores/graph-editor-store.test.ts
   import { describe, it, expect, beforeEach } from 'vitest';
@@ -339,7 +376,14 @@
 
     it('adds a node and marks dirty', () => {
       const { addNode } = useGraphEditorStore.getState();
-      addNode({ id: 'temp-1', title: 'Episode 1', nodeType: 'start', podcastId: 'p1', positionX: 0, positionY: 0 });
+      addNode({
+        id: 'temp-1',
+        title: 'Episode 1',
+        nodeType: 'start',
+        podcastId: 'p1',
+        positionX: 0,
+        positionY: 0,
+      });
       const state = useGraphEditorStore.getState();
       expect(state.nodes).toHaveLength(1);
       expect(state.nodes[0].title).toBe('Episode 1');
@@ -348,8 +392,22 @@
 
     it('removes a node and its connected edges', () => {
       const store = useGraphEditorStore.getState();
-      store.addNode({ id: 'n1', title: 'A', nodeType: 'default', podcastId: 'p1', positionX: 0, positionY: 0 });
-      store.addNode({ id: 'n2', title: 'B', nodeType: 'default', podcastId: 'p2', positionX: 100, positionY: 0 });
+      store.addNode({
+        id: 'n1',
+        title: 'A',
+        nodeType: 'default',
+        podcastId: 'p1',
+        positionX: 0,
+        positionY: 0,
+      });
+      store.addNode({
+        id: 'n2',
+        title: 'B',
+        nodeType: 'default',
+        podcastId: 'p2',
+        positionX: 100,
+        positionY: 0,
+      });
       store.addEdge({ id: 'e1', source: 'n1', target: 'n2' });
       store.removeNode('n1');
       const state = useGraphEditorStore.getState();
@@ -359,7 +417,14 @@
 
     it('updates a node', () => {
       const store = useGraphEditorStore.getState();
-      store.addNode({ id: 'n1', title: 'Old', nodeType: 'default', podcastId: 'p1', positionX: 0, positionY: 0 });
+      store.addNode({
+        id: 'n1',
+        title: 'Old',
+        nodeType: 'default',
+        podcastId: 'p1',
+        positionX: 0,
+        positionY: 0,
+      });
       store.updateNode('n1', { title: 'New', nodeType: 'milestone' });
       expect(useGraphEditorStore.getState().nodes[0].title).toBe('New');
       expect(useGraphEditorStore.getState().nodes[0].nodeType).toBe('milestone');
@@ -375,8 +440,22 @@
 
     it('applies dagre layout via setLayout', () => {
       const store = useGraphEditorStore.getState();
-      store.addNode({ id: 'n1', title: 'A', nodeType: 'start', podcastId: 'p1', positionX: 0, positionY: 0 });
-      store.addNode({ id: 'n2', title: 'B', nodeType: 'end', podcastId: 'p2', positionX: 0, positionY: 0 });
+      store.addNode({
+        id: 'n1',
+        title: 'A',
+        nodeType: 'start',
+        podcastId: 'p1',
+        positionX: 0,
+        positionY: 0,
+      });
+      store.addNode({
+        id: 'n2',
+        title: 'B',
+        nodeType: 'end',
+        podcastId: 'p2',
+        positionX: 0,
+        positionY: 0,
+      });
       store.addEdge({ id: 'e1', source: 'n1', target: 'n2' });
       store.setLayout(); // runs dagre
       const state = useGraphEditorStore.getState();
@@ -387,7 +466,14 @@
 
     it('resets isDirty after save', async () => {
       const store = useGraphEditorStore.getState();
-      store.addNode({ id: 'n1', title: 'A', nodeType: 'default', podcastId: 'p1', positionX: 0, positionY: 0 });
+      store.addNode({
+        id: 'n1',
+        title: 'A',
+        nodeType: 'default',
+        podcastId: 'p1',
+        positionX: 0,
+        positionY: 0,
+      });
       expect(useGraphEditorStore.getState().isDirty).toBe(true);
       // Mock save — store.save() calls API and clears isDirty
       await store.save('graph-id-123');
@@ -397,6 +483,7 @@
   ```
 
 - [ ] **2.2 — Implement the store**
+
   ```ts
   // stores/graph-editor-store.ts
   import { create } from 'zustand';
@@ -510,6 +597,7 @@
 ## Task 3: Visual Graph Editor
 
 **Files:**
+
 - `components/learning-path/graph-editor.tsx`
 - `components/learning-path/episode-node.tsx`
 - `components/learning-path/episode-sidebar.tsx`
@@ -519,6 +607,7 @@
 ### Steps
 
 - [ ] **3.1 — Install dependencies**
+
   ```bash
   npm install @xyflow/react dagre
   npm install -D @types/dagre
@@ -531,6 +620,7 @@
   - Test: shows source and target connection handles
 
 - [ ] **3.3 — Implement `episode-node.tsx`**
+
   ```tsx
   // components/learning-path/episode-node.tsx
   'use client';
@@ -562,7 +652,13 @@
           <Badge className={nodeColors[data.nodeType]}>{data.nodeType}</Badge>
         </div>
         {data.onPlay && (
-          <Button size="icon" variant="ghost" className="mt-1" onClick={data.onPlay} aria-label={`Play ${data.title}`}>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="mt-1"
+            onClick={data.onPlay}
+            aria-label={`Play ${data.title}`}
+          >
             <Play className="h-4 w-4" />
           </Button>
         )}
@@ -580,12 +676,21 @@
   - Test: shows "Unsaved changes" indicator when isDirty is true
 
 - [ ] **3.5 — Implement `graph-editor.tsx`**
+
   ```tsx
   // components/learning-path/graph-editor.tsx
   'use client';
 
   import { useCallback, useMemo } from 'react';
-  import { ReactFlow, Background, Controls, MiniMap, addEdge as rfAddEdge, type Connection, type Edge } from '@xyflow/react';
+  import {
+    ReactFlow,
+    Background,
+    Controls,
+    MiniMap,
+    addEdge as rfAddEdge,
+    type Connection,
+    type Edge,
+  } from '@xyflow/react';
   import '@xyflow/react/dist/style.css';
   import { useGraphEditorStore } from '@/stores/graph-editor-store';
   import { EpisodeNode } from './episode-node';
@@ -670,6 +775,7 @@
   - When a node is selected, shows edit form: title, node type dropdown (start/default/milestone/end)
   - Delete node button with confirmation
   - Podcast search uses existing podcast API (`GET /api/podcasts?search=...`)
+
   ```tsx
   // components/learning-path/episode-sidebar.tsx
   'use client';
@@ -678,13 +784,20 @@
   import { useGraphEditorStore } from '@/stores/graph-editor-store';
   import { Button } from '@/components/ui/button';
   import { Input } from '@/components/ui/input';
-  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+  import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from '@/components/ui/select';
   import { Label } from '@/components/ui/label';
   import { Plus, Trash2 } from 'lucide-react';
   import { nanoid } from 'nanoid';
 
   export function EpisodeSidebar() {
-    const { nodes, selectedNodeId, addNode, updateNode, removeNode, setSelectedNode } = useGraphEditorStore();
+    const { nodes, selectedNodeId, addNode, updateNode, removeNode, setSelectedNode } =
+      useGraphEditorStore();
     const selectedNode = nodes.find((n) => n.id === selectedNodeId);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -726,9 +839,13 @@
               <Label htmlFor="node-type">Type</Label>
               <Select
                 value={selectedNode.nodeType}
-                onValueChange={(v) => updateNode(selectedNode.id, { nodeType: v as GraphNode['nodeType'] })}
+                onValueChange={(v) =>
+                  updateNode(selectedNode.id, { nodeType: v as GraphNode['nodeType'] })
+                }
               >
-                <SelectTrigger id="node-type"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="node-type">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="start">Start</SelectItem>
                   <SelectItem value="default">Default</SelectItem>
@@ -771,12 +888,14 @@
 ## Task 4: Linear Path Editor
 
 **Files:**
+
 - `components/learning-path/linear-editor.tsx`
 - `__tests__/components/learning-path/linear-editor.test.tsx`
 
 ### Steps
 
 - [ ] **4.1 — Install @dnd-kit**
+
   ```bash
   npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
   ```
@@ -789,13 +908,19 @@
   - Test: save button calls store.save()
 
 - [ ] **4.3 — Implement `linear-editor.tsx`**
+
   ```tsx
   // components/learning-path/linear-editor.tsx
   'use client';
 
   import { useCallback } from 'react';
   import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
-  import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+  import {
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable,
+    arrayMove,
+  } from '@dnd-kit/sortable';
   import { CSS } from '@dnd-kit/utilities';
   import { useGraphEditorStore } from '@/stores/graph-editor-store';
   import { Button } from '@/components/ui/button';
@@ -805,12 +930,24 @@
     graphId: string;
   }
 
-  function SortableEpisode({ id, title, onRemove }: { id: string; title: string; onRemove: () => void }) {
+  function SortableEpisode({
+    id,
+    title,
+    onRemove,
+  }: {
+    id: string;
+    title: string;
+    onRemove: () => void;
+  }) {
     const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
     const style = { transform: CSS.Transform.toString(transform), transition };
 
     return (
-      <div ref={setNodeRef} style={style} className="flex items-center gap-2 p-3 border rounded bg-card mb-2">
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="flex items-center gap-2 p-3 border rounded bg-card mb-2"
+      >
         <button {...attributes} {...listeners} className="cursor-grab" aria-label="Drag to reorder">
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </button>
@@ -852,19 +989,28 @@
         </div>
 
         {isDirty && (
-          <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm mb-4">Unsaved changes</div>
+          <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm mb-4">
+            Unsaved changes
+          </div>
         )}
 
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={nodes.map((n) => n.id)} strategy={verticalListSortingStrategy}>
             {nodes.map((node, index) => (
-              <SortableEpisode key={node.id} id={node.id} title={`${index + 1}. ${node.title}`} onRemove={() => removeNode(node.id)} />
+              <SortableEpisode
+                key={node.id}
+                id={node.id}
+                title={`${index + 1}. ${node.title}`}
+                onRemove={() => removeNode(node.id)}
+              />
             ))}
           </SortableContext>
         </DndContext>
 
         {nodes.length === 0 && (
-          <p className="text-muted-foreground text-center py-8">No episodes yet. Click "Add Episode" to begin.</p>
+          <p className="text-muted-foreground text-center py-8">
+            No episodes yet. Click "Add Episode" to begin.
+          </p>
         )}
       </div>
     );
@@ -879,6 +1025,7 @@
 ## Task 5: Admin Learning Path Pages
 
 **Files:**
+
 - `app/(admin)/admin/learning-graphs/page.tsx`
 - `app/(admin)/admin/learning-graphs/[id]/page.tsx`
 - `__tests__/app/admin/learning-graphs.test.tsx`
@@ -892,6 +1039,7 @@
   - Test: publish toggle calls PUT API with `{ isPublished: true/false }`
 
 - [ ] **5.2 — Implement admin list page**
+
   ```tsx
   // app/(admin)/admin/learning-graphs/page.tsx
   import { prisma } from '@/lib/prisma';
@@ -911,9 +1059,11 @@
     );
   }
   ```
+
   - Also create `components/admin/learning-graphs-table.tsx` — client component with DataTable, publish/unpublish toggle (Switch), delete button with `AlertDialog` from shadcn/ui, link to editor.
 
 - [ ] **5.3 — Implement admin editor page**
+
   ```tsx
   // app/(admin)/admin/learning-graphs/[id]/page.tsx
   import { prisma } from '@/lib/prisma';
@@ -922,7 +1072,11 @@
   import { LinearEditor } from '@/components/learning-path/linear-editor';
   import { GraphEditorInitializer } from '@/components/learning-path/graph-editor-initializer';
 
-  export default async function AdminLearningGraphEditorPage({ params }: { params: Promise<{ id: string }> }) {
+  export default async function AdminLearningGraphEditorPage({
+    params,
+  }: {
+    params: Promise<{ id: string }>;
+  }) {
     const { id } = await params;
     const graph = await prisma.learningGraph.findUnique({
       where: { id },
@@ -940,6 +1094,7 @@
     );
   }
   ```
+
   - `GraphEditorInitializer` is a client component that calls `useGraphEditorStore.getState().loadFromApi(...)` on mount.
 
 - [ ] **5.4 — Run tests, verify green**
@@ -950,6 +1105,7 @@
 ## Task 6: Public Learning Path Listing
 
 **Files:**
+
 - `app/(public)/learning-path/page.tsx`
 - `components/learning-path/path-card.tsx`
 - `__tests__/components/learning-path/path-card.test.tsx`
@@ -962,6 +1118,7 @@
   - Test: links to `/learning-path/[id]`
 
 - [ ] **6.2 — Implement `path-card.tsx`**
+
   ```tsx
   // components/learning-path/path-card.tsx
   import Link from 'next/link';
@@ -978,7 +1135,14 @@
     completedCount: number;
   }
 
-  export function PathCard({ id, title, description, domain, episodeCount, completedCount }: PathCardProps) {
+  export function PathCard({
+    id,
+    title,
+    description,
+    domain,
+    episodeCount,
+    completedCount,
+  }: PathCardProps) {
     const progress = episodeCount > 0 ? Math.round((completedCount / episodeCount) * 100) : 0;
 
     return (
@@ -1005,6 +1169,7 @@
   ```
 
 - [ ] **6.3 — Implement public listing page**
+
   ```tsx
   // app/(public)/learning-path/page.tsx
   import { prisma } from '@/lib/prisma';
@@ -1052,6 +1217,7 @@
 ## Task 7: Learning Path Viewer
 
 **Files:**
+
 - `components/learning-path/path-viewer.tsx`
 - `app/(public)/learning-path/[id]/page.tsx`
 - `__tests__/components/learning-path/path-viewer.test.tsx`
@@ -1070,6 +1236,7 @@
   - Ordered list with completion indicators for linear mode
   - Completed nodes get a green border and checkmark
   - Overall progress bar at the top
+
   ```tsx
   // components/learning-path/path-viewer.tsx
   'use client';
@@ -1101,7 +1268,13 @@
     onEpisodeSelect: (episodeId: string, podcastId: string) => void;
   }
 
-  export function PathViewer({ pathType, episodes, edges, completedEpisodeIds, onEpisodeSelect }: PathViewerProps) {
+  export function PathViewer({
+    pathType,
+    episodes,
+    edges,
+    completedEpisodeIds,
+    onEpisodeSelect,
+  }: PathViewerProps) {
     const completedCount = episodes.filter((e) => completedEpisodeIds.has(e.id)).length;
     const progress = episodes.length > 0 ? Math.round((completedCount / episodes.length) * 100) : 0;
 
@@ -1111,6 +1284,7 @@
   ```
 
 - [ ] **7.3 — Implement viewer page**
+
   ```tsx
   // app/(public)/learning-path/[id]/page.tsx
   import { prisma } from '@/lib/prisma';
@@ -1118,7 +1292,11 @@
   import { PathViewer } from '@/components/learning-path/path-viewer';
   import { getServerSession } from '@/lib/auth';
 
-  export default async function LearningPathViewerPage({ params }: { params: Promise<{ id: string }> }) {
+  export default async function LearningPathViewerPage({
+    params,
+  }: {
+    params: Promise<{ id: string }>;
+  }) {
     const { id } = await params;
     const graph = await prisma.learningGraph.findUnique({
       where: { id, isPublished: true },
@@ -1132,7 +1310,11 @@
     let completedIds: string[] = [];
     if (session?.user) {
       const progress = await prisma.episodeProgress.findMany({
-        where: { userId: session.user.id, completed: true, episodeId: { in: graph.episodes.map((e) => e.id) } },
+        where: {
+          userId: session.user.id,
+          completed: true,
+          episodeId: { in: graph.episodes.map((e) => e.id) },
+        },
         select: { episodeId: true },
       });
       completedIds = progress.map((p) => p.episodeId);
@@ -1162,6 +1344,7 @@
 ## Task 8: Episode Playback in Path Context
 
 **Files:**
+
 - `stores/player-store.ts` (update existing)
 - `__tests__/stores/player-store.test.ts` (update existing)
 
@@ -1193,6 +1376,7 @@
 ## Task 9: Path Progress Tracking
 
 **Files:**
+
 - `hooks/use-path-progress.ts`
 - `__tests__/hooks/use-path-progress.test.ts`
 
@@ -1204,6 +1388,7 @@
   - Test: progress percentage updates correctly
 
 - [ ] **9.2 — Implement `use-path-progress.ts`**
+
   ```ts
   // hooks/use-path-progress.ts
   'use client';
@@ -1233,9 +1418,8 @@
       setCompletedIds((prev) => new Set([...prev, episodeId]));
     }, []);
 
-    const progress = episodeIds.length > 0
-      ? Math.round((completedIds.size / episodeIds.length) * 100)
-      : 0;
+    const progress =
+      episodeIds.length > 0 ? Math.round((completedIds.size / episodeIds.length) * 100) : 0;
 
     return { completedIds, progress, markComplete, isLoading };
   }
@@ -1254,6 +1438,7 @@
 ## Task 10: Integration + E2E Tests
 
 **Files:**
+
 - `__tests__/integration/learning-paths.test.ts`
 - `e2e/learning-paths.spec.ts`
 
@@ -1269,6 +1454,7 @@
   - Test linear editor: add episodes -> reorder -> save -> verify order persisted
 
 - [ ] **10.3 — Write E2E test**
+
   ```ts
   // e2e/learning-paths.spec.ts
   test('admin creates path, user views and tracks progress', async ({ page }) => {

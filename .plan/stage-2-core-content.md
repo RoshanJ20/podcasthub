@@ -15,16 +15,22 @@
 ## Task 1: MinIO/S3 Storage Client
 
 **Files:**
+
 - `lib/storage.ts` — S3-compatible client
 - `lib/__tests__/storage.test.ts` — unit tests
 
 ### Steps
 
 - [ ] **1.1 — Write failing tests first**
-  Create `lib/__tests__/storage.test.ts`:
+      Create `lib/__tests__/storage.test.ts`:
+
   ```typescript
   import { describe, it, expect, vi, beforeEach } from 'vitest';
-  import { generatePresignedUploadUrl, generatePresignedDownloadUrl, deleteObject } from '../storage';
+  import {
+    generatePresignedUploadUrl,
+    generatePresignedDownloadUrl,
+    deleteObject,
+  } from '../storage';
 
   // Mock @aws-sdk/client-s3 and @aws-sdk/s3-request-presigner
   vi.mock('@aws-sdk/client-s3');
@@ -38,36 +44,55 @@
         expect(typeof url).toBe('string');
       });
 
-      it('sets correct content-type header in presigned request', async () => { /* ... */ });
-      it('uses configured expiry time (default 1 hour)', async () => { /* ... */ });
+      it('sets correct content-type header in presigned request', async () => {
+        /* ... */
+      });
+      it('uses configured expiry time (default 1 hour)', async () => {
+        /* ... */
+      });
     });
 
     describe('generatePresignedDownloadUrl', () => {
-      it('returns a signed download URL', async () => { /* ... */ });
-      it('uses configured expiry time (default 1 hour)', async () => { /* ... */ });
+      it('returns a signed download URL', async () => {
+        /* ... */
+      });
+      it('uses configured expiry time (default 1 hour)', async () => {
+        /* ... */
+      });
     });
 
     describe('deleteObject', () => {
-      it('calls DeleteObjectCommand with correct bucket and key', async () => { /* ... */ });
-      it('throws StorageError on failure', async () => { /* ... */ });
+      it('calls DeleteObjectCommand with correct bucket and key', async () => {
+        /* ... */
+      });
+      it('throws StorageError on failure', async () => {
+        /* ... */
+      });
     });
   });
   ```
 
 - [ ] **1.2 — Install dependencies**
+
   ```bash
   npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner
   ```
 
 - [ ] **1.3 — Implement `lib/storage.ts`**
+
   ```typescript
-  import { S3Client, DeleteObjectCommand, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+  import {
+    S3Client,
+    DeleteObjectCommand,
+    PutObjectCommand,
+    GetObjectCommand,
+  } from '@aws-sdk/client-s3';
   import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
   const s3Client = new S3Client({
     region: process.env.S3_REGION || 'us-east-1',
-    endpoint: process.env.S3_ENDPOINT,           // MinIO in dev, Azure Blob gateway in prod
-    forcePathStyle: true,                         // Required for MinIO
+    endpoint: process.env.S3_ENDPOINT, // MinIO in dev, Azure Blob gateway in prod
+    forcePathStyle: true, // Required for MinIO
     credentials: {
       accessKeyId: process.env.S3_ACCESS_KEY_ID!,
       secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
@@ -89,10 +114,7 @@
     return getSignedUrl(s3Client, command, { expiresIn: PRESIGNED_EXPIRY });
   }
 
-  export async function generatePresignedDownloadUrl(
-    bucket: string,
-    key: string
-  ): Promise<string> {
+  export async function generatePresignedDownloadUrl(bucket: string, key: string): Promise<string> {
     const command = new GetObjectCommand({ Bucket: bucket, Key: key });
     return getSignedUrl(s3Client, command, { expiresIn: PRESIGNED_EXPIRY });
   }
@@ -104,6 +126,7 @@
   ```
 
 - [ ] **1.4 — Add env vars to `.env.example`**
+
   ```
   S3_ENDPOINT=http://localhost:9000
   S3_REGION=us-east-1
@@ -121,13 +144,15 @@
 ## Task 2: File Upload Utilities
 
 **Files:**
+
 - `lib/upload.ts` — MIME validation, filename sanitization, size formatting
 - `lib/__tests__/upload.test.ts` — unit tests
 
 ### Steps
 
 - [ ] **2.1 — Write failing tests first**
-  Create `lib/__tests__/upload.test.ts`:
+      Create `lib/__tests__/upload.test.ts`:
+
   ```typescript
   import { describe, it, expect } from 'vitest';
   import { validateFileType, sanitizeFilename, formatFileSize, generateUniqueKey } from '../upload';
@@ -160,10 +185,18 @@
   });
 
   describe('formatFileSize', () => {
-    it('formats bytes', () => { expect(formatFileSize(500)).toBe('500 B'); });
-    it('formats kilobytes', () => { expect(formatFileSize(1024)).toBe('1.0 KB'); });
-    it('formats megabytes', () => { expect(formatFileSize(1048576)).toBe('1.0 MB'); });
-    it('formats gigabytes', () => { expect(formatFileSize(1073741824)).toBe('1.0 GB'); });
+    it('formats bytes', () => {
+      expect(formatFileSize(500)).toBe('500 B');
+    });
+    it('formats kilobytes', () => {
+      expect(formatFileSize(1024)).toBe('1.0 KB');
+    });
+    it('formats megabytes', () => {
+      expect(formatFileSize(1048576)).toBe('1.0 MB');
+    });
+    it('formats gigabytes', () => {
+      expect(formatFileSize(1073741824)).toBe('1.0 GB');
+    });
   });
 
   describe('generateUniqueKey', () => {
@@ -175,6 +208,7 @@
   ```
 
 - [ ] **2.2 — Implement `lib/upload.ts`**
+
   ```typescript
   import { randomUUID } from 'crypto';
 
@@ -189,13 +223,13 @@
   } as const;
 
   export const MAX_FILE_SIZES = {
-    audio: 500 * 1024 * 1024,   // 500 MB
-    image: 5 * 1024 * 1024,     // 5 MB
-    pdf: 50 * 1024 * 1024,      // 50 MB
+    audio: 500 * 1024 * 1024, // 500 MB
+    image: 5 * 1024 * 1024, // 5 MB
+    pdf: 50 * 1024 * 1024, // 50 MB
   } as const;
 
   export function validateFileType(mime: string, allowed: string[]): boolean {
-    return allowed.map(t => t.toLowerCase()).includes(mime.toLowerCase());
+    return allowed.map((t) => t.toLowerCase()).includes(mime.toLowerCase());
   }
 
   export function sanitizeFilename(name: string): string {
@@ -230,6 +264,7 @@
 ## Task 3: Podcast API Routes — GET (List + Single)
 
 **Files:**
+
 - `app/api/podcasts/route.ts` — GET (paginated, filterable)
 - `app/api/podcasts/[id]/route.ts` — GET (single with transcript)
 - `lib/validations/podcast.ts` — Zod schemas for query params
@@ -238,7 +273,8 @@
 ### Steps
 
 - [ ] **3.1 — Define Zod schemas for query params**
-  Create `lib/validations/podcast.ts`:
+      Create `lib/validations/podcast.ts`:
+
   ```typescript
   import { z } from 'zod';
 
@@ -276,10 +312,12 @@
   export const podcastUpdateSchema = podcastCreateSchema.partial();
 
   export const batchSortOrderSchema = z.object({
-    items: z.array(z.object({
-      id: z.string().uuid(),
-      sort_order: z.number().int(),
-    })),
+    items: z.array(
+      z.object({
+        id: z.string().uuid(),
+        sort_order: z.number().int(),
+      })
+    ),
   });
 
   export type PodcastQuery = z.infer<typeof podcastQuerySchema>;
@@ -288,31 +326,57 @@
   ```
 
 - [ ] **3.2 — Write failing integration tests**
-  Create `app/api/podcasts/__tests__/get-podcasts.test.ts`:
+      Create `app/api/podcasts/__tests__/get-podcasts.test.ts`:
+
   ```typescript
   import { describe, it, expect, beforeAll, afterAll } from 'vitest';
   // Use test helpers from Stage 1 for seeding DB and making requests
 
   describe('GET /api/podcasts', () => {
-    it('returns paginated list of non-archived podcasts', async () => { /* ... */ });
-    it('filters by domain', async () => { /* ... */ });
-    it('filters by year', async () => { /* ... */ });
-    it('filters by tags (comma-separated)', async () => { /* ... */ });
-    it('sorts by newest (default)', async () => { /* ... */ });
-    it('sorts by title A-Z', async () => { /* ... */ });
-    it('returns correct pagination metadata', async () => { /* ... */ });
-    it('excludes archived podcasts', async () => { /* ... */ });
-    it('returns 400 for invalid query params', async () => { /* ... */ });
+    it('returns paginated list of non-archived podcasts', async () => {
+      /* ... */
+    });
+    it('filters by domain', async () => {
+      /* ... */
+    });
+    it('filters by year', async () => {
+      /* ... */
+    });
+    it('filters by tags (comma-separated)', async () => {
+      /* ... */
+    });
+    it('sorts by newest (default)', async () => {
+      /* ... */
+    });
+    it('sorts by title A-Z', async () => {
+      /* ... */
+    });
+    it('returns correct pagination metadata', async () => {
+      /* ... */
+    });
+    it('excludes archived podcasts', async () => {
+      /* ... */
+    });
+    it('returns 400 for invalid query params', async () => {
+      /* ... */
+    });
   });
 
   describe('GET /api/podcasts/:id', () => {
-    it('returns podcast with transcript', async () => { /* ... */ });
-    it('returns 404 for non-existent podcast', async () => { /* ... */ });
-    it('returns 404 for archived podcast', async () => { /* ... */ });
+    it('returns podcast with transcript', async () => {
+      /* ... */
+    });
+    it('returns 404 for non-existent podcast', async () => {
+      /* ... */
+    });
+    it('returns 404 for archived podcast', async () => {
+      /* ... */
+    });
   });
   ```
 
 - [ ] **3.3 — Implement `app/api/podcasts/route.ts` (GET)**
+
   ```typescript
   import { NextRequest, NextResponse } from 'next/server';
   import { prisma } from '@/lib/prisma';
@@ -324,7 +388,12 @@
     const parsed = podcastQuerySchema.safeParse(searchParams);
     if (!parsed.success) {
       return NextResponse.json(
-        { status: 400, error_code: 'VALIDATION_FAILED', message: 'Invalid query parameters', details: parsed.error.flatten().fieldErrors },
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: 'Invalid query parameters',
+          details: parsed.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
@@ -333,9 +402,14 @@
     const where: any = { is_archived: false };
     if (domain) where.domain = domain;
     if (year) where.year = year;
-    if (tags) where.tags = { hasSome: tags.split(',').map(t => t.trim()) };
+    if (tags) where.tags = { hasSome: tags.split(',').map((t) => t.trim()) };
 
-    const orderBy = sort === 'newest' ? { created_at: 'desc' } : sort === 'oldest' ? { created_at: 'asc' } : { title: 'asc' };
+    const orderBy =
+      sort === 'newest'
+        ? { created_at: 'desc' }
+        : sort === 'oldest'
+          ? { created_at: 'asc' }
+          : { title: 'asc' };
 
     const [data, total] = await Promise.all([
       prisma.podcast.findMany({ where, orderBy, skip: (page - 1) * limit, take: limit }),
@@ -350,6 +424,7 @@
   ```
 
 - [ ] **3.4 — Implement `app/api/podcasts/[id]/route.ts` (GET)**
+
   ```typescript
   import { NextRequest, NextResponse } from 'next/server';
   import { prisma } from '@/lib/prisma';
@@ -380,6 +455,7 @@
 ## Task 4: Podcast API Routes — Create / Update / Delete
 
 **Files:**
+
 - `app/api/podcasts/route.ts` — add POST handler
 - `app/api/podcasts/[id]/route.ts` — add PUT, DELETE handlers
 - `app/api/podcasts/batch/route.ts` — PATCH batch sort order
@@ -388,53 +464,101 @@
 ### Steps
 
 - [ ] **4.1 — Write failing tests first**
-  Create `app/api/podcasts/__tests__/mutate-podcasts.test.ts`:
+      Create `app/api/podcasts/__tests__/mutate-podcasts.test.ts`:
+
   ```typescript
   describe('POST /api/podcasts', () => {
-    it('creates a podcast when user is admin', async () => { /* ... */ });
-    it('returns 401 when unauthenticated', async () => { /* ... */ });
-    it('returns 403 when user is not admin', async () => { /* ... */ });
-    it('returns 400 for invalid body', async () => { /* ... */ });
-    it('validates domain enum', async () => { /* ... */ });
+    it('creates a podcast when user is admin', async () => {
+      /* ... */
+    });
+    it('returns 401 when unauthenticated', async () => {
+      /* ... */
+    });
+    it('returns 403 when user is not admin', async () => {
+      /* ... */
+    });
+    it('returns 400 for invalid body', async () => {
+      /* ... */
+    });
+    it('validates domain enum', async () => {
+      /* ... */
+    });
   });
 
   describe('PUT /api/podcasts/:id', () => {
-    it('updates podcast metadata', async () => { /* ... */ });
-    it('returns 404 for non-existent podcast', async () => { /* ... */ });
-    it('returns 403 for non-admin user', async () => { /* ... */ });
-    it('allows partial updates', async () => { /* ... */ });
+    it('updates podcast metadata', async () => {
+      /* ... */
+    });
+    it('returns 404 for non-existent podcast', async () => {
+      /* ... */
+    });
+    it('returns 403 for non-admin user', async () => {
+      /* ... */
+    });
+    it('allows partial updates', async () => {
+      /* ... */
+    });
   });
 
   describe('DELETE /api/podcasts/:id', () => {
-    it('soft-deletes (archives) podcast for superadmin', async () => { /* ... */ });
-    it('returns 403 for admin (not superadmin)', async () => { /* ... */ });
-    it('returns 404 for non-existent podcast', async () => { /* ... */ });
+    it('soft-deletes (archives) podcast for superadmin', async () => {
+      /* ... */
+    });
+    it('returns 403 for admin (not superadmin)', async () => {
+      /* ... */
+    });
+    it('returns 404 for non-existent podcast', async () => {
+      /* ... */
+    });
   });
 
   describe('PATCH /api/podcasts/batch', () => {
-    it('updates sort order for multiple podcasts', async () => { /* ... */ });
-    it('returns 403 for non-admin user', async () => { /* ... */ });
-    it('validates batch payload', async () => { /* ... */ });
+    it('updates sort order for multiple podcasts', async () => {
+      /* ... */
+    });
+    it('returns 403 for non-admin user', async () => {
+      /* ... */
+    });
+    it('validates batch payload', async () => {
+      /* ... */
+    });
   });
   ```
 
 - [ ] **4.2 — Implement POST in `app/api/podcasts/route.ts`**
-  Add to the existing route file:
+      Add to the existing route file:
+
   ```typescript
   import { verifyAuth, requireRole } from '@/lib/auth'; // from Stage 1
   import { podcastCreateSchema } from '@/lib/validations/podcast';
 
   export async function POST(request: NextRequest) {
     const auth = await verifyAuth(request);
-    if (!auth) return NextResponse.json({ status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' }, { status: 401 });
+    if (!auth)
+      return NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
 
     const roleCheck = requireRole(auth, ['admin', 'superadmin']);
-    if (!roleCheck.authorized) return NextResponse.json({ status: 403, error_code: 'FORBIDDEN', message: 'Admin access required' }, { status: 403 });
+    if (!roleCheck.authorized)
+      return NextResponse.json(
+        { status: 403, error_code: 'FORBIDDEN', message: 'Admin access required' },
+        { status: 403 }
+      );
 
     const body = await request.json();
     const parsed = podcastCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ status: 400, error_code: 'VALIDATION_FAILED', message: 'Invalid request body', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+      return NextResponse.json(
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: 'Invalid request body',
+          details: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
     const podcast = await prisma.podcast.create({ data: parsed.data });
@@ -443,9 +567,10 @@
   ```
 
 - [ ] **4.3 — Implement PUT and DELETE in `app/api/podcasts/[id]/route.ts`**
-  PUT: admin/superadmin can update. DELETE: superadmin only, sets `is_archived: true`.
+      PUT: admin/superadmin can update. DELETE: superadmin only, sets `is_archived: true`.
 
 - [ ] **4.4 — Implement `app/api/podcasts/batch/route.ts` (PATCH)**
+
   ```typescript
   export async function PATCH(request: NextRequest) {
     // Auth check — admin required
@@ -469,6 +594,7 @@
 ## Task 5: Transcript API Routes
 
 **Files:**
+
 - `app/api/podcasts/[id]/transcript/route.ts` — GET, PUT
 - `lib/validations/transcript.ts` — Zod schema
 - `app/api/podcasts/[id]/transcript/__tests__/transcript.test.ts` — integration tests
@@ -476,7 +602,8 @@
 ### Steps
 
 - [ ] **5.1 — Define Zod schema for transcript**
-  Create `lib/validations/transcript.ts`:
+      Create `lib/validations/transcript.ts`:
+
   ```typescript
   import { z } from 'zod';
 
@@ -494,22 +621,33 @@
   ```
 
 - [ ] **5.2 — Write failing tests**
+
   ```typescript
   describe('GET /api/podcasts/:id/transcript', () => {
-    it('returns transcript with segments', async () => { /* ... */ });
-    it('returns 404 if podcast has no transcript', async () => { /* ... */ });
+    it('returns transcript with segments', async () => {
+      /* ... */
+    });
+    it('returns 404 if podcast has no transcript', async () => {
+      /* ... */
+    });
   });
 
   describe('PUT /api/podcasts/:id/transcript', () => {
-    it('creates or updates transcript (admin)', async () => { /* ... */ });
-    it('returns 403 for non-admin', async () => { /* ... */ });
-    it('validates segment format', async () => { /* ... */ });
+    it('creates or updates transcript (admin)', async () => {
+      /* ... */
+    });
+    it('returns 403 for non-admin', async () => {
+      /* ... */
+    });
+    it('validates segment format', async () => {
+      /* ... */
+    });
   });
   ```
 
 - [ ] **5.3 — Implement GET and PUT handlers**
-  GET: Returns transcript(s) for the podcast.
-  PUT: Upserts transcript using `prisma.transcript.upsert` with `(podcast_id, transcript_type)` as unique constraint.
+      GET: Returns transcript(s) for the podcast.
+      PUT: Upserts transcript using `prisma.transcript.upsert` with `(podcast_id, transcript_type)` as unique constraint.
 
 - [ ] **5.4 — Run tests, confirm green**
 
@@ -518,30 +656,52 @@
 ## Task 6: Upload API Route
 
 **Files:**
+
 - `app/api/upload/route.ts` — POST (returns presigned URL)
 - `app/api/upload/__tests__/upload.test.ts` — integration tests
 
 ### Steps
 
 - [ ] **6.1 — Write failing tests**
+
   ```typescript
   describe('POST /api/upload', () => {
-    it('returns presigned URL for valid audio upload request', async () => { /* ... */ });
-    it('returns presigned URL for valid image upload request', async () => { /* ... */ });
-    it('returns presigned URL for valid PDF upload request', async () => { /* ... */ });
-    it('returns 400 for unsupported file type', async () => { /* ... */ });
-    it('returns 400 for file exceeding size limit', async () => { /* ... */ });
-    it('returns 401 for unauthenticated user', async () => { /* ... */ });
-    it('returns 403 for non-admin user', async () => { /* ... */ });
+    it('returns presigned URL for valid audio upload request', async () => {
+      /* ... */
+    });
+    it('returns presigned URL for valid image upload request', async () => {
+      /* ... */
+    });
+    it('returns presigned URL for valid PDF upload request', async () => {
+      /* ... */
+    });
+    it('returns 400 for unsupported file type', async () => {
+      /* ... */
+    });
+    it('returns 400 for file exceeding size limit', async () => {
+      /* ... */
+    });
+    it('returns 401 for unauthenticated user', async () => {
+      /* ... */
+    });
+    it('returns 403 for non-admin user', async () => {
+      /* ... */
+    });
   });
   ```
 
 - [ ] **6.2 — Implement `app/api/upload/route.ts`**
+
   ```typescript
   import { NextRequest, NextResponse } from 'next/server';
   import { verifyAuth, requireRole } from '@/lib/auth';
   import { generatePresignedUploadUrl } from '@/lib/storage';
-  import { validateFileType, generateUniqueKey, FILE_TYPE_GROUPS, MAX_FILE_SIZES } from '@/lib/upload';
+  import {
+    validateFileType,
+    generateUniqueKey,
+    FILE_TYPE_GROUPS,
+    MAX_FILE_SIZES,
+  } from '@/lib/upload';
   import { z } from 'zod';
 
   const uploadRequestSchema = z.object({
@@ -555,21 +715,52 @@
 
   export async function POST(request: NextRequest) {
     const auth = await verifyAuth(request);
-    if (!auth) return NextResponse.json({ status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' }, { status: 401 });
+    if (!auth)
+      return NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Authentication required' },
+        { status: 401 }
+      );
     const roleCheck = requireRole(auth, ['admin', 'superadmin']);
-    if (!roleCheck.authorized) return NextResponse.json({ status: 403, error_code: 'FORBIDDEN', message: 'Admin access required' }, { status: 403 });
+    if (!roleCheck.authorized)
+      return NextResponse.json(
+        { status: 403, error_code: 'FORBIDDEN', message: 'Admin access required' },
+        { status: 403 }
+      );
 
     const body = await request.json();
     const parsed = uploadRequestSchema.safeParse(body);
-    if (!parsed.success) return NextResponse.json({ status: 400, error_code: 'VALIDATION_FAILED', message: 'Invalid request', details: parsed.error.flatten().fieldErrors }, { status: 400 });
+    if (!parsed.success)
+      return NextResponse.json(
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: 'Invalid request',
+          details: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
 
     const { filename, content_type, file_size, category } = parsed.data;
 
     if (!validateFileType(content_type, FILE_TYPE_GROUPS[category])) {
-      return NextResponse.json({ status: 400, error_code: 'VALIDATION_FAILED', message: `Invalid file type for ${category}` }, { status: 400 });
+      return NextResponse.json(
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: `Invalid file type for ${category}`,
+        },
+        { status: 400 }
+      );
     }
     if (file_size > MAX_FILE_SIZES[category]) {
-      return NextResponse.json({ status: 400, error_code: 'VALIDATION_FAILED', message: `File exceeds maximum size for ${category}` }, { status: 400 });
+      return NextResponse.json(
+        {
+          status: 400,
+          error_code: 'VALIDATION_FAILED',
+          message: `File exceeds maximum size for ${category}`,
+        },
+        { status: 400 }
+      );
     }
 
     const bucket = BUCKET_MAP[category];
@@ -587,6 +778,7 @@
 ## Task 7: shadcn/ui Component Installation
 
 **Files:**
+
 - `components/ui/*.tsx` — all installed shadcn components
 - `components.json` — shadcn config
 - `lib/utils.ts` — cn utility (if not already from Stage 1)
@@ -594,30 +786,36 @@
 ### Steps
 
 - [ ] **7.1 — Initialize shadcn/ui (if not already done)**
+
   ```bash
   npx shadcn@latest init
   ```
+
   Select: New York style, Tailwind CSS, CSS variables for colors.
 
 - [ ] **7.2 — Install required components**
+
   ```bash
   npx shadcn@latest add button input textarea select label card table badge dialog dropdown-menu skeleton separator tabs tooltip sheet scroll-area
   ```
 
 - [ ] **7.3 — Install toast library (Sonner)**
+
   ```bash
   npm install sonner
   ```
+
   Add `<Toaster />` to root layout if not already present.
 
 - [ ] **7.4 — Verify all components render without errors**
-  Quick smoke test: create a temporary page that imports each component and verify `npm run build` succeeds.
+      Quick smoke test: create a temporary page that imports each component and verify `npm run build` succeeds.
 
 ---
 
 ## Task 8: Admin Upload Form
 
 **Files:**
+
 - `components/admin/podcast-upload-form.tsx` — full upload form
 - `components/admin/__tests__/podcast-upload-form.test.tsx` — component tests
 - `hooks/use-file-upload.ts` — file upload hook with progress tracking
@@ -625,7 +823,8 @@
 ### Steps
 
 - [ ] **8.1 — Write failing component tests**
-  Create `components/admin/__tests__/podcast-upload-form.test.tsx`:
+      Create `components/admin/__tests__/podcast-upload-form.test.tsx`:
+
   ```typescript
   import { describe, it, expect, vi } from 'vitest';
   import { render, screen, waitFor } from '@testing-library/react';
@@ -659,6 +858,7 @@
   ```
 
 - [ ] **8.2 — Create `hooks/use-file-upload.ts`**
+
   ```typescript
   'use client';
   import { useState, useCallback } from 'react';
@@ -671,7 +871,12 @@
   }
 
   export function useFileUpload() {
-    const [state, setState] = useState<UploadState>({ progress: 0, isUploading: false, error: null, uploadedKey: null });
+    const [state, setState] = useState<UploadState>({
+      progress: 0,
+      isUploading: false,
+      error: null,
+      uploadedKey: null,
+    });
 
     const upload = useCallback(async (file: File, category: 'audio' | 'image' | 'pdf') => {
       setState({ progress: 0, isUploading: true, error: null, uploadedKey: null });
@@ -680,7 +885,12 @@
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename: file.name, content_type: file.type, file_size: file.size, category }),
+          body: JSON.stringify({
+            filename: file.name,
+            content_type: file.type,
+            file_size: file.size,
+            category,
+          }),
         });
         if (!res.ok) throw new Error('Failed to get upload URL');
         const { data } = await res.json();
@@ -689,9 +899,11 @@
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable) setState(s => ({ ...s, progress: Math.round((e.loaded / e.total) * 100) }));
+            if (e.lengthComputable)
+              setState((s) => ({ ...s, progress: Math.round((e.loaded / e.total) * 100) }));
           };
-          xhr.onload = () => (xhr.status >= 200 && xhr.status < 300) ? resolve() : reject(new Error('Upload failed'));
+          xhr.onload = () =>
+            xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error('Upload failed'));
           xhr.onerror = () => reject(new Error('Upload failed'));
           xhr.open('PUT', data.upload_url);
           xhr.setRequestHeader('Content-Type', file.type);
@@ -701,7 +913,7 @@
         setState({ progress: 100, isUploading: false, error: null, uploadedKey: data.key });
         return data.key;
       } catch (err: any) {
-        setState(s => ({ ...s, isUploading: false, error: err.message }));
+        setState((s) => ({ ...s, isUploading: false, error: err.message }));
         throw err;
       }
     }, []);
@@ -726,6 +938,7 @@
 ## Task 9: Admin Podcast Table
 
 **Files:**
+
 - `components/admin/podcast-table.tsx` — sortable data table
 - `components/admin/__tests__/podcast-table.test.tsx` — component tests
 - `components/admin/podcast-table-actions.tsx` — row action dropdown
@@ -733,20 +946,36 @@
 ### Steps
 
 - [ ] **9.1 — Install @dnd-kit**
+
   ```bash
   npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
   ```
 
 - [ ] **9.2 — Write failing component tests**
+
   ```typescript
   describe('PodcastTable', () => {
-    it('renders podcast rows with title, domain, year, status', () => { /* ... */ });
-    it('shows archived badge for archived podcasts', () => { /* ... */ });
-    it('renders action dropdown with Edit and Archive buttons', () => { /* ... */ });
-    it('calls onSortOrderChange when rows are dragged', () => { /* ... */ });
-    it('renders pagination controls', () => { /* ... */ });
-    it('calls onPageChange when pagination buttons are clicked', () => { /* ... */ });
-    it('shows empty state when no podcasts', () => { /* ... */ });
+    it('renders podcast rows with title, domain, year, status', () => {
+      /* ... */
+    });
+    it('shows archived badge for archived podcasts', () => {
+      /* ... */
+    });
+    it('renders action dropdown with Edit and Archive buttons', () => {
+      /* ... */
+    });
+    it('calls onSortOrderChange when rows are dragged', () => {
+      /* ... */
+    });
+    it('renders pagination controls', () => {
+      /* ... */
+    });
+    it('calls onPageChange when pagination buttons are clicked', () => {
+      /* ... */
+    });
+    it('shows empty state when no podcasts', () => {
+      /* ... */
+    });
   });
   ```
 
@@ -768,6 +997,7 @@
 ## Task 10: Admin Pages
 
 **Files:**
+
 - `app/(admin)/layout.tsx` — admin layout with sidebar
 - `app/(admin)/admin/page.tsx` — dashboard (podcast table)
 - `app/(admin)/admin/upload/page.tsx` — upload form
@@ -782,6 +1012,7 @@
   - Responsive: collapsed on mobile (sheet/drawer)
 
 - [ ] **10.2 — Create `app/(admin)/layout.tsx`**
+
   ```typescript
   import { AdminSidebar } from '@/components/admin/admin-sidebar';
 
@@ -819,12 +1050,14 @@
 ## Task 11: Podcast Card Component
 
 **Files:**
+
 - `components/library/podcast-card.tsx` — card for library grid
 - `components/library/__tests__/podcast-card.test.tsx` — component tests
 
 ### Steps
 
 - [ ] **11.1 — Write failing tests**
+
   ```typescript
   describe('PodcastCard', () => {
     const mockPodcast = {
@@ -837,17 +1070,32 @@
       thumbnail_url: '/thumbnails/amg-q1.jpg',
     };
 
-    it('renders podcast title', () => { /* ... */ });
-    it('renders domain as a badge', () => { /* ... */ });
-    it('renders year', () => { /* ... */ });
-    it('truncates long descriptions', () => { /* ... */ });
-    it('renders thumbnail image', () => { /* ... */ });
-    it('links to podcast detail page', () => { /* ... */ });
-    it('renders tags as badges', () => { /* ... */ });
+    it('renders podcast title', () => {
+      /* ... */
+    });
+    it('renders domain as a badge', () => {
+      /* ... */
+    });
+    it('renders year', () => {
+      /* ... */
+    });
+    it('truncates long descriptions', () => {
+      /* ... */
+    });
+    it('renders thumbnail image', () => {
+      /* ... */
+    });
+    it('links to podcast detail page', () => {
+      /* ... */
+    });
+    it('renders tags as badges', () => {
+      /* ... */
+    });
   });
   ```
 
 - [ ] **11.2 — Implement `components/library/podcast-card.tsx`**
+
   ```typescript
   import Image from 'next/image';
   import Link from 'next/link';
@@ -899,6 +1147,7 @@
 ## Task 12: Public Library Page
 
 **Files:**
+
 - `app/(public)/layout.tsx` — public navigation layout
 - `app/(public)/bulletins/page.tsx` — filterable podcast library
 - `components/library/library-filters.tsx` — filter controls
@@ -925,6 +1174,7 @@
   - Mini-player slot at bottom (placeholder for Stage 3)
 
 - [ ] **12.4 — Create `app/(public)/bulletins/page.tsx`**
+
   ```typescript
   import { prisma } from '@/lib/prisma';
   import { PodcastGrid } from '@/components/library/podcast-grid';
@@ -962,13 +1212,14 @@
   ```
 
 - [ ] **12.5 — Add pagination component to the page**
-  Use a shared pagination component that updates URL search params.
+      Use a shared pagination component that updates URL search params.
 
 ---
 
 ## Task 13: Home Page
 
 **Files:**
+
 - `app/(public)/page.tsx` — home page
 
 ### Steps
@@ -981,6 +1232,7 @@
   - Each category card shows domain name, abbreviation, podcast count
 
 - [ ] **13.2 — Fetch data server-side**
+
   ```typescript
   const recentPodcasts = await prisma.podcast.findMany({
     where: { is_archived: false },
@@ -1002,6 +1254,7 @@
 ## Task 14: Integration Tests for All API Routes
 
 **Files:**
+
 - `app/api/podcasts/__tests__/get-podcasts.test.ts` — (from Task 3)
 - `app/api/podcasts/__tests__/mutate-podcasts.test.ts` — (from Task 4)
 - `app/api/podcasts/[id]/transcript/__tests__/transcript.test.ts` — (from Task 5)
@@ -1019,6 +1272,7 @@
   - Filtering combinations
 
 - [ ] **14.2 — Run full test suite**
+
   ```bash
   npx vitest run --reporter=verbose
   ```
@@ -1036,17 +1290,20 @@
 ### Steps
 
 - [ ] **15.1 — Run lint and type check**
+
   ```bash
   npm run lint
   npx tsc --noEmit
   ```
 
 - [ ] **15.2 — Run full test suite one final time**
+
   ```bash
   npx vitest run
   ```
 
 - [ ] **15.3 — Run build to verify no build errors**
+
   ```bash
   npm run build
   ```

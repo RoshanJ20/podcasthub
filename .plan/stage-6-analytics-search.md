@@ -15,6 +15,7 @@
 ## Task 1: Analytics API Route — TDD
 
 **Files:**
+
 - `app/api/admin/analytics/route.ts`
 - `__tests__/api/admin/analytics.test.ts`
 
@@ -26,6 +27,7 @@
   - Test: returns analytics object with all expected fields for admin
   - Test: supports `?from=2026-01-01&to=2026-03-15` date range filtering
   - Test: returns correct aggregation values
+
   ```ts
   // __tests__/api/admin/analytics.test.ts
   import { describe, it, expect, beforeEach } from 'vitest';
@@ -89,6 +91,7 @@
   ```
 
 - [ ] **1.2 — Implement the analytics route**
+
   ```ts
   // app/api/admin/analytics/route.ts
   import { NextRequest, NextResponse } from 'next/server';
@@ -111,16 +114,17 @@
       ...(to ? { createdAt: { lte: new Date(to) } } : {}),
     };
 
-    const [totalPodcasts, totalPaths, listensByDomain, monthlyTrends, topTopics] = await Promise.all([
-      prisma.podcast.count({ where: dateFilter }),
-      prisma.learningGraph.count({ where: dateFilter }),
-      prisma.podcast.groupBy({
-        by: ['domain'],
-        _count: { id: true },
-        where: dateFilter,
-      }),
-      // Monthly trends: group podcast creation by month
-      prisma.$queryRaw`
+    const [totalPodcasts, totalPaths, listensByDomain, monthlyTrends, topTopics] =
+      await Promise.all([
+        prisma.podcast.count({ where: dateFilter }),
+        prisma.learningGraph.count({ where: dateFilter }),
+        prisma.podcast.groupBy({
+          by: ['domain'],
+          _count: { id: true },
+          where: dateFilter,
+        }),
+        // Monthly trends: group podcast creation by month
+        prisma.$queryRaw`
         SELECT
           TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') as month,
           COUNT(*)::int as count
@@ -130,15 +134,15 @@
         GROUP BY DATE_TRUNC('month', "createdAt")
         ORDER BY month
       `,
-      // Top topics by tag frequency
-      prisma.$queryRaw`
+        // Top topics by tag frequency
+        prisma.$queryRaw`
         SELECT unnest(tags) as topic, COUNT(*)::int as count
         FROM "Podcast"
         GROUP BY topic
         ORDER BY count DESC
         LIMIT 10
       `,
-    ]);
+      ]);
 
     return NextResponse.json({
       totalPodcasts,
@@ -158,12 +162,14 @@
 ## Task 2: Azure OpenAI Embeddings Client
 
 **Files:**
+
 - `lib/embeddings.ts`
 - `__tests__/lib/embeddings.test.ts`
 
 ### Steps
 
 - [ ] **2.1 — Write unit tests with mocked Azure OpenAI API**
+
   ```ts
   // __tests__/lib/embeddings.test.ts
   import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -236,11 +242,13 @@
   ```
 
 - [ ] **2.2 — Implement `lib/embeddings.ts`**
+
   ```ts
   // lib/embeddings.ts
   const AZURE_OPENAI_ENDPOINT = process.env.AZURE_OPENAI_ENDPOINT!;
   const AZURE_OPENAI_API_KEY = process.env.AZURE_OPENAI_API_KEY!;
-  const AZURE_OPENAI_DEPLOYMENT = process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT ?? 'text-embedding-3-large';
+  const AZURE_OPENAI_DEPLOYMENT =
+    process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT ?? 'text-embedding-3-large';
   const API_VERSION = '2024-02-01';
 
   interface EmbeddingOptions {
@@ -287,6 +295,7 @@
   ```
 
 - [ ] **2.3 — Add environment variables to `.env.example`**
+
   ```
   AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
   AZURE_OPENAI_API_KEY=your-key
@@ -301,6 +310,7 @@
 ## Task 3: Search API Routes — TDD
 
 **Files:**
+
 - `app/api/search/route.ts`
 - `prisma/migrations/XXXXXXXX_add_pgvector/migration.sql`
 - `lib/search.ts`
@@ -310,6 +320,7 @@
 ### Steps
 
 - [ ] **3.1 — Create pgvector Prisma migration**
+
   ```sql
   -- prisma/migrations/XXXXXXXX_add_pgvector/migration.sql
 
@@ -362,6 +373,7 @@
   ```
 
 - [ ] **3.2 — Write integration tests for basic text search**
+
   ```ts
   // __tests__/api/search.test.ts
   import { describe, it, expect, beforeEach } from 'vitest';
@@ -374,9 +386,21 @@
       await prisma.podcast.deleteMany();
       await prisma.podcast.createMany({
         data: [
-          { title: 'React Performance Tips', description: 'How to optimize React apps', tags: ['react', 'performance'] },
-          { title: 'Node.js Best Practices', description: 'Server-side JavaScript patterns', tags: ['nodejs', 'backend'] },
-          { title: 'CSS Grid Layout', description: 'Modern CSS layout techniques', tags: ['css', 'layout'] },
+          {
+            title: 'React Performance Tips',
+            description: 'How to optimize React apps',
+            tags: ['react', 'performance'],
+          },
+          {
+            title: 'Node.js Best Practices',
+            description: 'Server-side JavaScript patterns',
+            tags: ['nodejs', 'backend'],
+          },
+          {
+            title: 'CSS Grid Layout',
+            description: 'Modern CSS layout techniques',
+            tags: ['css', 'layout'],
+          },
         ],
       });
     });
@@ -421,6 +445,7 @@
   ```
 
 - [ ] **3.3 — Write integration tests for semantic search**
+
   ```ts
   describe('POST /api/search (semantic search)', () => {
     it('returns transcript segments with timestamps and similarity scores', async () => {
@@ -449,6 +474,7 @@
   ```
 
 - [ ] **3.4 — Implement `app/api/search/route.ts`**
+
   ```ts
   // app/api/search/route.ts
   import { NextRequest, NextResponse } from 'next/server';
@@ -470,7 +496,14 @@
           { tags: { has: q.toLowerCase() } },
         ],
       },
-      select: { id: true, title: true, description: true, domain: true, tags: true, thumbnailUrl: true },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        domain: true,
+        tags: true,
+        thumbnailUrl: true,
+      },
       take: 20,
     });
 
@@ -486,15 +519,17 @@
     const embedding = await generateEmbedding(query);
     const embeddingStr = `[${embedding.join(',')}]`;
 
-    const results = await prisma.$queryRaw<Array<{
-      id: string;
-      podcastId: string;
-      podcastTitle: string;
-      content: string;
-      startTime: number;
-      endTime: number;
-      similarity: number;
-    }>>`
+    const results = await prisma.$queryRaw<
+      Array<{
+        id: string;
+        podcastId: string;
+        podcastTitle: string;
+        content: string;
+        startTime: number;
+        endTime: number;
+        similarity: number;
+      }>
+    >`
       SELECT * FROM match_transcripts(${embeddingStr}::vector, 0.7, 10)
     `;
 
@@ -510,6 +545,7 @@
 ## Task 4: Analytics Dashboard Page
 
 **Files:**
+
 - `app/(admin)/admin/analytics/page.tsx`
 - `components/admin/analytics-charts.tsx`
 - `components/admin/date-range-picker.tsx`
@@ -518,6 +554,7 @@
 ### Steps
 
 - [ ] **4.1 — Install Recharts**
+
   ```bash
   npm install recharts
   ```
@@ -530,6 +567,7 @@
   - Test: date range picker emits `onDateChange` callback
 
 - [ ] **4.3 — Implement `date-range-picker.tsx`**
+
   ```tsx
   // components/admin/date-range-picker.tsx
   'use client';
@@ -551,28 +589,45 @@
       <div className="flex items-end gap-3">
         <div>
           <Label htmlFor="date-from">From</Label>
-          <Input id="date-from" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <Input
+            id="date-from"
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
         </div>
         <div>
           <Label htmlFor="date-to">To</Label>
           <Input id="date-to" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
-        <Button variant="outline" onClick={() => onDateChange(from, to)}>Apply</Button>
+        <Button variant="outline" onClick={() => onDateChange(from, to)}>
+          Apply
+        </Button>
       </div>
     );
   }
   ```
 
 - [ ] **4.4 — Implement `analytics-charts.tsx`**
+
   ```tsx
   // components/admin/analytics-charts.tsx
   'use client';
 
   import { useState, useEffect } from 'react';
   import {
-    PieChart, Pie, Cell,
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-    AreaChart, Area,
+    PieChart,
+    Pie,
+    Cell,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    AreaChart,
+    Area,
     ResponsiveContainer,
   } from 'recharts';
   import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -603,7 +658,9 @@
       setIsLoading(false);
     };
 
-    useEffect(() => { fetchAnalytics(); }, []);
+    useEffect(() => {
+      fetchAnalytics();
+    }, []);
 
     if (isLoading) return <div>Loading analytics...</div>;
     if (!data) return <div>No data available</div>;
@@ -615,22 +672,39 @@
         {/* Summary Cards */}
         <div className="grid grid-cols-2 gap-4">
           <Card>
-            <CardHeader><CardTitle>Total Podcasts</CardTitle></CardHeader>
-            <CardContent><p className="text-3xl font-bold">{data.totalPodcasts}</p></CardContent>
+            <CardHeader>
+              <CardTitle>Total Podcasts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{data.totalPodcasts}</p>
+            </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle>Total Learning Paths</CardTitle></CardHeader>
-            <CardContent><p className="text-3xl font-bold">{data.totalPaths}</p></CardContent>
+            <CardHeader>
+              <CardTitle>Total Learning Paths</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">{data.totalPaths}</p>
+            </CardContent>
           </Card>
         </div>
 
         {/* Domain Donut Chart */}
         <Card>
-          <CardHeader><CardTitle>Podcasts by Domain</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Podcasts by Domain</CardTitle>
+          </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie data={data.listensByDomain} dataKey="count" nameKey="domain" innerRadius={60} outerRadius={100} label>
+                <Pie
+                  data={data.listensByDomain}
+                  dataKey="count"
+                  nameKey="domain"
+                  innerRadius={60}
+                  outerRadius={100}
+                  label
+                >
                   {data.listensByDomain.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
@@ -644,7 +718,9 @@
 
         {/* Monthly Trends */}
         <Card>
-          <CardHeader><CardTitle>Monthly Trends</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Monthly Trends</CardTitle>
+          </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={data.monthlyTrends}>
@@ -660,7 +736,9 @@
 
         {/* Top Topics */}
         <Card>
-          <CardHeader><CardTitle>Top Topics</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Top Topics</CardTitle>
+          </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={data.topTopics} layout="vertical">
@@ -679,6 +757,7 @@
   ```
 
 - [ ] **4.5 — Implement admin analytics page**
+
   ```tsx
   // app/(admin)/admin/analytics/page.tsx
   import { AnalyticsCharts } from '@/components/admin/analytics-charts';
@@ -701,6 +780,7 @@
 ## Task 5: Search Page
 
 **Files:**
+
 - `app/(public)/search/page.tsx`
 - `components/search/search-results.tsx`
 - `components/search/search-input.tsx`
@@ -717,6 +797,7 @@
   - Test: shows loading spinner during search
 
 - [ ] **5.2 — Implement `search-input.tsx`**
+
   ```tsx
   // components/search/search-input.tsx
   'use client';
@@ -755,7 +836,11 @@
             <Search className="h-4 w-4 mr-1" /> Search
           </Button>
         </div>
-        <ToggleGroup type="single" value={mode} onValueChange={(v) => v && setMode(v as 'basic' | 'semantic')}>
+        <ToggleGroup
+          type="single"
+          value={mode}
+          onValueChange={(v) => v && setMode(v as 'basic' | 'semantic')}
+        >
           <ToggleGroupItem value="basic" aria-label="Basic search">
             <Search className="h-4 w-4 mr-1" /> Basic
           </ToggleGroupItem>
@@ -769,6 +854,7 @@
   ```
 
 - [ ] **5.3 — Implement `search-results.tsx`**
+
   ```tsx
   // components/search/search-results.tsx
   'use client';
@@ -802,7 +888,8 @@
   }
 
   export function BasicResults({ results }: { results: BasicResult[] }) {
-    if (results.length === 0) return <p className="text-muted-foreground text-center py-8">No results found</p>;
+    if (results.length === 0)
+      return <p className="text-muted-foreground text-center py-8">No results found</p>;
 
     return (
       <div className="space-y-3">
@@ -814,7 +901,9 @@
                   <h3 className="font-medium">{r.title}</h3>
                   {r.domain && <Badge variant="secondary">{r.domain}</Badge>}
                 </div>
-                {r.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>}
+                {r.description && (
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>
+                )}
               </CardContent>
             </Card>
           </Link>
@@ -824,7 +913,8 @@
   }
 
   export function SemanticResults({ results }: { results: SemanticResult[] }) {
-    if (results.length === 0) return <p className="text-muted-foreground text-center py-8">No results found</p>;
+    if (results.length === 0)
+      return <p className="text-muted-foreground text-center py-8">No results found</p>;
 
     return (
       <div className="space-y-3">
@@ -850,6 +940,7 @@
   ```
 
 - [ ] **5.4 — Implement search page**
+
   ```tsx
   // app/(public)/search/page.tsx
   'use client';
@@ -910,6 +1001,7 @@
 ## Task 6: User Role Management
 
 **Files:**
+
 - `app/api/users/route.ts`
 - `app/api/users/[id]/role/route.ts`
 - `app/(admin)/admin/users/page.tsx`
@@ -924,6 +1016,7 @@
   - Test: returns 403 for admin (not superadmin) users
   - Test: returns paginated user list for superadmin with fields: id, name, email, role, createdAt
   - Test: supports `?search=` filter on name/email
+
   ```ts
   // __tests__/api/users.test.ts
   describe('GET /api/users', () => {
@@ -961,6 +1054,7 @@
   - Test: returns 403 for non-superadmin
   - Test: returns 404 for non-existent user ID
   - Test: cannot change own role (prevents lockout)
+
   ```ts
   describe('PUT /api/users/[id]/role', () => {
     it('updates user role', async () => {
@@ -990,6 +1084,7 @@
   ```
 
 - [ ] **6.3 — Implement `app/api/users/route.ts`**
+
   ```ts
   // app/api/users/route.ts
   import { NextRequest, NextResponse } from 'next/server';
@@ -999,7 +1094,8 @@
   export async function GET(req: NextRequest) {
     const user = await verifyAuth(req);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'superadmin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (user.role !== 'superadmin')
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get('page') ?? '1');
@@ -1007,7 +1103,12 @@
     const search = searchParams.get('search');
 
     const where = search
-      ? { OR: [{ name: { contains: search, mode: 'insensitive' as const } }, { email: { contains: search, mode: 'insensitive' as const } }] }
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { email: { contains: search, mode: 'insensitive' as const } },
+          ],
+        }
       : {};
 
     const [data, total] = await Promise.all([
@@ -1026,6 +1127,7 @@
   ```
 
 - [ ] **6.4 — Implement `app/api/users/[id]/role/route.ts`**
+
   ```ts
   // app/api/users/[id]/role/route.ts
   import { NextRequest, NextResponse } from 'next/server';
@@ -1038,7 +1140,8 @@
     const { id } = await params;
     const user = await verifyAuth(req);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (user.role !== 'superadmin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (user.role !== 'superadmin')
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     if (user.id === id) {
       return NextResponse.json({ error: 'Cannot change your own role' }, { status: 400 });
@@ -1046,7 +1149,10 @@
 
     const { role } = await req.json();
     if (!VALID_ROLES.includes(role)) {
-      return NextResponse.json({ error: `Invalid role. Must be one of: ${VALID_ROLES.join(', ')}` }, { status: 400 });
+      return NextResponse.json(
+        { error: `Invalid role. Must be one of: ${VALID_ROLES.join(', ')}` },
+        { status: 400 }
+      );
     }
 
     try {
@@ -1065,15 +1171,39 @@
 - [ ] **6.5 — Implement admin users page and table**
   - `app/(admin)/admin/users/page.tsx` — Server Component that renders heading + client table
   - `components/admin/users-table.tsx` — Client Component with DataTable, search input, role dropdown per row, confirmation on role change
+
   ```tsx
   // components/admin/users-table.tsx (key parts)
   'use client';
 
   import { useState, useEffect } from 'react';
-  import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-  import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+  import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+  } from '@/components/ui/table';
+  import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from '@/components/ui/select';
   import { Input } from '@/components/ui/input';
-  import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+  import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from '@/components/ui/alert-dialog';
 
   // Fetches users, renders table with role dropdown per row
   // Role change triggers AlertDialog confirmation -> PUT /api/users/[id]/role
@@ -1087,6 +1217,7 @@
 ## Task 7: Integration + E2E Tests
 
 **Files:**
+
 - `__tests__/integration/analytics-search.test.ts`
 - `e2e/analytics-search.spec.ts`
 
@@ -1099,6 +1230,7 @@
   - Test user management: superadmin updates role -> verify user role changed -> verify non-superadmin blocked
 
 - [ ] **7.2 — Write E2E test for search flow**
+
   ```ts
   // e2e/analytics-search.spec.ts
   test('user searches and navigates to result', async ({ page }) => {

@@ -28,15 +28,15 @@ Stage 7: Hardening & Deployment
 
 ## Stages Overview
 
-| Stage | Name | Goal | Key Deliverables |
-|-------|------|------|------------------|
-| 1 | [Foundation](stage-1-foundation.md) | Project scaffold, tooling, auth, database | Next.js app, Prisma schema, JWT auth, CI/CD, testing infra |
-| 2 | [Core Content](stage-2-core-content.md) | Podcast CRUD, upload, library | Podcast API, admin upload/edit, public library, file upload |
-| 3 | [Audio Experience](stage-3-audio-experience.md) | Audio player, transcript, PDF viewer | HLS player, synced transcript, bulletin viewer, podcast page |
-| 4 | [User Features](stage-4-user-features.md) | Bookmarks, progress, profile | Bookmark CRUD, progress tracking, activity logging, profile |
-| 5 | [Learning Paths](stage-5-learning-paths.md) | Learning path management & viewer | Graph/linear editors, path viewer, episode playback |
-| 6 | [Analytics & Search](stage-6-analytics-search.md) | Analytics dashboard, AI search | Recharts dashboard, pgvector search, role management |
-| 7 | [Hardening](stage-7-hardening.md) | Security, performance, production | Rate limiting, security headers, a11y, migration, deploy |
+| Stage | Name                                              | Goal                                      | Key Deliverables                                             |
+| ----- | ------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------ |
+| 1     | [Foundation](stage-1-foundation.md)               | Project scaffold, tooling, auth, database | Next.js app, Prisma schema, JWT auth, CI/CD, testing infra   |
+| 2     | [Core Content](stage-2-core-content.md)           | Podcast CRUD, upload, library             | Podcast API, admin upload/edit, public library, file upload  |
+| 3     | [Audio Experience](stage-3-audio-experience.md)   | Audio player, transcript, PDF viewer      | HLS player, synced transcript, bulletin viewer, podcast page |
+| 4     | [User Features](stage-4-user-features.md)         | Bookmarks, progress, profile              | Bookmark CRUD, progress tracking, activity logging, profile  |
+| 5     | [Learning Paths](stage-5-learning-paths.md)       | Learning path management & viewer         | Graph/linear editors, path viewer, episode playback          |
+| 6     | [Analytics & Search](stage-6-analytics-search.md) | Analytics dashboard, AI search            | Recharts dashboard, pgvector search, role management         |
+| 7     | [Hardening](stage-7-hardening.md)                 | Security, performance, production         | Rate limiting, security headers, a11y, migration, deploy     |
 
 ## How to Use These Plans
 

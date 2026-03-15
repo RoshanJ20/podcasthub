@@ -15,6 +15,7 @@
 ## Task 1: Rate Limiting Middleware Integration
 
 **Files:**
+
 - `middleware.ts` (update existing)
 - `lib/rate-limit.ts` (created in Stage 1 — no changes needed)
 - `__tests__/middleware/rate-limit.test.ts`
@@ -22,6 +23,7 @@
 ### Steps
 
 - [ ] **1.1 — Write integration tests for rate limiting**
+
   ```ts
   // __tests__/middleware/rate-limit.test.ts
   import { describe, it, expect, beforeEach } from 'vitest';
@@ -42,7 +44,11 @@
     });
 
     it('returns 429 when auth endpoint limit exceeded (5 req/min)', async () => {
-      const req = createMockRequest({ method: 'POST', url: '/api/auth/login', body: { email: 'a@b.com', password: 'x' } });
+      const req = createMockRequest({
+        method: 'POST',
+        url: '/api/auth/login',
+        body: { email: 'a@b.com', password: 'x' },
+      });
       // Send 6 requests — 6th should be rate limited
       for (let i = 0; i < 5; i++) {
         await handleMiddleware(req);
@@ -105,7 +111,11 @@
     });
 
     it('returns Retry-After header on 429', async () => {
-      const req = createMockRequest({ method: 'POST', url: '/api/auth/login', body: { email: 'a@b.com', password: 'x' } });
+      const req = createMockRequest({
+        method: 'POST',
+        url: '/api/auth/login',
+        body: { email: 'a@b.com', password: 'x' },
+      });
       for (let i = 0; i < 5; i++) await handleMiddleware(req);
       const res = await handleMiddleware(req);
       expect(res.status).toBe(429);
@@ -115,6 +125,7 @@
   ```
 
 - [ ] **1.2 — Update middleware.ts to apply rate limits**
+
   ```ts
   // middleware.ts (add rate limiting logic)
   import { NextRequest, NextResponse } from 'next/server';
@@ -122,11 +133,11 @@
 
   // Define rate limit tiers per PRD Section 12.3
   const RATE_LIMITS: Record<string, { limit: number; windowMs: number }> = {
-    auth:   { limit: 5,   windowMs: 60_000 },       // 5 req/min
-    read:   { limit: 100, windowMs: 60_000 },       // 100 req/min
-    write:  { limit: 20,  windowMs: 60_000 },       // 20 req/min
-    upload: { limit: 5,   windowMs: 300_000 },      // 5 req/5min
-    search: { limit: 30,  windowMs: 60_000 },       // 30 req/min
+    auth: { limit: 5, windowMs: 60_000 }, // 5 req/min
+    read: { limit: 100, windowMs: 60_000 }, // 100 req/min
+    write: { limit: 20, windowMs: 60_000 }, // 20 req/min
+    upload: { limit: 5, windowMs: 300_000 }, // 5 req/5min
+    search: { limit: 30, windowMs: 60_000 }, // 30 req/min
   };
 
   function getRateLimitTier(pathname: string, method: string): string {
@@ -188,12 +199,14 @@
 ## Task 2: Security Headers
 
 **Files:**
+
 - `next.config.ts` (update existing)
 - `__tests__/integration/security-headers.test.ts`
 
 ### Steps
 
 - [ ] **2.1 — Write integration tests for security headers**
+
   ```ts
   // __tests__/integration/security-headers.test.ts
   import { describe, it, expect } from 'vitest';
@@ -234,6 +247,7 @@
   ```
 
 - [ ] **2.2 — Update `next.config.ts` with security headers**
+
   ```ts
   // next.config.ts
   import type { NextConfig } from 'next';
@@ -267,7 +281,7 @@
       key: 'Content-Security-Policy',
       value: [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-eval' 'unsafe-inline'",  // unsafe-eval needed for Next.js dev
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // unsafe-eval needed for Next.js dev
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob: https:",
         "media-src 'self' blob: https:",
@@ -301,12 +315,14 @@
 ## Task 3: CORS Configuration
 
 **Files:**
+
 - `middleware.ts` (update existing)
 - `__tests__/middleware/cors.test.ts`
 
 ### Steps
 
 - [ ] **3.1 — Write integration tests for CORS**
+
   ```ts
   // __tests__/middleware/cors.test.ts
   import { describe, it, expect } from 'vitest';
@@ -316,7 +332,9 @@
       const res = await fetch('http://localhost:3000/api/podcasts', {
         headers: { Origin: process.env.APP_DOMAIN ?? 'http://localhost:3000' },
       });
-      expect(res.headers.get('Access-Control-Allow-Origin')).toBe(process.env.APP_DOMAIN ?? 'http://localhost:3000');
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe(
+        process.env.APP_DOMAIN ?? 'http://localhost:3000'
+      );
     });
 
     it('blocks requests from unknown origins', async () => {
@@ -342,6 +360,7 @@
   ```
 
 - [ ] **3.2 — Add CORS handling to middleware**
+
   ```ts
   // Add to middleware.ts — within the API route handler section
 
@@ -376,6 +395,7 @@
   ```
 
 - [ ] **3.3 — Add `APP_DOMAIN` to `.env.example`**
+
   ```
   APP_DOMAIN=http://localhost:3000
   ```
@@ -388,17 +408,20 @@
 ## Task 4: Performance Audit
 
 **Files:**
+
 - `scripts/lighthouse-audit.sh`
 - `next.config.ts` (update for bundle analyzer)
 
 ### Steps
 
 - [ ] **4.1 — Install performance tools**
+
   ```bash
   npm install -D @next/bundle-analyzer lighthouse
   ```
 
 - [ ] **4.2 — Configure bundle analyzer in `next.config.ts`**
+
   ```ts
   // Add to next.config.ts
   import withBundleAnalyzer from '@next/bundle-analyzer';
@@ -411,6 +434,7 @@
   ```
 
 - [ ] **4.3 — Create Lighthouse audit script**
+
   ```bash
   #!/bin/bash
   # scripts/lighthouse-audit.sh
@@ -438,9 +462,11 @@
   ```
 
 - [ ] **4.4 — Run bundle analyzer**
+
   ```bash
   ANALYZE=true npm run build
   ```
+
   - Review output for large bundles
   - Document findings and optimization opportunities
 
@@ -463,11 +489,13 @@
 ## Task 5: Accessibility Audit
 
 **Files:**
+
 - `__tests__/a11y/pages.test.ts`
 
 ### Steps
 
 - [ ] **5.1 — Install axe-core**
+
   ```bash
   npm install -D @axe-core/playwright  # if using Playwright for E2E
   # or
@@ -475,6 +503,7 @@
   ```
 
 - [ ] **5.2 — Write accessibility tests for all pages**
+
   ```ts
   // __tests__/a11y/pages.test.ts
   import { describe, it, expect } from 'vitest';
@@ -529,17 +558,20 @@
 ## Task 6: Load Testing
 
 **Files:**
+
 - `k6/load-test.js`
 - `k6/stress-test.js`
 
 ### Steps
 
 - [ ] **6.1 — Install k6**
+
   ```bash
   brew install grafana/k6/k6  # macOS
   ```
 
 - [ ] **6.2 — Create load test script**
+
   ```js
   // k6/load-test.js
   import http from 'k6/http';
@@ -550,15 +582,15 @@
 
   export const options = {
     stages: [
-      { duration: '30s', target: 10 },   // Ramp up to 10 users
-      { duration: '1m', target: 10 },    // Stay at 10 users
-      { duration: '30s', target: 50 },   // Ramp up to 50 users
-      { duration: '1m', target: 50 },    // Stay at 50 users
-      { duration: '30s', target: 0 },    // Ramp down
+      { duration: '30s', target: 10 }, // Ramp up to 10 users
+      { duration: '1m', target: 10 }, // Stay at 10 users
+      { duration: '30s', target: 50 }, // Ramp up to 50 users
+      { duration: '1m', target: 50 }, // Stay at 50 users
+      { duration: '30s', target: 0 }, // Ramp down
     ],
     thresholds: {
-      http_req_duration: ['p(95)<500'],   // 95% of requests under 500ms
-      errors: ['rate<0.01'],              // Error rate under 1%
+      http_req_duration: ['p(95)<500'], // 95% of requests under 500ms
+      errors: ['rate<0.01'], // Error rate under 1%
     },
   };
 
@@ -590,6 +622,7 @@
   ```
 
 - [ ] **6.3 — Create stress test script**
+
   ```js
   // k6/stress-test.js
   import http from 'k6/http';
@@ -597,14 +630,14 @@
 
   export const options = {
     stages: [
-      { duration: '1m', target: 100 },   // Ramp to 100 users
-      { duration: '2m', target: 100 },   // Hold at 100
-      { duration: '1m', target: 200 },   // Ramp to 200
-      { duration: '2m', target: 200 },   // Hold at 200
-      { duration: '1m', target: 0 },     // Ramp down
+      { duration: '1m', target: 100 }, // Ramp to 100 users
+      { duration: '2m', target: 100 }, // Hold at 100
+      { duration: '1m', target: 200 }, // Ramp to 200
+      { duration: '2m', target: 200 }, // Hold at 200
+      { duration: '1m', target: 0 }, // Ramp down
     ],
     thresholds: {
-      http_req_duration: ['p(99)<1500'],  // 99% under 1.5s
+      http_req_duration: ['p(99)<1500'], // 99% under 1.5s
     },
   };
 
@@ -612,6 +645,7 @@
   ```
 
 - [ ] **6.4 — Run load tests against local/staging**
+
   ```bash
   k6 run k6/load-test.js
   ```
@@ -629,20 +663,32 @@
 ## Task 7: Data Migration Script
 
 **Files:**
+
 - `scripts/migrate-v1.ts`
 - `scripts/migrate-v1.test.ts`
 
 ### Steps
 
 - [ ] **7.1 — Write unit tests for migration functions**
+
   ```ts
   // scripts/migrate-v1.test.ts
   import { describe, it, expect, vi } from 'vitest';
-  import { transformPodcast, transformUser, transformLearningGraph, validateMigration } from './migrate-v1';
+  import {
+    transformPodcast,
+    transformUser,
+    transformLearningGraph,
+    validateMigration,
+  } from './migrate-v1';
 
   describe('Data migration', () => {
     it('transforms v1 podcast to v2 schema', () => {
-      const v1Podcast = { id: 1, title: 'Test', audio_url: '/uploads/audio.mp3', created_at: '2025-01-01' };
+      const v1Podcast = {
+        id: 1,
+        title: 'Test',
+        audio_url: '/uploads/audio.mp3',
+        created_at: '2025-01-01',
+      };
       const v2Podcast = transformPodcast(v1Podcast);
       expect(v2Podcast.title).toBe('Test');
       expect(v2Podcast.audioUrl).toBe('/uploads/audio.mp3');
@@ -670,6 +716,7 @@
   ```
 
 - [ ] **7.2 — Implement migration script**
+
   ```ts
   // scripts/migrate-v1.ts
   import { PrismaClient as V2Client } from '@prisma/client';
@@ -714,8 +761,12 @@
 
   export function validateMigration(args: { v1Count: number; v2Count: number; entity: string }) {
     const diff = args.v1Count - args.v2Count;
-    if (diff === 0) return { success: true, message: `${args.entity}: ${args.v2Count} migrated successfully` };
-    return { success: false, message: `${diff} ${args.entity} missing (v1: ${args.v1Count}, v2: ${args.v2Count})` };
+    if (diff === 0)
+      return { success: true, message: `${args.entity}: ${args.v2Count} migrated successfully` };
+    return {
+      success: false,
+      message: `${diff} ${args.entity} missing (v1: ${args.v1Count}, v2: ${args.v2Count})`,
+    };
   }
 
   async function migrateUsers(): Promise<MigrationResult> {
@@ -734,7 +785,13 @@
     }
 
     const v2Count = await v2.user.count();
-    return { entity: 'users', v1Count: v1Users.length, v2Count, success: errors.length === 0, errors };
+    return {
+      entity: 'users',
+      v1Count: v1Users.length,
+      v2Count,
+      success: errors.length === 0,
+      errors,
+    };
   }
 
   async function migratePodcasts(): Promise<MigrationResult> {
@@ -751,7 +808,13 @@
     }
 
     const v2Count = await v2.podcast.count();
-    return { entity: 'podcasts', v1Count: v1Podcasts.length, v2Count, success: errors.length === 0, errors };
+    return {
+      entity: 'podcasts',
+      v1Count: v1Podcasts.length,
+      v2Count,
+      success: errors.length === 0,
+      errors,
+    };
   }
 
   async function migrateLearningGraphs(): Promise<MigrationResult> {
@@ -779,7 +842,13 @@
     // ... (similar pattern for each entity)
 
     const v2Count = await v2.learningGraph.count();
-    return { entity: 'learningGraphs', v1Count: v1Graphs.length, v2Count, success: errors.length === 0, errors };
+    return {
+      entity: 'learningGraphs',
+      v1Count: v1Graphs.length,
+      v2Count,
+      success: errors.length === 0,
+      errors,
+    };
   }
 
   async function migrateStorageFiles(): Promise<void> {
@@ -826,6 +895,7 @@
   ```
 
 - [ ] **7.3 — Add migration environment variables to `.env.example`**
+
   ```
   V1_DATABASE_URL=postgresql://user:pass@localhost:5432/podcasthub_v1
   ```
@@ -838,12 +908,13 @@
 ## Task 8: README & Documentation
 
 **Files:**
+
 - `README.md`
 
 ### Steps
 
 - [ ] **8.1 — Write comprehensive README.md with all 13 required sections**
-  The README must include:
+      The README must include:
   1. **Project Title & Description** — Podcast Hub v2: internal podcast management + learning path platform
   2. **Features** — podcast CRUD, audio player, learning paths (graph + linear), bookmarks, progress tracking, search (basic + semantic), analytics, user management
   3. **Tech Stack** — Next.js 16, TypeScript, PostgreSQL, Prisma, Zustand, @xyflow/react, @dnd-kit, Recharts, Azure OpenAI, shadcn/ui
@@ -875,6 +946,7 @@
 ## Task 9: Staging Deployment
 
 **Files:**
+
 - `Dockerfile`
 - `docker-compose.yml`
 - `.dockerignore`
@@ -883,6 +955,7 @@
 ### Steps
 
 - [ ] **9.1 — Create Dockerfile**
+
   ```dockerfile
   # Dockerfile
   FROM node:20-alpine AS base
@@ -924,6 +997,7 @@
   ```
 
 - [ ] **9.2 — Create docker-compose.yml for local testing**
+
   ```yaml
   # docker-compose.yml
   version: '3.8'
@@ -931,7 +1005,7 @@
     app:
       build: .
       ports:
-        - "3000:3000"
+        - '3000:3000'
       environment:
         - DATABASE_URL=postgresql://postgres:postgres@db:5432/podcasthub
         - NEXTAUTH_URL=http://localhost:3000
@@ -941,7 +1015,7 @@
     db:
       image: pgvector/pgvector:pg16
       ports:
-        - "5432:5432"
+        - '5432:5432'
       environment:
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
@@ -954,6 +1028,7 @@
   ```
 
 - [ ] **9.3 — Create `.dockerignore`**
+
   ```
   node_modules
   .next
@@ -968,6 +1043,7 @@
   ```
 
 - [ ] **9.4 — Create staging deployment script**
+
   ```bash
   #!/bin/bash
   # scripts/deploy-staging.sh
@@ -998,12 +1074,14 @@
   ```
 
 - [ ] **9.5 — Deploy to staging**
+
   ```bash
   chmod +x scripts/deploy-staging.sh
   ./scripts/deploy-staging.sh
   ```
 
 - [ ] **9.6 — Run E2E test suite against staging**
+
   ```bash
   BASE_URL=https://podcasthub-staging.azurecontainerapps.io npm run test:e2e
   ```
@@ -1027,25 +1105,31 @@
 ## Task 10: Production Deployment
 
 **Files:**
+
 - `scripts/deploy-production.sh`
 - `scripts/health-check.sh`
 
 ### Steps
 
 - [ ] **10.1 — Run final E2E test suite on staging**
+
   ```bash
   BASE_URL=https://podcasthub-staging.azurecontainerapps.io npm run test:e2e
   ```
+
   - All tests must pass before proceeding
 
 - [ ] **10.2 — Run data migration against production database**
+
   ```bash
   V1_DATABASE_URL=<production-v1-url> DATABASE_URL=<production-v2-url> npx tsx scripts/migrate-v1.ts
   ```
+
   - Review migration summary — all entities should show "OK"
   - Verify row counts match expected values
 
 - [ ] **10.3 — Create production deployment script**
+
   ```bash
   #!/bin/bash
   # scripts/deploy-production.sh
@@ -1083,6 +1167,7 @@
   ```
 
 - [ ] **10.4 — Create health check script**
+
   ```bash
   #!/bin/bash
   # scripts/health-check.sh
@@ -1109,12 +1194,14 @@
   ```
 
 - [ ] **10.5 — Deploy to production**
+
   ```bash
   chmod +x scripts/deploy-production.sh scripts/health-check.sh
   ./scripts/deploy-production.sh
   ```
 
 - [ ] **10.6 — Verify health check endpoint responds 200**
+
   ```bash
   curl -s https://podcasthub-prod.azurecontainerapps.io/api/health | jq .
   ```
