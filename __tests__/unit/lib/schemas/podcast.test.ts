@@ -158,34 +158,34 @@ describe('createPodcastSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects invalid thumbnailUrl', () => {
+  it('rejects empty thumbnailUrl', () => {
     const result = createPodcastSchema.safeParse({
       ...validCreateInput,
-      thumbnailUrl: 'not-a-url',
+      thumbnailUrl: '',
     });
     expect(result.success).toBe(false);
   });
 
-  it('rejects invalid audioShortUrl', () => {
+  it('rejects empty audioShortUrl', () => {
     const result = createPodcastSchema.safeParse({
       ...validCreateInput,
-      audioShortUrl: 'not-a-url',
+      audioShortUrl: '',
     });
     expect(result.success).toBe(false);
   });
 
-  it('rejects invalid audioLongUrl', () => {
+  it('rejects empty audioLongUrl', () => {
     const result = createPodcastSchema.safeParse({
       ...validCreateInput,
-      audioLongUrl: 'not-a-url',
+      audioLongUrl: '',
     });
     expect(result.success).toBe(false);
   });
 
-  it('rejects invalid bulletinUrls entries', () => {
+  it('rejects empty bulletinUrls entries', () => {
     const result = createPodcastSchema.safeParse({
       ...validCreateInput,
-      bulletinUrls: ['not-a-url'],
+      bulletinUrls: [''],
     });
     expect(result.success).toBe(false);
   });

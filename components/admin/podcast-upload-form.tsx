@@ -156,7 +156,7 @@ export function PodcastUploadForm({
       let bulletinUrls = initialData?.bulletinUrls ?? [];
 
       if (thumbnailFile) {
-        const key = await thumbnailUpload.upload(thumbnailFile, 'thumbnail');
+        const key = await thumbnailUpload.upload(thumbnailFile, 'image');
         if (!key) {
           toast.error('Failed to upload thumbnail');
           setIsSubmitting(false);
@@ -166,7 +166,7 @@ export function PodcastUploadForm({
       }
 
       if (audioShortFile) {
-        const key = await audioShortUpload.upload(audioShortFile, 'audio-short');
+        const key = await audioShortUpload.upload(audioShortFile, 'audio');
         if (!key) {
           toast.error('Failed to upload short audio');
           setIsSubmitting(false);
@@ -176,7 +176,7 @@ export function PodcastUploadForm({
       }
 
       if (audioLongFile) {
-        const key = await audioLongUpload.upload(audioLongFile, 'audio-long');
+        const key = await audioLongUpload.upload(audioLongFile, 'audio');
         if (!key) {
           toast.error('Failed to upload long audio');
           setIsSubmitting(false);
@@ -188,7 +188,7 @@ export function PodcastUploadForm({
       if (bulletinFiles.length > 0) {
         const uploadedKeys: string[] = [];
         for (const file of bulletinFiles) {
-          const key = await bulletinUpload.upload(file, 'bulletin');
+          const key = await bulletinUpload.upload(file, 'pdf');
           if (!key) {
             toast.error(`Failed to upload bulletin: ${file.name}`);
             setIsSubmitting(false);

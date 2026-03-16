@@ -50,17 +50,19 @@ export function useFileUpload(): UseFileUploadReturn {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           filename: file.name,
-          contentType: file.type,
+          content_type: file.type,
+          file_size: file.size,
           category,
         }),
       });
 
       if (!presignResponse.ok) {
         const body = await presignResponse.json().catch(() => ({}));
-        throw new Error(body.error || 'Failed to get upload URL');
+        throw new Error(body.message || 'Failed to get upload URL');
       }
 
-      const { url, key } = await presignResponse.json();
+      const { data } = await presignResponse.json();
+      const { upload_url: url, key } = data;
 
       // Step 2: Upload the file via XHR with progress tracking
       await new Promise<void>((resolve, reject) => {

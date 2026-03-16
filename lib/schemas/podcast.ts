@@ -23,14 +23,14 @@ export const createPodcastSchema = z.object({
   year: z.number().int().min(2020).max(2099),
   /** Optional array of string tags. */
   tags: z.array(z.string()).optional(),
-  /** URL to the podcast thumbnail image. */
-  thumbnailUrl: z.url(),
-  /** URL to the short-form audio file. */
-  audioShortUrl: z.url(),
-  /** Optional URL to the long-form audio file. */
-  audioLongUrl: z.url().optional(),
-  /** Optional array of bulletin document URLs. */
-  bulletinUrls: z.array(z.url()).optional(),
+  /** Storage key or URL for the podcast thumbnail image. */
+  thumbnailUrl: z.string().min(1),
+  /** Storage key or URL for the short-form audio file. */
+  audioShortUrl: z.string().min(1),
+  /** Optional storage key or URL for the long-form audio file. */
+  audioLongUrl: z.string().min(1).optional(),
+  /** Optional array of bulletin document storage keys or URLs. */
+  bulletinUrls: z.array(z.string().min(1)).optional(),
 });
 
 /** Inferred type for podcast creation input. */
