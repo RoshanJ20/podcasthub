@@ -1,14 +1,22 @@
 /**
- * Unit tests for the BulletinViewer component.
+ * Unit tests for the AttachmentViewer component.
  *
  * Verifies PDF document rendering, page navigation controls,
- * download button, bulletin selector for multiple PDFs,
+ * download button, attachment selector for multiple PDFs,
  * and empty state handling. Uses mocked react-pdf components.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, act, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BulletinViewer } from '@/components/audio-player/bulletin-viewer';
+import { AttachmentViewer } from '@/components/audio-player/bulletin-viewer';
+
+// Mock ResizeObserver which is not available in jsdom
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
 /** Store the onLoadSuccess callback so we can call it manually. */
 let capturedOnLoadSuccess: ((data: { numPages: number }) => void) | null = null;
@@ -43,31 +51,31 @@ function simulatePdfLoad(numPages: number) {
   });
 }
 
-describe('BulletinViewer', () => {
+describe('AttachmentViewer', () => {
   it('renders the PDF document', () => {
-    const { container } = render(<BulletinViewer urls={['/bulletins/test.pdf']} />);
+    const { container } = render(<AttachmentViewer urls={['/bulletins/test.pdf']} />);
     expect(container.querySelector('[data-testid="pdf-document"]')).not.toBeNull();
   });
 
   it('shows page navigation controls after load', () => {
-    const { container } = render(<BulletinViewer urls={['/bulletins/test.pdf']} />);
+    const { container } = render(<AttachmentViewer urls={['/bulletins/test.pdf']} />);
     simulatePdfLoad(3);
-    expect(container.textContent).toContain('Page 1 of 3');
+    expect(container.textContent).toContain('1 / 3');
     expect(container.querySelector('button[aria-label="Next page"]')).not.toBeNull();
     expect(container.querySelector('button[aria-label="Previous page"]')).not.toBeNull();
   });
 
   it('navigates to next page', async () => {
-    const { container } = render(<BulletinViewer urls={['/bulletins/test.pdf']} />);
+    const { container } = render(<AttachmentViewer urls={['/bulletins/test.pdf']} />);
     simulatePdfLoad(3);
     const user = userEvent.setup();
     const nextBtn = container.querySelector('button[aria-label="Next page"]')!;
     await user.click(nextBtn);
-    expect(container.textContent).toContain('Page 2 of 3');
+    expect(container.textContent).toContain('2 / 3');
   });
 
   it('disables previous button on first page', () => {
-    const { container } = render(<BulletinViewer urls={['/bulletins/test.pdf']} />);
+    const { container } = render(<AttachmentViewer urls={['/bulletins/test.pdf']} />);
     simulatePdfLoad(3);
     const prevBtn = container.querySelector('button[aria-label="Previous page"]');
     expect(prevBtn).not.toBeNull();
@@ -75,28 +83,28 @@ describe('BulletinViewer', () => {
   });
 
   it('renders download link', () => {
-    const { container } = render(<BulletinViewer urls={['/bulletins/test.pdf']} />);
-    const downloadLink = container.querySelector('a[aria-label="Download"]');
+    const { container } = render(<AttachmentViewer urls={['/bulletins/test.pdf']} />);
+    const downloadLink = container.querySelector('a[aria-label="Download PDF"]');
     expect(downloadLink).not.toBeNull();
-    expect(downloadLink!.getAttribute('href')).toBe('/bulletins/test.pdf');
+    expect(downloadLink!.getAttribute('href')).toContain('test.pdf');
   });
 
-  it('shows bulletin selector when multiple PDFs', () => {
+  it('shows attachment selector when multiple PDFs', () => {
     const { container } = render(
-      <BulletinViewer urls={['/bulletins/a.pdf', '/bulletins/b.pdf']} />
+      <AttachmentViewer urls={['/bulletins/a.pdf', '/bulletins/b.pdf']} />
     );
-    const select = container.querySelector('select[aria-label="Select bulletin"]');
+    const select = container.querySelector('select[aria-label="Select attachment"]');
     expect(select).not.toBeNull();
   });
 
-  it('does not show bulletin selector for single PDF', () => {
-    const { container } = render(<BulletinViewer urls={['/bulletins/a.pdf']} />);
-    const select = container.querySelector('select[aria-label="Select bulletin"]');
+  it('does not show attachment selector for single PDF', () => {
+    const { container } = render(<AttachmentViewer urls={['/bulletins/a.pdf']} />);
+    const select = container.querySelector('select[aria-label="Select attachment"]');
     expect(select).toBeNull();
   });
 
-  it('shows empty state when no bulletin URLs', () => {
-    const { container } = render(<BulletinViewer urls={[]} />);
-    expect(container.textContent).toContain('No bulletins available.');
+  it('shows empty state when no attachment URLs', () => {
+    const { container } = render(<AttachmentViewer urls={[]} />);
+    expect(container.textContent).toContain('No attachments available.');
   });
 });

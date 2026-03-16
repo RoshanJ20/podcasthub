@@ -12,7 +12,17 @@ import { usePlayerStore } from '@/stores/player-store';
 import { useHlsPlayer } from '@/hooks/use-hls-player';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Volume1 } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  SkipForward,
+  SkipBack,
+  Volume2,
+  VolumeX,
+  Volume1,
+  Bookmark,
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 /** Format seconds as m:ss or h:mm:ss. */
 function formatTime(seconds: number): string {
@@ -173,6 +183,37 @@ export function AudioPlayer() {
           className="text-xs font-mono"
         >
           {playbackRate}x
+        </Button>
+
+        {/* Bookmark button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={async () => {
+            if (!currentPodcast) return;
+            const ts = Math.floor(currentTime);
+            try {
+              const res = await fetch('/api/bookmarks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  podcastId: currentPodcast.id,
+                  timestampSeconds: ts,
+                }),
+              });
+              if (!res.ok) {
+                toast.error('Failed to add bookmark');
+                return;
+              }
+              toast.success(`Bookmark added at ${formatTime(ts)}`);
+            } catch {
+              toast.error('Failed to add bookmark');
+            }
+          }}
+          aria-label="Add bookmark"
+        >
+          <Bookmark className="h-4 w-4" />
         </Button>
 
         {/* Audio type toggle */}

@@ -3,7 +3,7 @@
  *
  * Orchestrates the full audio experience: loads the podcast into the
  * player store on mount, renders the AudioPlayer, and provides tabbed
- * content for Transcript and Bulletins viewers. Also displays podcast
+ * content for Transcript and Attachments viewers. Also displays podcast
  * metadata (title, domain, year, tags, description).
  */
 'use client';
@@ -12,7 +12,8 @@ import { usePlayerStore } from '@/stores/player-store';
 import { useHlsPlayer } from '@/hooks/use-hls-player';
 import { AudioPlayer } from './audio-player';
 import { TranscriptViewer } from './transcript-viewer';
-import { BulletinViewer } from './bulletin-viewer';
+import { AttachmentViewer } from './bulletin-viewer';
+import { BookmarkPanel } from './bookmark-panel';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import type { TranscriptSegment } from '@/hooks/use-transcript-sync';
@@ -72,7 +73,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
     ? (activeTranscript.segments as TranscriptSegment[])
     : [];
 
-  const hasBulletins = podcast.bulletinUrls.length > 0;
+  const hasAttachments = podcast.bulletinUrls.length > 0;
 
   return (
     <div className="container mx-auto py-8 space-y-6">
@@ -98,16 +99,24 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
       <Tabs defaultValue="transcript">
         <TabsList>
           <TabsTrigger value="transcript">Transcript</TabsTrigger>
-          {hasBulletins && <TabsTrigger value="bulletins">Bulletins</TabsTrigger>}
+          {hasAttachments && <TabsTrigger value="attachments">Attachments</TabsTrigger>}
+          <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
         </TabsList>
         <TabsContent value="transcript">
-          <TranscriptViewer segments={segments} onSeek={seekTo} />
+          <TranscriptViewer
+            segments={segments}
+            fullText={activeTranscript?.fullText}
+            onSeek={seekTo}
+          />
         </TabsContent>
-        {hasBulletins && (
-          <TabsContent value="bulletins">
-            <BulletinViewer urls={podcast.bulletinUrls} />
+        {hasAttachments && (
+          <TabsContent value="attachments">
+            <AttachmentViewer urls={podcast.bulletinUrls} />
           </TabsContent>
         )}
+        <TabsContent value="bookmarks">
+          <BookmarkPanel podcastId={podcast.id} onSeek={seekTo} />
+        </TabsContent>
       </Tabs>
     </div>
   );

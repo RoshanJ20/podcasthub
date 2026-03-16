@@ -44,8 +44,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     const bytes = await body.transformToByteArray();
+
+    // Infer content type from extension if S3 doesn't provide it
+    const contentType =
+      response.ContentType && response.ContentType !== 'application/octet-stream'
+        ? response.ContentType
+        : inferContentType(key);
+
     const headers: Record<string, string> = {
-      'Content-Type': response.ContentType || 'application/octet-stream',
+      'Content-Type': contentType,
       'Cache-Control': 'public, max-age=3600',
     };
 
@@ -69,4 +76,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     console.error('Media proxy error:', error);
     return NextResponse.json({ error: 'File not found' }, { status: 404 });
   }
+}
+
+const MIME_MAP: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.mp3': 'audio/mpeg',
+  '.m4a': 'audio/mp4',
+  '.wav': 'audio/wav',
+  '.ogg': 'audio/ogg',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+};
+
+function inferContentType(key: string): string {
+  const ext = key.substring(key.lastIndexOf('.')).toLowerCase();
+  return MIME_MAP[ext] || 'application/octet-stream';
 }

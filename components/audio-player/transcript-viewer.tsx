@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 
 interface TranscriptViewerProps {
   segments: TranscriptSegment[];
+  fullText?: string;
   onSeek?: (time: number) => void;
 }
 
@@ -22,8 +23,20 @@ function formatTimestamp(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export function TranscriptViewer({ segments, onSeek }: TranscriptViewerProps) {
+export function TranscriptViewer({ segments, fullText, onSeek }: TranscriptViewerProps) {
   const { activeIndex, containerRef } = useTranscriptSync(segments);
+
+  if (segments.length === 0 && fullText) {
+    return (
+      <div className="h-[500px] overflow-y-auto p-4 space-y-4">
+        {fullText.split('\n\n').map((paragraph, index) => (
+          <p key={index} className="text-sm leading-relaxed">
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    );
+  }
 
   if (segments.length === 0) {
     return <p className="text-muted-foreground text-center py-8">No transcript available.</p>;

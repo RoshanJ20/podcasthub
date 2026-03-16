@@ -17,7 +17,7 @@ const securityHeaders = [
   {
     key: 'Content-Security-Policy',
     value:
-      "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; font-src 'self' data:; worker-src 'self' blob:",
+      "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://unpkg.com; font-src 'self' data:; worker-src 'self' blob: https://unpkg.com;",
   },
   {
     key: 'Strict-Transport-Security',

@@ -2,7 +2,7 @@
  * Admin podcast upload/edit form component.
  *
  * Provides a comprehensive form for creating or editing podcasts,
- * including file uploads for thumbnail, audio files, and bulletin
+ * including file uploads for thumbnail, audio files, and attachment
  * documents with real-time progress tracking. Uses React Hook Form
  * with Zod validation and sonner for toast notifications.
  */
@@ -68,6 +68,16 @@ export function PodcastUploadForm({
 }: PodcastUploadFormProps) {
   const [tags, setTags] = useState<string[]>(initialData?.tags ?? []);
   const [tagInput, setTagInput] = useState('');
+  const [shortTranscript, setShortTranscript] = useState(
+    initialData?.transcripts?.find(
+      (t: { transcriptType: string; fullText: string }) => t.transcriptType === 'short'
+    )?.fullText ?? ''
+  );
+  const [longTranscript, setLongTranscript] = useState(
+    initialData?.transcripts?.find(
+      (t: { transcriptType: string; fullText: string }) => t.transcriptType === 'long'
+    )?.fullText ?? ''
+  );
 
   // File state
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -190,7 +200,7 @@ export function PodcastUploadForm({
         for (const file of bulletinFiles) {
           const key = await bulletinUpload.upload(file, 'pdf');
           if (!key) {
-            toast.error(`Failed to upload bulletin: ${file.name}`);
+            toast.error(`Failed to upload attachment: ${file.name}`);
             setIsSubmitting(false);
             return;
           }
@@ -222,6 +232,35 @@ export function PodcastUploadForm({
         const body = await response.json().catch(() => ({}));
         console.error('Podcast save error:', body);
         throw new Error(body.message || 'Failed to save podcast');
+      }
+
+      const savedPodcast = await response.json();
+      const podcastId = savedPodcast.data?.id ?? savedPodcast.id ?? initialData?.id;
+
+      // Save transcripts if provided
+      if (podcastId) {
+        if (shortTranscript.trim()) {
+          await fetch(`/api/podcasts/${podcastId}/transcript`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fullText: shortTranscript.trim(),
+              segments: [],
+              transcriptType: 'short',
+            }),
+          });
+        }
+        if (longTranscript.trim()) {
+          await fetch(`/api/podcasts/${podcastId}/transcript`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fullText: longTranscript.trim(),
+              segments: [],
+              transcriptType: 'long',
+            }),
+          });
+        }
       }
 
       toast.success(
@@ -361,9 +400,9 @@ export function PodcastUploadForm({
             {audioLongUpload.isUploading && <ProgressBar progress={audioLongUpload.progress} />}
           </div>
 
-          {/* Bulletins */}
+          {/* Attachments */}
           <div className="space-y-2">
-            <Label htmlFor="bulletins">Bulletin Documents (Optional)</Label>
+            <Label htmlFor="bulletins">Attachments (Optional)</Label>
             <Input
               id="bulletins"
               type="file"
@@ -372,6 +411,50 @@ export function PodcastUploadForm({
               onChange={(e) => setBulletinFiles(e.target.files ? Array.from(e.target.files) : [])}
             />
             {bulletinUpload.isUploading && <ProgressBar progress={bulletinUpload.progress} />}
+          </div>
+
+          {/* Short Transcript */}
+          <div className="space-y-2">
+            <Label htmlFor="shortTranscript">Short Transcript (Optional)</Label>
+            <Input
+              id="shortTranscript"
+              type="file"
+              accept=".txt,.srt,.vtt,.md"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const text = await file.text();
+                  setShortTranscript(text);
+                }
+              }}
+            />
+            {shortTranscript && (
+              <p className="text-xs text-muted-foreground">
+                Loaded: {shortTranscript.length} characters
+              </p>
+            )}
+          </div>
+
+          {/* Long Transcript */}
+          <div className="space-y-2">
+            <Label htmlFor="longTranscript">Long Transcript (Optional)</Label>
+            <Input
+              id="longTranscript"
+              type="file"
+              accept=".txt,.srt,.vtt,.md"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const text = await file.text();
+                  setLongTranscript(text);
+                }
+              }}
+            />
+            {longTranscript && (
+              <p className="text-xs text-muted-foreground">
+                Loaded: {longTranscript.length} characters
+              </p>
+            )}
           </div>
 
           {/* Submit */}
