@@ -1,9 +1,8 @@
 /**
  * Custom hook for file uploads with progress tracking.
  *
- * Handles fetching a presigned URL from /api/upload, then uploading
- * the file via XMLHttpRequest with real-time progress updates.
- * Designed to work with the admin podcast upload form.
+ * Uploads files directly to /api/upload/file (server-side proxy to MinIO/S3).
+ * This avoids CORS issues that occur with browser-to-MinIO presigned URL uploads.
  */
 'use client';
 
@@ -28,8 +27,8 @@ interface UseFileUploadReturn {
  * @returns Upload state and the upload function.
  *
  * @example
- * const { progress, isUploading, error, uploadedKey, upload } = useFileUpload();
- * const key = await upload(file, 'thumbnail');
+ * const { progress, isUploading, error, upload } = useFileUpload();
+ * const key = await upload(file, 'image');
  */
 export function useFileUpload(): UseFileUploadReturn {
   const [progress, setProgress] = useState(0);
@@ -44,61 +43,48 @@ export function useFileUpload(): UseFileUploadReturn {
     setUploadedKey(null);
 
     try {
-      // Step 1: Request a presigned upload URL from the server
-      const presignResponse = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: file.name,
-          content_type: file.type,
-          file_size: file.size,
-          category,
-        }),
-      });
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('category', category);
 
-      if (!presignResponse.ok) {
-        const body = await presignResponse.json().catch(() => ({}));
-        throw new Error(body.message || 'Failed to get upload URL');
-      }
-
-      const { data } = await presignResponse.json();
-      const { upload_url: url, key } = data;
-
-      // Step 2: Upload the file via XHR with progress tracking
-      await new Promise<void>((resolve, reject) => {
+      // Upload via XHR for progress tracking
+      const result = await new Promise<string>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
         xhr.upload.addEventListener('progress', (event) => {
           if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            setProgress(percent);
+            setProgress(Math.round((event.loaded / event.total) * 100));
           }
         });
 
         xhr.addEventListener('load', () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
+            try {
+              const data = JSON.parse(xhr.responseText);
+              resolve(data.data.key);
+            } catch {
+              reject(new Error('Invalid response from server'));
+            }
           } else {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
+            try {
+              const data = JSON.parse(xhr.responseText);
+              reject(new Error(data.message || `Upload failed (${xhr.status})`));
+            } catch {
+              reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
           }
         });
 
-        xhr.addEventListener('error', () => {
-          reject(new Error('Network error during upload'));
-        });
+        xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+        xhr.addEventListener('abort', () => reject(new Error('Upload was aborted')));
 
-        xhr.addEventListener('abort', () => {
-          reject(new Error('Upload was aborted'));
-        });
-
-        xhr.open('PUT', url);
-        xhr.setRequestHeader('Content-Type', file.type);
-        xhr.send(file);
+        xhr.open('POST', '/api/upload/file');
+        xhr.send(formData);
       });
 
-      setUploadedKey(key);
+      setUploadedKey(result);
       setIsUploading(false);
-      return key;
+      return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Upload failed';
       setError(message);
