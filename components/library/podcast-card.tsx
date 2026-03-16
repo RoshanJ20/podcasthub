@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { resolveStorageUrl } from '@/lib/storage-url';
 
 export interface PodcastCardProps {
   id: string;
@@ -37,7 +38,7 @@ export function PodcastCard({
       <Card className="h-full transition-shadow hover:shadow-lg">
         <div className="relative aspect-video w-full overflow-hidden rounded-t-xl">
           <Image
-            src={thumbnailUrl}
+            src={resolveStorageUrl(thumbnailUrl)}
             alt={title}
             fill
             className="object-cover transition-transform group-hover:scale-105"
