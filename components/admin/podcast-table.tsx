@@ -172,7 +172,7 @@ function SortableRow({ podcast, onRefresh }: { podcast: PodcastData; onRefresh: 
   };
 
   return (
-    <TableRow ref={setNodeRef} style={style}>
+    <TableRow ref={setNodeRef} style={style} className="transition-colors hover:bg-secondary/50">
       <TableCell>
         <button
           className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground"

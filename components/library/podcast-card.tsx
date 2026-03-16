@@ -35,7 +35,7 @@ export function PodcastCard({
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <Link href={`/podcast/${id}` as any} className="group block" data-testid="podcast-card-link">
-      <Card className="h-full transition-shadow hover:shadow-lg">
+      <Card className="h-full transition-all hover:shadow-md active:scale-[0.98]">
         <div className="relative aspect-video w-full overflow-hidden rounded-t-xl">
           <Image
             src={resolveStorageUrl(thumbnailUrl)}

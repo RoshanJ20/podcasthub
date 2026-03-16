@@ -12,6 +12,7 @@
  */
 import Link from 'next/link';
 import { LoginForm } from '@/components/auth/login-form';
+import { LoginPageCard } from '@/components/auth/login-page-card';
 
 /**
  * Props for the login page, including search params from the URL.
@@ -35,7 +36,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background">
-      <div className="w-full max-w-md space-y-8 p-8">
+      <LoginPageCard>
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">Podcast Hub</h1>
           <p className="mt-2 text-muted-foreground">Sign in to your account</p>
@@ -47,7 +48,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Create one
           </Link>
         </p>
-      </div>
+      </LoginPageCard>
     </main>
   );
 }
