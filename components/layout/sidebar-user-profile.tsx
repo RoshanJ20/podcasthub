@@ -18,7 +18,6 @@ import Link from 'next/link';
 import { Settings } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 
 /**
  * Props for the SidebarUserProfile component.
@@ -98,11 +97,13 @@ export function SidebarUserProfile({
   }
 
   return (
-    <div
-      data-testid="sidebar-user-profile"
-      className={cn('flex items-center gap-3 rounded-lg px-3 py-2', 'border-t border-border pt-3')}
-    >
-      {avatar}
+    <div data-testid="sidebar-user-profile" className="flex items-center gap-2.5 px-3 py-2">
+      <Avatar className="size-7 text-[11px]">
+        {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
+        <AvatarFallback aria-label={initials} className="text-[11px]">
+          {initials}
+        </AvatarFallback>
+      </Avatar>
 
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium leading-tight">{name}</p>

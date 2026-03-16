@@ -28,7 +28,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { SidebarNavItem } from '@/components/layout/sidebar-nav-item';
 import { SidebarNowPlaying } from '@/components/layout/sidebar-now-playing';
 import { SidebarUserProfile } from '@/components/layout/sidebar-user-profile';
-import { mainLinks, personalLinks, adminLinks, isRouteActive } from '@/lib/navigation-config';
+import { mainLinks, adminLinks, isRouteActive } from '@/lib/navigation-config';
 
 /**
  * Props for the MobileTopBar component.
@@ -107,23 +107,6 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
                 Main
               </p>
               {mainLinks.map((link) => (
-                <SidebarNavItem
-                  key={link.href}
-                  href={link.href}
-                  label={link.label}
-                  icon={link.icon}
-                  isActive={isRouteActive(link.href, pathname)}
-                  onClick={closeDrawer}
-                />
-              ))}
-
-              <div className="my-1" />
-
-              {/* Personal links */}
-              <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Your Stuff
-              </p>
-              {personalLinks.map((link) => (
                 <SidebarNavItem
                   key={link.href}
                   href={link.href}
