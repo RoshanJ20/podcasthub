@@ -23,18 +23,7 @@ import {
   Bookmark,
 } from 'lucide-react';
 import { toast } from 'sonner';
-
-/** Format seconds as m:ss or h:mm:ss. */
-function formatTime(seconds: number): string {
-  if (!isFinite(seconds) || seconds < 0) return '0:00';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  }
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
+import { formatTime } from '@/lib/format-time';
 
 /** Playback speed options. */
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
@@ -192,21 +181,21 @@ export function AudioPlayer() {
           className="h-8 w-8"
           onClick={async () => {
             if (!currentPodcast) return;
-            const ts = Math.floor(currentTime);
+            const timestampSeconds = Math.floor(currentTime);
             try {
-              const res = await fetch('/api/bookmarks', {
+              const response = await fetch('/api/bookmarks', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                   podcastId: currentPodcast.id,
-                  timestampSeconds: ts,
+                  timestampSeconds,
                 }),
               });
-              if (!res.ok) {
+              if (!response.ok) {
                 toast.error('Failed to add bookmark');
                 return;
               }
-              toast.success(`Bookmark added at ${formatTime(ts)}`);
+              toast.success(`Bookmark added at ${formatTime(timestampSeconds)}`);
             } catch {
               toast.error('Failed to add bookmark');
             }

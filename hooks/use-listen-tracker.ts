@@ -35,8 +35,8 @@ export function useListenTracker(podcastId: string | null) {
             podcastId,
           }),
         });
-      } catch {
-        // Silently fail — fire-and-forget
+      } catch (error) {
+        console.warn('Activity tracking failed:', error);
       }
     };
 

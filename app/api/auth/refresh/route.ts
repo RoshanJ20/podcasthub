@@ -23,6 +23,9 @@ import { verifyRefreshToken, signAccessToken, signRefreshToken } from '@/lib/aut
 import { REFRESH_TOKEN_COOKIE, setAuthCookies } from '@/lib/auth/cookies';
 import { prisma } from '@/lib/db';
 import { unauthorized, internalError, createErrorResponse } from '@/lib/api/errors';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('auth-refresh');
 
 /**
  * Handles JWT token rotation via refresh token.
@@ -89,7 +92,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return response;
   } catch (error) {
-    console.error('Token refresh error:', error);
+    log.error({ error }, 'Token refresh failed');
     return createErrorResponse(internalError());
   }
 }

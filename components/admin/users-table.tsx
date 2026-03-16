@@ -1,3 +1,11 @@
+/**
+ * Users management table for the admin dashboard.
+ *
+ * Key responsibilities:
+ * - Displays paginated list of registered users
+ * - Supports search filtering by name or email
+ * - Allows admin role changes with confirmation dialog
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -29,6 +37,11 @@ interface UserData {
 
 const ROLES = ['public', 'admin', 'superadmin'];
 
+/**
+ * Renders a paginated, searchable table of users with role management.
+ *
+ * @returns Users management table with search, pagination, and role change controls
+ */
 export function UsersTable() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [total, setTotal] = useState(0);
@@ -74,8 +87,8 @@ export function UsersTable() {
       });
       if (res.ok) {
         setUsers((prev) =>
-          prev.map((u) =>
-            u.id === pendingRoleChange.userId ? { ...u, role: pendingRoleChange.role } : u
+          prev.map((user) =>
+            user.id === pendingRoleChange.userId ? { ...user, role: pendingRoleChange.role } : user
           )
         );
       }

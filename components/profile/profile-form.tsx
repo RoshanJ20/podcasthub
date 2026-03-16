@@ -50,8 +50,8 @@ export function ProfileForm() {
           totalListens: 0, // Will be populated when activity endpoint supports counts
           totalBookmarks: bookmarkData.pagination?.total ?? 0,
         });
-      } catch {
-        // Fail silently
+      } catch (error) {
+        console.warn('Failed to fetch profile stats:', error);
       } finally {
         setStatsLoading(false);
       }

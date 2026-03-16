@@ -75,6 +75,7 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
 
     const podcast = await prisma.podcast.update({
       where: { id },
+      // WORKAROUND: Prisma create returns broader type than our schema output — safe to cast
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: result.data as any,
     });

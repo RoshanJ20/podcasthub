@@ -14,6 +14,7 @@ import {
   internalError,
   notFound,
   forbidden,
+  badRequest,
 } from '@/lib/api/errors';
 import { updateBookmarkSchema } from '@/lib/schemas/bookmark';
 
@@ -34,7 +35,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const parsed = updateBookmarkSchema.safeParse(body);
     if (!parsed.success) {
       return createErrorResponse(
-        new ApiError(400, 'BAD_REQUEST' as never, 'Invalid update data', parsed.error.flatten())
+        badRequest('Invalid update data', parsed.error.flatten())
       );
     }
 

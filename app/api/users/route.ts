@@ -49,12 +49,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     ]);
 
     // Flatten role from relation
-    const data = users.map((u) => ({
-      id: u.id,
-      name: u.displayName,
-      email: u.email,
-      role: u.role?.role ?? 'public',
-      createdAt: u.createdAt,
+    const data = users.map((user) => ({
+      id: user.id,
+      name: user.displayName,
+      email: user.email,
+      role: user.role?.role ?? 'public',
+      createdAt: user.createdAt,
     }));
 
     return NextResponse.json({ data, total, page, limit });

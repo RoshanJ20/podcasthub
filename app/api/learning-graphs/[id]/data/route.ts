@@ -89,7 +89,7 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
       return createErrorResponse(badRequest('episodes array is required'));
     }
 
-    const existingEpisodeIds = new Set(graph.episodes.map((e: { id: string }) => e.id));
+    const existingEpisodeIds = new Set(graph.episodes.map((episode: { id: string }) => episode.id));
     const incomingIds = new Set<string>();
     const tempIdToRealId = new Map<string, string>();
 

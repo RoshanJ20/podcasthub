@@ -8,7 +8,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { ApiError, createErrorResponse, notFound, internalError } from '@/lib/api/errors';
+import { ApiError, createErrorResponse, notFound, badRequest, internalError } from '@/lib/api/errors';
 import { updateLearningGraphSchema } from '@/lib/schemas/learning-graph';
 import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
 
@@ -67,7 +67,7 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
     const result = updateLearningGraphSchema.safeParse(body);
     if (!result.success) {
       return createErrorResponse(
-        new ApiError(400, 'BAD_REQUEST' as never, 'Validation failed', result.error.flatten())
+        badRequest('Validation failed', result.error.flatten())
       );
     }
 

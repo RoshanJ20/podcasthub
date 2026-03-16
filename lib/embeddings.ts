@@ -54,7 +54,9 @@ export async function generateEmbedding(
 
     if (response.status === 429 || response.status >= 500) {
       if (attempt < maxRetries - 1) {
-        await new Promise((resolve) => setTimeout(resolve, retryDelayMs * (attempt + 1)));
+        await new Promise((resolve) =>
+          setTimeout(resolve, retryDelayMs * Math.pow(2, attempt) + Math.random() * 1000)
+        );
         continue;
       }
     }

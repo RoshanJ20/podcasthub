@@ -11,7 +11,8 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
-import { SidebarNowPlaying, formatTime } from '@/components/layout/sidebar-now-playing';
+import { SidebarNowPlaying } from '@/components/layout/sidebar-now-playing';
+import { formatTime } from '@/lib/format-time';
 import { usePlayerStore } from '@/stores/player-store';
 
 // Mock next/image — jsdom does not implement it; replace with a plain <img>.

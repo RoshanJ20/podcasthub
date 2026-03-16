@@ -40,6 +40,9 @@ import {
   formatFileSize,
 } from '@/lib/upload';
 import { generatePresignedUploadUrl } from '@/lib/storage';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('upload-api');
 
 /** Zod schema for validating upload request body. */
 const uploadRequestSchema = z.object({
@@ -111,7 +114,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return createErrorResponse(error);
     }
 
-    console.error('Upload error:', error);
+    log.error({ error }, 'Podcast upload failed');
     return createErrorResponse(internalError());
   }
 }

@@ -17,6 +17,14 @@ export interface PaginationControlsProps {
   totalPages: number;
 }
 
+/**
+ * Renders pagination controls with previous/next buttons and page indicator.
+ *
+ * @param props - Component props
+ * @param props.page - Current page number
+ * @param props.totalPages - Total number of pages
+ * @returns Pagination bar with prev/next buttons and page count display, or null if only one page
+ */
 export function PaginationControls({ page, totalPages }: PaginationControlsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();

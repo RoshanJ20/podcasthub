@@ -75,7 +75,7 @@ export function PodcastTable({
     })
   );
 
-  const podcastIds = useMemo(() => podcasts.map((p) => p.id), [podcasts]);
+  const podcastIds = useMemo(() => podcasts.map((podcast) => podcast.id), [podcasts]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -84,8 +84,8 @@ export function PodcastTable({
       return;
     }
 
-    const oldIndex = podcasts.findIndex((p) => p.id === active.id);
-    const newIndex = podcasts.findIndex((p) => p.id === over.id);
+    const oldIndex = podcasts.findIndex((podcast) => podcast.id === active.id);
+    const newIndex = podcasts.findIndex((podcast) => podcast.id === over.id);
 
     const reordered = arrayMove(podcasts, oldIndex, newIndex);
     setPodcasts(reordered);

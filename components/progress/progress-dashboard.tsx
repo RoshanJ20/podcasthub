@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatTime } from '@/lib/format-time';
 
 interface ProgressRecord {
   id: string;
@@ -61,12 +62,6 @@ function groupByGraph(progress: ProgressRecord[]): GraphProgress[] {
   return Array.from(map.values());
 }
 
-function formatTimestamp(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
 export function ProgressDashboard() {
   const [progress, setProgress] = useState<ProgressRecord[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -84,8 +79,8 @@ export function ProgressDashboard() {
 
         setProgress(progressData.data ?? []);
         setBookmarks(bookmarksData.data ?? []);
-      } catch {
-        // Fail silently
+      } catch (error) {
+        console.warn('Failed to fetch progress data:', error);
       } finally {
         setLoading(false);
       }
@@ -173,7 +168,7 @@ export function ProgressDashboard() {
               <CardContent className="pt-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium">{formatTimestamp(bm.timestampSeconds)}</p>
+                    <p className="font-medium">{formatTime(bm.timestampSeconds)}</p>
                     {bm.note && <p className="text-sm text-muted-foreground mt-1">{bm.note}</p>}
                   </div>
                   <Badge variant="outline">{new Date(bm.createdAt).toLocaleDateString()}</Badge>

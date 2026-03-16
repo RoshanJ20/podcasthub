@@ -28,13 +28,13 @@ export function PathListClient({ paths }: PathListClientProps) {
   useEffect(() => {
     async function fetchProgress() {
       try {
-        const res = await fetch('/api/progress');
-        if (!res.ok) return;
-        const json = await res.json();
+        const response = await fetch('/api/progress');
+        if (!response.ok) return;
+        const progressResponse = await response.json();
         // Count completed episodes per graph
         const counts: Record<string, number> = {};
-        for (const p of json.data ?? []) {
-          const graphId = p.graphId ?? p.graph?.id;
+        for (const progress of progressResponse.data ?? []) {
+          const graphId = progress.graphId ?? progress.graph?.id;
           if (graphId) {
             counts[graphId] = (counts[graphId] || 0) + 1;
           }

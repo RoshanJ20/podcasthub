@@ -19,7 +19,12 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  });
   // @ts-expect-error — pg Pool type mismatch between @types/pg and @prisma/adapter-pg
   const adapter = new PrismaPg(pool);
   return new PrismaClient({
