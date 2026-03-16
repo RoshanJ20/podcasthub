@@ -140,14 +140,24 @@ Must parse `x-user-domains` header (JSON string) and return `domains` array.
 
 ### Token Refresh Strategy
 
-**Constraint:** The middleware runs in the Edge runtime, which cannot use Prisma or make database calls. The current refresh logic in middleware (`signNewAccessToken(refreshPayload, accessSecret)`) uses only the refresh token's payload — no DB lookup.
+**Constraint:** The middleware runs in the Edge runtime, which cannot use Prisma or make database calls. The current refresh logic in middleware (`signNewAccessToken(refreshPayload, accessSecret)`) uses only the refresh token's payload — no DB lookup. The middleware cannot redirect to an internal API route or make fetch calls to itself reliably.
 
-**Solution:** Move token refresh with domain re-fetch to a dedicated API route:
+**Solution: Two-layer approach:**
 
-- New route: `POST /api/auth/refresh` (Node.js runtime)
-- When the middleware detects an expired access token but valid refresh token, instead of signing a new access token inline, it redirects the request to `/api/auth/refresh`
-- The refresh endpoint queries `UserRole` (including `domains`) from the database, builds a fresh JWT payload, signs a new access token, and sets the cookie
-- This ensures domain assignment changes by a superadmin propagate on the next access token expiry (within 15 minutes)
+**Layer 1 — Middleware inline refresh (seamless UX, potentially stale domains):**
+
+The middleware continues to sign a new access token inline from the refresh token payload when the access token expires. This keeps requests flowing without interruption. The new access token will contain `domains` from the refresh token — which may be stale if a superadmin changed domains since login.
+
+**Layer 2 — Client-initiated refresh (fresh domains from DB):**
+
+- New route: `POST /api/auth/refresh` (Node.js runtime, not Edge)
+- Queries `UserRole` (including `domains`) from the database, builds a fresh JWT payload, signs new access + refresh tokens, and sets cookies
+- Returns `{ user: { id, email, displayName, role, domains } }`
+- Returns 401 if the refresh token is missing or invalid
+- The admin layout calls this endpoint **on mount** (once per page load) to ensure the JWT always has DB-fresh domains
+- This means domain changes propagate on the admin's next page load — typically faster than 15 minutes
+
+**Why this works:** The middleware's inline refresh ensures no requests are blocked. The client-initiated refresh ensures domain data stays current. The admin UI always calls `/api/auth/refresh` on mount, so domain changes by a superadmin are picked up on the next navigation. For the brief window between the inline refresh and the client refresh, the admin may have stale domains — but since API routes also enforce domain access, a 403 is the worst case (not a security hole).
 
 **Backward compatibility during deployment:** JWTs issued before this change will not contain a `domains` field. All code parsing the JWT must treat a missing `domains` field as `[]` (empty array). This means existing admins will have no domain access until they re-login or their token refreshes — which is the intended behaviour (forces explicit domain assignment by superadmin).
 
@@ -185,7 +195,7 @@ function assertDomainAccess(user: JwtPayload, domain: string): void {
  * @param user - The authenticated user's JWT payload
  * @returns Prisma where clause for domain filtering
  */
-function buildDomainFilter(user: JwtPayload): Record<string, unknown> {
+function buildDomainFilter(user: JwtPayload): { domain?: { in: string[] } } {
   if (user.role === 'superadmin') return {};
   return { domain: { in: user.domains } };
 }
@@ -207,6 +217,7 @@ The current `GET /api/podcasts` serves both public and admin consumers with no d
 
 - **Public GET** (`GET /api/podcasts`, `GET /api/learning-graphs`): Unchanged. No domain filtering. Available to all users.
 - **Admin GET**: The existing routes detect whether the caller is an admin (via `x-user-role` header). When the caller is an admin and an `admin=true` query parameter is present, apply `buildDomainFilter(user)` to scope results. This avoids creating separate `/api/admin/podcasts` routes and keeps the API surface small.
+- **Admin without `admin=true`**: Gets the unfiltered public response. The admin UI must always pass `admin=true` when fetching data for admin pages. This is handled in the admin page components, not by the end user.
 
 ### Podcasts (`/api/podcasts`)
 
