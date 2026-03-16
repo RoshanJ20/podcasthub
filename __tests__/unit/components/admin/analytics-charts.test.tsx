@@ -12,6 +12,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { AnalyticsCharts } from '@/components/admin/analytics-charts';
 
+// Mock matchMedia for useReducedMotion hook used by AnimatedNumber
+beforeEach(() => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn().mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    })
+  );
+});
+
 /**
  * Mock recharts components to inspect rendered props in jsdom.
  *
