@@ -1,0 +1,38 @@
+graph LR
+    subgraph LearningGraph
+        LG["LearningGraph\nid, title, domain\npathType: linear or graph\nisPublished, createdBy"]
+    end
+
+    subgraph Episodes
+        E1["Episode start\nid, title, sortOrder=0\nnodeType: start\npositionX, positionY"]
+        E2["Episode default\nnodeType: default\nsortOrder=1"]
+        E3["Episode milestone\nnodeType: milestone\nsortOrder=2"]
+        E4["Episode end\nnodeType: end\nsortOrder=3"]
+    end
+
+    subgraph Tracking
+        UP["UserProgress\nuserId + episodeId\ncompletedAt"]
+    end
+
+    LG -->|"has many"| E1
+    LG -->|"has many"| E2
+    LG -->|"has many"| E3
+    LG -->|"has many"| E4
+
+    E1 -->|"Edge"| E2
+    E1 -->|"Edge"| E3
+    E2 -->|"Edge"| E4
+    E3 -->|"Edge"| E4
+
+    E1 -.->|"tracked by"| UP
+    E2 -.->|"tracked by"| UP
+    E3 -.->|"tracked by"| UP
+    E4 -.->|"tracked by"| UP
+
+    classDef graphNode fill:#7c3aed,color:#fff
+    classDef episode fill:#2563eb,color:#fff
+    classDef tracking fill:#059669,color:#fff
+
+    class LG graphNode
+    class E1,E2,E3,E4 episode
+    class UP tracking

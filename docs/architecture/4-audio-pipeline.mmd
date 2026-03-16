@@ -1,0 +1,45 @@
+sequenceDiagram
+    actor A as Admin
+    participant Upload as /api/upload
+    participant S3 as MinIO / Azure Blob
+    participant FFmpeg as FFmpeg
+
+    A->>Upload: POST filename, content_type, category audio
+    Upload->>Upload: Validate MIME type mp3/m4a/wav/ogg
+    Upload->>Upload: Check size under 500MB
+    Upload->>Upload: Generate key audio/uuid/filename
+    Upload->>S3: Generate presigned PUT URL 1hr
+    S3-->>Upload: Signed URL
+    Upload-->>A: upload_url, key, bucket
+    A->>S3: PUT raw audio file via presigned URL
+    Note over S3,FFmpeg: FFmpeg transcodes to HLS segments .m3u8 + .ts
+
+    actor U as Listener
+    participant Player as Audio Player
+    participant Hook as useHlsPlayer
+    participant Media as /api/media
+    participant Store as Player Store Zustand
+
+    U->>Player: Click play on podcast
+    Player->>Store: loadPodcast with id, title, audioShortUrl, audioLongUrl
+    Store-->>Hook: currentPodcast changed
+    Hook->>Hook: Resolve URL via /api/media?key=encoded
+    alt HLS stream .m3u8
+        Hook->>Hook: new Hls loadSource attachMedia
+    else Direct file
+        Hook->>Hook: audio.src = url
+    end
+
+    Hook->>Media: GET /api/media?key=audio/uuid/file.mp3
+    Media->>S3: GetObject with Range header if seeking
+    S3-->>Media: Audio bytes + Content-Range
+    Media-->>Hook: 206 Partial Content
+
+    Hook->>Store: setDuration
+    loop Every timeupdate event
+        Hook->>Store: setCurrentTime
+    end
+
+    U->>Player: Toggle Short/Long audio
+    Player->>Store: toggleAudioType
+    Store-->>Hook: audioType changed, new URL loaded

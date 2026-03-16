@@ -1,0 +1,48 @@
+graph TD
+    Req["Incoming Request"] --> MW["Edge Middleware\nmiddleware.ts"]
+
+    MW --> ClassifyRoute{"Route\nClassification"}
+
+    ClassifyRoute -->|"/ /login /register\n/bulletins /podcast/*"| Public["Allow Through\nNo Auth"]
+    ClassifyRoute -->|"/api/auth/*"| AuthRoute["Allow Through\nAuth Endpoints"]
+    ClassifyRoute -->|"/api/health\n/api/media"| Utility["Allow Through\nUtility"]
+    ClassifyRoute -->|"/admin/*"| AdminCheck{"JWT Valid?\nRole admin or superadmin?"}
+    ClassifyRoute -->|"Everything else"| AuthCheck{"JWT Valid?"}
+    ClassifyRoute -->|"GET /api/podcasts\nGET /api/search\nGET /api/learning-graphs"| PublicAPI["Allow Through\nPublic API"]
+
+    AuthCheck -->|"Valid"| InjectHeaders["Inject Headers\nx-user-id\nx-user-email\nx-user-role"]
+    AuthCheck -->|"Expired"| TryRefresh{"Refresh\nToken Valid?"}
+    AuthCheck -->|"Missing"| Redirect302["302 to /login?redirectTo=..."]
+
+    TryRefresh -->|"Yes"| SignNew["Sign New Access Token\nSet Cookie\nContinue Request"]
+    TryRefresh -->|"No"| Redirect302
+
+    AdminCheck -->|"Valid + Correct Role"| InjectHeaders
+    AdminCheck -->|"Wrong Role"| Forbidden["302 to /unauthorized"]
+    AdminCheck -->|"No Token"| Redirect302
+
+    InjectHeaders --> Handler["API Route Handler\nor Page Component"]
+
+    Handler --> ValidateInput["Zod Schema\nValidation"]
+    ValidateInput -->|"Invalid"| Error422["422 Validation Failed"]
+    ValidateInput -->|"Valid"| BusinessLogic["Business Logic\nPrisma queries,\nembeddings, storage"]
+
+    BusinessLogic -->|"Success"| Response200["200/201 JSON Response"]
+    BusinessLogic -->|"Not Found"| Error404["404 Not Found"]
+    BusinessLogic -->|"Error"| Error500["500 Internal Error"]
+
+    Error422 --> ErrorFormat["Consistent Error Schema\nstatus, error_code,\nmessage, details, request_id"]
+    Error404 --> ErrorFormat
+    Error500 --> ErrorFormat
+
+    classDef mw fill:#d4456e,color:#fff
+    classDef allow fill:#059669,color:#fff
+    classDef deny fill:#dc2626,color:#fff
+    classDef logic fill:#2563eb,color:#fff
+    classDef check fill:#d97706,color:#fff
+
+    class MW mw
+    class Public,AuthRoute,Utility,PublicAPI,InjectHeaders,SignNew allow
+    class Redirect302,Forbidden,Error422,Error404,Error500 deny
+    class Handler,ValidateInput,BusinessLogic,Response200 logic
+    class ClassifyRoute,AuthCheck,AdminCheck,TryRefresh check

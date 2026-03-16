@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: podcasthub
+          POSTGRES_PASSWORD: podcasthub_dev
+          POSTGRES_DB: podcasthub
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+
+      # Step 1: Format check
+      - name: Prettier check
+        run: npx prettier --check .
+
+      # Step 2: Lint
+      - name: ESLint
+        run: npm run lint
+
+      # Step 3: Type check
+      - name: TypeScript
+        run: npm run typecheck
+
+      # Step 4: Generate Prisma client
+      - name: Prisma generate
+        run: npx prisma generate
+
+      # Step 5: Run migrations
+      - name: Prisma migrate
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://podcasthub:podcasthub_dev@localhost:5432/podcasthub
+
+      # Step 6: Unit + Integration tests with coverage
+      - name: Tests
+        run: npm run test:coverage
+        env:
+          DATABASE_URL: postgresql://podcasthub:podcasthub_dev@localhost:5432/podcasthub
+          JWT_ACCESS_SECRET: ci-test-access-secret-min-32-chars!!
+          JWT_REFRESH_SECRET: ci-test-refresh-secret-min-32-chars!!
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      # Step 7: Build
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://podcasthub:podcasthub_dev@localhost:5432/podcasthub
+          JWT_ACCESS_SECRET: ci-test-access-secret-min-32-chars!!
+          JWT_REFRESH_SECRET: ci-test-refresh-secret-min-32-chars!!
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      # Step 8: Upload coverage report
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/

@@ -1,0 +1,197 @@
+// Podcast Hub v2 — Database Schema
+// PostgreSQL 16 with pgvector extension for vector similarity search
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector"), uuidOssp(map: "uuid-ossp")]
+}
+
+model User {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  displayName  String?  @map("display_name")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  role           UserRole?
+  bookmarks      Bookmark[]
+  progress       UserProgress[]
+  activity       UserActivity[]
+  learningGraphs LearningGraph[] @relation("CreatedBy")
+
+  @@map("users")
+}
+
+model Podcast {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title         String
+  description   String
+  domain        String
+  year          Int
+  tags          String[] @default([])
+  thumbnailUrl  String   @map("thumbnail_url")
+  audioShortUrl String   @map("audio_short_url")
+  audioLongUrl  String?  @map("audio_long_url")
+  bulletinUrls  String[] @default([]) @map("bulletin_urls")
+  sortOrder     Int      @default(0) @map("sort_order")
+  isArchived    Boolean  @default(false) @map("is_archived")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  transcripts Transcript[]
+  bookmarks   Bookmark[]
+  activity    UserActivity[] @relation("ActivityPodcast")
+
+  @@map("podcasts")
+}
+
+model Transcript {
+  id             String                          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  podcastId      String                          @map("podcast_id") @db.Uuid
+  fullText       String                          @map("full_text")
+  segments       Json                            @default("[]")
+  embedding      Unsupported("vector(1536)")?
+  transcriptType String                          @default("short") @map("transcript_type")
+  createdAt      DateTime                        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime                        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  podcast Podcast @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+
+  @@unique([podcastId, transcriptType])
+  @@map("transcripts")
+}
+
+model LearningGraph {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title        String
+  description  String?
+  domain       String
+  pathType     String   @default("linear") @map("path_type")
+  thumbnailUrl String?  @map("thumbnail_url")
+  isPublished  Boolean  @default(true) @map("is_published")
+  createdBy    String?  @map("created_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  creator  User?              @relation("CreatedBy", fields: [createdBy], references: [id])
+  episodes Episode[]
+  edges    LearningPathEdge[]
+  progress UserProgress[]
+  activity UserActivity[]     @relation("ActivityGraph")
+
+  @@map("learning_graphs")
+}
+
+model Episode {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  graphId     String   @map("graph_id") @db.Uuid
+  title        String
+  description  String?
+  thumbnailUrl String?  @map("thumbnail_url")
+  audioUrl     String   @map("audio_url")
+  transcript  Json     @default("[]")
+  positionX   Float    @default(0) @map("position_x") @db.Real
+  positionY   Float    @default(0) @map("position_y") @db.Real
+  nodeType    String   @default("default") @map("node_type")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  graph       LearningGraph      @relation(fields: [graphId], references: [id], onDelete: Cascade)
+  sourceEdges LearningPathEdge[] @relation("SourceEpisode")
+  targetEdges LearningPathEdge[] @relation("TargetEpisode")
+  progress    UserProgress[]
+  activity    UserActivity[]     @relation("ActivityEpisode")
+
+  @@index([graphId])
+  @@map("episodes")
+}
+
+model LearningPathEdge {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  graphId         String   @map("graph_id") @db.Uuid
+  sourceEpisodeId String   @map("source_episode_id") @db.Uuid
+  targetEpisodeId String   @map("target_episode_id") @db.Uuid
+  label           String?
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  graph         LearningGraph @relation(fields: [graphId], references: [id], onDelete: Cascade)
+  sourceEpisode Episode       @relation("SourceEpisode", fields: [sourceEpisodeId], references: [id], onDelete: Cascade)
+  targetEpisode Episode       @relation("TargetEpisode", fields: [targetEpisodeId], references: [id], onDelete: Cascade)
+
+  @@index([graphId])
+  @@map("learning_path_edges")
+}
+
+model Bookmark {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  podcastId        String   @map("podcast_id") @db.Uuid
+  timestampSeconds Float    @map("timestamp_seconds") @db.Real
+  note             String?
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  podcast Podcast @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([podcastId])
+  @@map("bookmarks")
+}
+
+model UserRole {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  role      String   @default("public")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_roles")
+}
+
+model UserProgress {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  graphId     String   @map("graph_id") @db.Uuid
+  episodeId   String   @map("episode_id") @db.Uuid
+  completedAt DateTime @default(now()) @map("completed_at") @db.Timestamptz
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  graph   LearningGraph @relation(fields: [graphId], references: [id], onDelete: Cascade)
+  episode Episode       @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, episodeId])
+  @@index([userId])
+  @@index([graphId])
+  @@map("user_progress")
+}
+
+model UserActivity {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  activityType String   @map("activity_type")
+  podcastId    String?  @map("podcast_id") @db.Uuid
+  episodeId    String?  @map("episode_id") @db.Uuid
+  graphId      String?  @map("graph_id") @db.Uuid
+  metadata     Json     @default("{}")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  podcast Podcast?       @relation("ActivityPodcast", fields: [podcastId], references: [id], onDelete: SetNull)
+  episode Episode?       @relation("ActivityEpisode", fields: [episodeId], references: [id], onDelete: SetNull)
+  graph   LearningGraph? @relation("ActivityGraph", fields: [graphId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([activityType])
+  @@index([createdAt])
+  @@map("user_activity")
+}

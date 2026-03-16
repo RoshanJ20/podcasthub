@@ -1,0 +1,40 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run build
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.APP_URL }}
+
+      - name: Build Docker image
+        run: docker build -t podcast-hub:${{ github.sha }} .
+
+      - name: Push to container registry
+        run: |
+          docker tag podcast-hub:${{ github.sha }} ${{ secrets.REGISTRY_URL }}/podcast-hub:${{ github.sha }}
+          docker push ${{ secrets.REGISTRY_URL }}/podcast-hub:${{ github.sha }}
+
+      - name: Deploy to Azure Container Apps
+        run: |
+          az containerapp update \
+            --name podcast-hub \
+            --resource-group ${{ secrets.AZURE_RG }} \
+            --image ${{ secrets.REGISTRY_URL }}/podcast-hub:${{ github.sha }}
