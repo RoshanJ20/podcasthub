@@ -31,8 +31,11 @@ export default async function AdminLearningGraphEditorPage({
   if (!graph) return notFound();
 
   return (
-    <div className="container py-6">
-      <h1 className="text-2xl font-bold mb-4">{graph.title}</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight">{graph.title}</h1>
+        <p className="text-sm text-muted-foreground mt-1">Edit episodes, order, and connections.</p>
+      </div>
       <GraphEditorInitializer graphId={id} episodes={graph.episodes} edges={graph.edges} />
       <EditorTabs defaultTab={graph.pathType === 'graph' ? 'graph' : 'linear'}>
         <LinearEditor graphId={id} />

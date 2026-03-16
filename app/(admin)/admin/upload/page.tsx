@@ -27,7 +27,7 @@ export default function UploadPage() {
       </nav>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Upload New Podcast</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Upload New Podcast</h1>
       </div>
 
       <PodcastUploadWizard mode="create" onSuccess={() => router.push('/admin')} />

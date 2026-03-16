@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+
 import {
   Select,
   SelectContent,
@@ -272,11 +272,13 @@ export function PodcastUploadForm({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{mode === 'create' ? 'Upload New Podcast' : 'Edit Podcast'}</CardTitle>
+    <Card className="rounded-xl border border-border bg-card">
+      <CardHeader className="border-b border-border px-6 py-4">
+        <CardTitle className="text-sm font-semibold">
+          {mode === 'create' ? 'Upload New Podcast' : 'Edit Podcast'}
+        </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Title */}
           <div className="space-y-2">
@@ -351,15 +353,14 @@ export function PodcastUploadForm({
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {tags.map((tag) => (
-                  <Badge
+                  <span
                     key={tag}
-                    variant="secondary"
-                    className="cursor-pointer"
+                    className="inline-flex cursor-pointer items-center rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:border-border hover:bg-secondary/60 transition-colors"
                     onClick={() => handleRemoveTag(tag)}
                   >
                     {tag}
                     <X className="ml-1 h-3 w-3" />
-                  </Badge>
+                  </span>
                 ))}
               </div>
             )}

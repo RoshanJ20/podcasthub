@@ -36,7 +36,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { PodcastTableActions } from '@/components/admin/podcast-table-actions';
 import type { PodcastData } from '@/lib/types';
 
@@ -130,12 +129,20 @@ export function PodcastTable({
         <SortableContext items={podcastIds} strategy={verticalListSortingStrategy}>
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="border-border/50 hover:bg-transparent">
                 <TableHead className="w-12" />
-                <TableHead>Title</TableHead>
-                <TableHead>Domain</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Title
+                </TableHead>
+                <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Domain
+                </TableHead>
+                <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Year
+                </TableHead>
+                <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Status
+                </TableHead>
                 <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
@@ -147,7 +154,7 @@ export function PodcastTable({
           </Table>
         </SortableContext>
       </DndContext>
-      <div className="flex items-center justify-between px-2 py-4 text-sm text-muted-foreground">
+      <div className="flex items-center justify-between border-t border-border/50 px-5 py-3 text-xs text-muted-foreground">
         <span>
           Showing {podcasts.length} of {pagination.total} podcasts
         </span>
@@ -172,23 +179,39 @@ function SortableRow({ podcast, onRefresh }: { podcast: PodcastData; onRefresh: 
   };
 
   return (
-    <TableRow ref={setNodeRef} style={style} className="transition-colors hover:bg-secondary/50">
-      <TableCell>
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className="border-border/30 transition-colors hover:bg-secondary/30"
+    >
+      <TableCell className="py-3.5">
         <button
-          className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground"
+          className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground/50 hover:text-muted-foreground"
           {...attributes}
           {...listeners}
         >
-          <GripVertical className="h-4 w-4" />
+          <GripVertical className="size-3.5" />
         </button>
       </TableCell>
-      <TableCell className="font-medium">{podcast.title}</TableCell>
-      <TableCell>
-        <Badge variant="outline">{podcast.domain}</Badge>
+      <TableCell className="py-3.5 font-medium text-foreground">{podcast.title}</TableCell>
+      <TableCell className="py-3.5">
+        <span className="inline-flex rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          {podcast.domain}
+        </span>
       </TableCell>
-      <TableCell>{podcast.year}</TableCell>
-      <TableCell>{podcast.isArchived && <Badge variant="secondary">Archived</Badge>}</TableCell>
-      <TableCell>
+      <TableCell className="py-3.5 text-muted-foreground">{podcast.year}</TableCell>
+      <TableCell className="py-3.5">
+        {podcast.isArchived ? (
+          <span className="inline-flex rounded-md border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-400">
+            Draft
+          </span>
+        ) : (
+          <span className="inline-flex rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-400">
+            Published
+          </span>
+        )}
+      </TableCell>
+      <TableCell className="py-3.5">
         <PodcastTableActions podcast={podcast} onRefresh={onRefresh} />
       </TableCell>
     </TableRow>
