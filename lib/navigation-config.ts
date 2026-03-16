@@ -13,7 +13,6 @@ import {
   Home,
   Library,
   Route,
-  Search,
   BarChart3,
   User,
   LayoutDashboard,
@@ -42,7 +41,6 @@ export const mainLinks: NavLink[] = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/bulletins', label: 'Library', icon: Library },
   { href: '/learning-path', label: 'Learning Paths', icon: Route },
-  { href: '/search', label: 'Search', icon: Search },
 ];
 
 /**

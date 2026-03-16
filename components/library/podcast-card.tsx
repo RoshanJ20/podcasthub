@@ -52,18 +52,16 @@ export function PodcastCard({
           </div>
           <p className="line-clamp-1 text-sm font-medium leading-snug">{title}</p>
           <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{description}</p>
-          {visibleTags.length > 0 && (
-            <div className="mt-auto flex flex-wrap gap-1 pt-3">
-              {visibleTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
+          <div className="mt-auto flex min-h-[24px] flex-wrap items-end gap-1 pt-3">
+            {visibleTags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </Link>
