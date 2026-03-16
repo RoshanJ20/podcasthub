@@ -8,6 +8,8 @@
 import { prisma } from '@/lib/db';
 import { PathListClient } from '@/components/learning-path/path-list-client';
 
+export const dynamic = 'force-dynamic';
+
 export default async function LearningPathsPage({
   searchParams,
 }: {

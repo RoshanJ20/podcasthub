@@ -12,6 +12,8 @@ import { prisma } from '@/lib/db';
 import { AdminDashboardClient } from '@/components/admin/admin-dashboard-client';
 import type { PodcastData } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboardPage() {
   const podcasts = await prisma.podcast.findMany({
     orderBy: { sortOrder: 'asc' },

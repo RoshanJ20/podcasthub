@@ -12,6 +12,8 @@ import { LinearEditor } from '@/components/learning-path/linear-editor';
 import { GraphEditorInitializer } from '@/components/learning-path/graph-editor-initializer';
 import { EditorTabs } from '@/components/learning-path/editor-tabs';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLearningGraphEditorPage({
   params,
 }: {

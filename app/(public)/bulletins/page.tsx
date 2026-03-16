@@ -13,6 +13,8 @@ import { PaginationControls } from '@/components/library/pagination-controls';
 import { DOMAINS } from '@/lib/schemas/common';
 import type { PodcastData } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Technical Content | Podcast Hub',
   description: 'Browse the full library of technical audio content.',

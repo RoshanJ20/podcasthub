@@ -9,6 +9,8 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { PodcastDetailLayout } from '@/components/audio-player/podcast-detail-layout';
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: Promise<{ id: string }>;
 }

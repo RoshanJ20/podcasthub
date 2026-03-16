@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { CategoryGrid } from '@/components/home/category-grid';
 import type { PodcastData } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const [recentPodcasts, domainCounts] = await Promise.all([
     prisma.podcast.findMany({

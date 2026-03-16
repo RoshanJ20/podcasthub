@@ -11,6 +11,8 @@ import { prisma } from '@/lib/db';
 import { EditPodcastClient } from '@/components/admin/edit-podcast-client';
 import type { PodcastData } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 interface EditPodcastPageProps {
   params: Promise<{ id: string }>;
 }

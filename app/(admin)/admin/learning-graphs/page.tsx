@@ -7,6 +7,8 @@
 import { prisma } from '@/lib/db';
 import { LearningGraphsTable } from '@/components/admin/learning-graphs-table';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLearningGraphsPage() {
   const graphs = await prisma.learningGraph.findMany({
     orderBy: { createdAt: 'desc' },

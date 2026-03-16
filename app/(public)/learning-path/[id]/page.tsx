@@ -8,6 +8,8 @@ import { prisma } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { PathViewerWrapper } from '@/components/learning-path/path-viewer-wrapper';
 
+export const dynamic = 'force-dynamic';
+
 export default async function LearningPathViewerPage({
   params,
 }: {
