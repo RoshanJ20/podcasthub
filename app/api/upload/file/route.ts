@@ -27,6 +27,20 @@ const log = createLogger('upload-file-api');
 
 const UPLOAD_BUCKET = process.env.S3_UPLOAD_BUCKET ?? 'podcast-hub-uploads';
 
+/**
+ * Handles POST requests to upload a file to S3/MinIO storage.
+ *
+ * Accepts multipart form data with a 'file' and 'category' field. Validates the
+ * file type against allowed MIME types for the category and enforces size limits.
+ * Generates a unique storage key and uploads the file to the configured S3 bucket.
+ * Requires admin or superadmin role.
+ *
+ * @param request - The incoming Next.js request object with multipart form data
+ * @returns JSON response with the generated storage key ({ data: { key: string } })
+ * @throws {ApiError} 400 if file or category is missing, category is invalid, or file type/size is rejected
+ * @throws {ApiError} 401 if the user is not authenticated
+ * @throws {ApiError} 403 if the user does not have admin or superadmin role
+ */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const user = requireAuth(request);

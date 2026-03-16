@@ -9,18 +9,12 @@
 'use client';
 import { useTranscriptSync, type TranscriptSegment } from '@/hooks/use-transcript-sync';
 import { cn } from '@/lib/utils';
+import { formatTime } from '@/lib/format-time';
 
 interface TranscriptViewerProps {
   segments: TranscriptSegment[];
   fullText?: string;
   onSeek?: (time: number) => void;
-}
-
-/** Format seconds as m:ss timestamp. */
-function formatTimestamp(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 export function TranscriptViewer({ segments, fullText, onSeek }: TranscriptViewerProps) {
@@ -63,7 +57,7 @@ export function TranscriptViewer({ segments, fullText, onSeek }: TranscriptViewe
             }}
           >
             <span className="text-xs text-muted-foreground font-mono w-10 flex-shrink-0 pt-0.5">
-              {formatTimestamp(segment.start)}
+              {formatTime(segment.start)}
             </span>
             <p className="text-sm leading-relaxed">{segment.text}</p>
           </div>

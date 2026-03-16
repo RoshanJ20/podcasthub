@@ -18,6 +18,19 @@ const log = createLogger('media-api');
 
 const UPLOAD_BUCKET = process.env.S3_UPLOAD_BUCKET ?? 'podcast-hub-uploads';
 
+/**
+ * Handles GET requests to proxy media files from MinIO/S3 storage.
+ *
+ * Retrieves the file identified by the 'key' query parameter from the S3 bucket
+ * and streams it back to the client. Supports HTTP range requests for audio seeking.
+ * Infers content type from the file extension when S3 does not provide one.
+ *
+ * @param request - The incoming Next.js request object with a 'key' query parameter
+ * @returns Binary response with appropriate Content-Type, Content-Length, and range headers
+ * @throws {ApiError} 400 if the 'key' query parameter is missing
+ * @throws {ApiError} 404 if the file is not found in S3
+ * @throws {ApiError} 500 if the S3 retrieval fails
+ */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const key = request.nextUrl.searchParams.get('key');
   if (!key) {

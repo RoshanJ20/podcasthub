@@ -16,6 +16,16 @@ const markCompleteSchema = z.object({
   episodeId: z.string().min(1),
 });
 
+/**
+ * Handles GET requests to retrieve the authenticated user's learning progress.
+ *
+ * Returns all progress records for the user, including related graph and episode
+ * details, ordered by most recently completed first.
+ *
+ * @param request - The incoming Next.js request object
+ * @returns JSON response with an array of progress records including graph and episode data
+ * @throws {ApiError} 401 if the user is not authenticated
+ */
 export async function GET(request: NextRequest) {
   try {
     const user = requireAuth(request);
@@ -36,6 +46,17 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/**
+ * Handles POST requests to mark an episode as complete.
+ *
+ * Creates or updates a progress record for the authenticated user. Uses an upsert
+ * on the unique [userId, episodeId] constraint to ensure idempotency.
+ *
+ * @param request - The incoming Next.js request object with graphId and episodeId in the body
+ * @returns JSON response with the progress record and 201 status
+ * @throws {ApiError} 400 if the progress data fails schema validation
+ * @throws {ApiError} 401 if the user is not authenticated
+ */
 export async function POST(request: NextRequest) {
   try {
     const user = requireAuth(request);

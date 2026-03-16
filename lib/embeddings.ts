@@ -38,30 +38,38 @@ export async function generateEmbedding(
   const url = `${endpoint}/openai/deployments/${deployment}/embeddings?api-version=${API_VERSION}`;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'api-key': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ input: text }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-    if (response.ok) {
-      const data = await response.json();
-      return data.data[0].embedding;
-    }
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'api-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ input: text }),
+        signal: controller.signal,
+      });
 
-    if (response.status === 429 || response.status >= 500) {
-      if (attempt < maxRetries - 1) {
-        await new Promise((resolve) =>
-          setTimeout(resolve, retryDelayMs * Math.pow(2, attempt) + Math.random() * 1000)
-        );
-        continue;
+      if (response.ok) {
+        const data = await response.json();
+        return data.data[0].embedding;
       }
-    }
 
-    throw new Error(`Embedding API error: ${response.status}`);
+      if (response.status === 429 || response.status >= 500) {
+        if (attempt < maxRetries - 1) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, retryDelayMs * Math.pow(2, attempt) + Math.random() * 1000)
+          );
+          continue;
+        }
+      }
+
+      throw new Error(`Embedding API error: ${response.status}`);
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   throw new Error('Embedding generation failed after retries');

@@ -10,6 +10,17 @@ import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
 import { ApiError, createErrorResponse, internalError } from '@/lib/api/errors';
 import { parsePaginationParams } from '@/lib/api/pagination';
 
+/**
+ * Handles GET requests to list users with their roles.
+ *
+ * Requires superadmin role. Supports pagination via page/limit query parameters
+ * and optional text search across displayName and email fields.
+ *
+ * @param request - The incoming Next.js request object with optional search and pagination params
+ * @returns JSON response with user data (id, name, email, role, createdAt), total count, and pagination info
+ * @throws {ApiError} 401 if the user is not authenticated
+ * @throws {ApiError} 403 if the user does not have the superadmin role
+ */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const user = requireAuth(request);

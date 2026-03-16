@@ -10,6 +10,11 @@
  */
 import { NextResponse } from 'next/server';
 
+/**
+ * Handles GET requests to check application liveness.
+ *
+ * @returns JSON response with status, timestamp, and version
+ */
 export async function GET(): Promise<NextResponse> {
   return NextResponse.json({
     status: 'ok',

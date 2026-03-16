@@ -52,6 +52,86 @@ function buildEpisodeData(ep: Record<string, unknown>) {
 }
 
 /**
+ * Upserts episodes for a learning graph: updates existing episodes in place
+ * and creates new ones for temp IDs. Also deletes episodes that were removed
+ * by the user (present in DB but absent from payload).
+ *
+ * @param graphId - The learning graph ID to associate new episodes with
+ * @param episodes - The incoming episode payloads from the client request
+ * @param existingEpisodeIds - Set of episode IDs currently in the database
+ * @returns A map of temporary client IDs to their server-assigned real IDs
+ */
+async function upsertEpisodes(
+  graphId: string,
+  episodes: Array<Record<string, unknown>>,
+  existingEpisodeIds: Set<string>,
+): Promise<Map<string, string>> {
+  const incomingIds = new Set<string>();
+  const tempIdToRealId = new Map<string, string>();
+
+  for (const ep of episodes) {
+    const epId = ep.id as string;
+    const isExisting = existingEpisodeIds.has(epId);
+    const isTemp = typeof epId === 'string' && epId.startsWith('temp-');
+    const episodeData = buildEpisodeData(ep);
+
+    if (isExisting && !isTemp) {
+      await prisma.episode.update({ where: { id: epId }, data: episodeData });
+      incomingIds.add(epId);
+    } else {
+      const created = await prisma.episode.create({
+        data: { graphId, ...episodeData },
+      });
+      tempIdToRealId.set(epId, created.id);
+      incomingIds.add(created.id);
+    }
+  }
+
+  // Delete episodes that were removed by the user
+  const idsToDelete = [...existingEpisodeIds].filter((eid) => !incomingIds.has(eid));
+  if (idsToDelete.length > 0) {
+    await prisma.learningPathEdge.deleteMany({
+      where: {
+        graphId,
+        OR: [{ sourceEpisodeId: { in: idsToDelete } }, { targetEpisodeId: { in: idsToDelete } }],
+      },
+    });
+    await prisma.episode.deleteMany({ where: { id: { in: idsToDelete } } });
+  }
+
+  return tempIdToRealId;
+}
+
+/**
+ * Deletes all existing edges for the graph and recreates them from the
+ * client payload, resolving any temporary IDs to their real counterparts.
+ *
+ * @param graphId - The learning graph ID the edges belong to
+ * @param edges - The incoming edge payloads from the client request
+ * @param idMap - Map of temporary client IDs to server-assigned real IDs
+ */
+async function recreateEdges(
+  graphId: string,
+  edges: Array<Record<string, unknown>>,
+  idMap: Map<string, string>,
+): Promise<void> {
+  await prisma.learningPathEdge.deleteMany({ where: { graphId } });
+
+  for (const edge of edges) {
+    const sourceId = idMap.get(edge.sourceEpisodeId as string) ?? (edge.sourceEpisodeId as string);
+    const targetId = idMap.get(edge.targetEpisodeId as string) ?? (edge.targetEpisodeId as string);
+    await prisma.learningPathEdge.create({
+      data: {
+        graphId,
+        sourceEpisodeId: sourceId,
+        targetEpisodeId: targetId,
+        label: (edge.label as string) || null,
+      },
+    });
+  }
+}
+
+/**
  * Bulk saves episodes and edges for a learning graph using upsert logic.
  *
  * Existing episodes are updated in place (preserving their IDs and related
@@ -89,61 +169,15 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
       return createErrorResponse(badRequest('episodes array is required'));
     }
 
-    const existingEpisodeIds = new Set(graph.episodes.map((episode: { id: string }) => episode.id));
-    const incomingIds = new Set<string>();
-    const tempIdToRealId = new Map<string, string>();
+    const existingEpisodeIds = new Set(graph.episodes.map((ep: { id: string }) => ep.id));
+    const tempIdToRealId = await upsertEpisodes(id, episodes, existingEpisodeIds);
 
-    // Upsert episodes: update existing, create new
-    for (const ep of episodes) {
-      const isExisting = existingEpisodeIds.has(ep.id);
-      const isTemp = typeof ep.id === 'string' && ep.id.startsWith('temp-');
-      const episodeData = buildEpisodeData(ep);
-
-      if (isExisting && !isTemp) {
-        await prisma.episode.update({
-          where: { id: ep.id },
-          data: episodeData,
-        });
-        incomingIds.add(ep.id);
-      } else {
-        const created = await prisma.episode.create({
-          data: { graphId: id, ...episodeData },
-        });
-        tempIdToRealId.set(ep.id, created.id);
-        incomingIds.add(created.id);
-      }
-    }
-
-    // Delete episodes that were removed by the user
-    const idsToDelete = [...existingEpisodeIds].filter((eid) => !incomingIds.has(eid));
-    if (idsToDelete.length > 0) {
-      await prisma.learningPathEdge.deleteMany({
-        where: {
-          graphId: id,
-          OR: [{ sourceEpisodeId: { in: idsToDelete } }, { targetEpisodeId: { in: idsToDelete } }],
-        },
-      });
-      await prisma.episode.deleteMany({ where: { id: { in: idsToDelete } } });
-    }
-
-    // Recreate edges (edges are cheap, no user data attached)
-    await prisma.learningPathEdge.deleteMany({ where: { graphId: id } });
     if (Array.isArray(edges) && edges.length > 0) {
-      for (const edge of edges) {
-        const sourceId = tempIdToRealId.get(edge.sourceEpisodeId) ?? edge.sourceEpisodeId;
-        const targetId = tempIdToRealId.get(edge.targetEpisodeId) ?? edge.targetEpisodeId;
-        await prisma.learningPathEdge.create({
-          data: {
-            graphId: id,
-            sourceEpisodeId: sourceId,
-            targetEpisodeId: targetId,
-            label: edge.label || null,
-          },
-        });
-      }
+      await recreateEdges(id, edges, tempIdToRealId);
+    } else {
+      await prisma.learningPathEdge.deleteMany({ where: { graphId: id } });
     }
 
-    // Return the saved graph so the client can update IDs
     const saved = await prisma.learningGraph.findUnique({
       where: { id },
       include: { episodes: { orderBy: { sortOrder: 'asc' } }, edges: true },

@@ -17,6 +17,21 @@ import {
 
 const VALID_ROLES = ['public', 'admin', 'superadmin'];
 
+/**
+ * Handles PUT requests to update a user's role.
+ *
+ * Requires superadmin role. Validates that the role is one of 'public', 'admin',
+ * or 'superadmin'. Prevents superadmins from changing their own role. Upserts
+ * the role record for the target user.
+ *
+ * @param request - The incoming Next.js request object with the new role in the body
+ * @param params - Route parameters containing the target user ID
+ * @returns JSON response with the updated user data (id, name, email, role)
+ * @throws {ApiError} 400 if the role is invalid or the user attempts to change their own role
+ * @throws {ApiError} 401 if the user is not authenticated
+ * @throws {ApiError} 403 if the user does not have the superadmin role
+ * @throws {ApiError} 404 if the target user is not found
+ */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
