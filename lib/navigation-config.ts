@@ -11,9 +11,8 @@
  */
 import {
   Home,
-  Library,
+  Headphones,
   Route,
-  Search,
   BarChart3,
   User,
   LayoutDashboard,
@@ -36,13 +35,15 @@ export interface NavLink {
 
 /**
  * Primary navigation links shown to all authenticated users.
- * Maps to the main sections of the application.
  */
-export const mainLinks: NavLink[] = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/bulletins', label: 'Library', icon: Library },
+export const mainLinks: NavLink[] = [{ href: '/', label: 'Home', icon: Home }];
+
+/**
+ * Library sub-navigation — shown under the "Library" section header.
+ */
+export const libraryLinks: NavLink[] = [
+  { href: '/bulletins', label: 'Technical Content', icon: Headphones },
   { href: '/learning-path', label: 'Learning Paths', icon: Route },
-  { href: '/search', label: 'Search', icon: Search },
 ];
 
 /**

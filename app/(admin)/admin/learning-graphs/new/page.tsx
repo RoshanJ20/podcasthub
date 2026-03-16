@@ -68,13 +68,18 @@ export default function NewLearningPathPage() {
   };
 
   return (
-    <div className="container max-w-2xl py-6">
-      <h1 className="text-2xl font-bold mb-6">Create New Learning Path</h1>
-      <Card>
-        <CardHeader>
-          <CardTitle>Learning Path Details</CardTitle>
+    <div className="space-y-6 max-w-2xl">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight">Create New Learning Path</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Define the structure and metadata for a new learning journey.
+        </p>
+      </div>
+      <Card className="rounded-xl border border-border bg-card">
+        <CardHeader className="border-b border-border px-6 py-4">
+          <CardTitle className="text-sm font-semibold">Learning Path Details</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>

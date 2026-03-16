@@ -16,8 +16,13 @@ export default async function AdminLearningGraphsPage() {
   });
 
   return (
-    <div className="container py-6">
-      <h1 className="text-2xl font-bold mb-6">Learning Paths</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-xl font-semibold tracking-tight">Learning Paths</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Create and manage structured learning journeys.
+        </p>
+      </div>
       <LearningGraphsTable graphs={graphs} />
     </div>
   );

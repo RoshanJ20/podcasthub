@@ -36,7 +36,7 @@ export function EditPodcastClient({ podcast }: EditPodcastClientProps) {
       </nav>
 
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Edit Podcast</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Edit Podcast</h1>
         <p className="text-muted-foreground">
           Update the details for &ldquo;{podcast.title}&rdquo;.
         </p>

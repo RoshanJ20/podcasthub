@@ -76,22 +76,22 @@ export function AnalyticsCharts() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Podcasts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">
+        <Card className="rounded-xl border border-border bg-card">
+          <CardContent className="p-5">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Total Podcasts
+            </p>
+            <p className="text-2xl font-semibold tracking-tight mt-1">
               <AnimatedNumber value={data.totalPodcasts} />
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Learning Paths</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">
+        <Card className="rounded-xl border border-border bg-card">
+          <CardContent className="p-5">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Learning Paths
+            </p>
+            <p className="text-2xl font-semibold tracking-tight mt-1">
               <AnimatedNumber value={data.totalPaths} />
             </p>
           </CardContent>
@@ -99,11 +99,11 @@ export function AnalyticsCharts() {
       </div>
 
       {/* Domain Pie Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Listens by Domain</CardTitle>
+      <Card className="rounded-xl border border-border bg-card">
+        <CardHeader className="border-b border-border px-5 py-3.5">
+          <CardTitle className="text-sm font-semibold">Listens by Domain</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-5">
           {data.listensByDomain.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No listen data available</p>
           ) : (
@@ -131,11 +131,11 @@ export function AnalyticsCharts() {
       </Card>
 
       {/* Monthly Trends */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Monthly Trends</CardTitle>
+      <Card className="rounded-xl border border-border bg-card">
+        <CardHeader className="border-b border-border px-5 py-3.5">
+          <CardTitle className="text-sm font-semibold">Monthly Trends</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-5">
           {data.monthlyTrends.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No trend data available</p>
           ) : (
@@ -159,11 +159,11 @@ export function AnalyticsCharts() {
       </Card>
 
       {/* Top Topics */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Topics</CardTitle>
+      <Card className="rounded-xl border border-border bg-card">
+        <CardHeader className="border-b border-border px-5 py-3.5">
+          <CardTitle className="text-sm font-semibold">Top Topics</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-5">
           {sortedTopics.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No topic data available</p>
           ) : (

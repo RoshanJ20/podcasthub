@@ -84,7 +84,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Technical Content</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Technical Content</h1>
         <LibraryFilters />
       </div>
 

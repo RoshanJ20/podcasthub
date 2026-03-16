@@ -99,7 +99,11 @@ export function UsersTable() {
           placeholder="Search by name or email..."
           className="max-w-sm"
         />
-        <Button type="submit" variant="outline">
+        <Button
+          type="submit"
+          variant="outline"
+          className="border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary"
+        >
           Search
         </Button>
       </form>
@@ -108,67 +112,84 @@ export function UsersTable() {
         <div className="text-center py-8 text-muted-foreground">Loading users...</div>
       ) : (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Display Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Joined</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id} className="transition-colors hover:bg-secondary/50">
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.name ?? '-'}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={user.role}
-                      onValueChange={(value) => {
-                        if (value) handleRoleChange(user.id, value);
-                      }}
-                    >
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {ROLES.map((role) => (
-                          <SelectItem key={role} value={role}>
-                            {role}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          <div className="flex justify-between items-center">
-            <p className="text-sm text-muted-foreground">
-              {total} user{total !== 1 ? 's' : ''} total
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => p - 1)}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page * 20 >= total}
-                onClick={() => setPage((p) => p + 1)}
-              >
-                Next
-              </Button>
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="border-b border-border px-5 py-3.5">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                {total} user{total !== 1 ? 's' : ''} total
+              </p>
             </div>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/30 hover:bg-transparent">
+                  <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Email
+                  </TableHead>
+                  <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Display Name
+                  </TableHead>
+                  <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Role
+                  </TableHead>
+                  <TableHead className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Joined
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow
+                    key={user.id}
+                    className="border-border/30 transition-colors hover:bg-secondary/30"
+                  >
+                    <TableCell className="py-3.5">{user.email}</TableCell>
+                    <TableCell className="py-3.5">{user.name ?? '-'}</TableCell>
+                    <TableCell className="py-3.5">
+                      <Select
+                        value={user.role}
+                        onValueChange={(value) => {
+                          if (value) handleRoleChange(user.id, value);
+                        }}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLES.map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {role}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell className="py-3.5">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="flex justify-end items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+              className="border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary"
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page * 20 >= total}
+              onClick={() => setPage((p) => p + 1)}
+              className="border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary"
+            >
+              Next
+            </Button>
           </div>
         </>
       )}

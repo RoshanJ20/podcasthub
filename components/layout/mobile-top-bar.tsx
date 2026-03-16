@@ -28,7 +28,7 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { SidebarNavItem } from '@/components/layout/sidebar-nav-item';
 import { SidebarNowPlaying } from '@/components/layout/sidebar-now-playing';
 import { SidebarUserProfile } from '@/components/layout/sidebar-user-profile';
-import { mainLinks, personalLinks, adminLinks, isRouteActive } from '@/lib/navigation-config';
+import { mainLinks, libraryLinks, adminLinks, isRouteActive } from '@/lib/navigation-config';
 
 /**
  * Props for the MobileTopBar component.
@@ -103,9 +103,6 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
             {/* Scrollable nav links */}
             <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-3">
               {/* Main navigation */}
-              <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Main
-              </p>
               {mainLinks.map((link) => (
                 <SidebarNavItem
                   key={link.href}
@@ -119,11 +116,11 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
 
               <div className="my-1" />
 
-              {/* Personal links */}
+              {/* Library section */}
               <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Your Stuff
+                Library
               </p>
-              {personalLinks.map((link) => (
+              {libraryLinks.map((link) => (
                 <SidebarNavItem
                   key={link.href}
                   href={link.href}

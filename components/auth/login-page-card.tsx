@@ -33,12 +33,16 @@ export function LoginPageCard({ children }: LoginPageCardProps) {
   const reducedMotion = useReducedMotion();
 
   if (reducedMotion) {
-    return <div className="w-full max-w-md space-y-8 p-8">{children}</div>;
+    return (
+      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 space-y-8">
+        {children}
+      </div>
+    );
   }
 
   return (
     <motion.div
-      className="w-full max-w-md space-y-8 p-8"
+      className="w-full max-w-md rounded-xl border border-border bg-card p-8 space-y-8"
       initial="hidden"
       animate="visible"
       variants={variants.scaleIn}

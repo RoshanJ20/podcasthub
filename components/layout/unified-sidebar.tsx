@@ -30,7 +30,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarNavItem } from '@/components/layout/sidebar-nav-item';
 import { SidebarNowPlaying } from '@/components/layout/sidebar-now-playing';
 import { SidebarUserProfile } from '@/components/layout/sidebar-user-profile';
-import { mainLinks, personalLinks, adminLinks, isRouteActive } from '@/lib/navigation-config';
+import { mainLinks, libraryLinks, adminLinks, isRouteActive } from '@/lib/navigation-config';
 import { transitions } from '@/lib/animation';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { cn } from '@/lib/utils';
@@ -145,7 +145,6 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
       {/* ── Scrollable nav area ─────────────────────────────────────────── */}
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-3">
         {/* Main navigation */}
-        <SectionLabel label="Main" collapsed={collapsed} />
         {mainLinks.map((link) => (
           <SidebarNavItem
             key={link.href}
@@ -159,9 +158,9 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
 
         <div className="my-1" />
 
-        {/* Personal links */}
-        <SectionLabel label="Your Stuff" collapsed={collapsed} />
-        {personalLinks.map((link) => (
+        {/* Library section */}
+        <SectionLabel label="Library" collapsed={collapsed} />
+        {libraryLinks.map((link) => (
           <SidebarNavItem
             key={link.href}
             href={link.href}
