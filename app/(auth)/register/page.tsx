@@ -19,8 +19,8 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
     <main className="flex min-h-screen items-center justify-center bg-background">
       <LoginPageCard>
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Podcast Hub</h1>
-          <p className="mt-2 text-muted-foreground">Create your account</p>
+          <h1 className="text-lg font-semibold tracking-tight">Podcast Hub</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Create your account</p>
         </div>
         <RegisterForm redirectTo={redirectTo} />
         <p className="text-center text-sm text-muted-foreground">

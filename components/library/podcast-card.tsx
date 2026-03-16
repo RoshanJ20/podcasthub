@@ -7,8 +7,6 @@
  */
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { resolveStorageUrl } from '@/lib/storage-url';
 
 export interface PodcastCardProps {
@@ -35,8 +33,8 @@ export function PodcastCard({
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <Link href={`/podcast/${id}` as any} className="group block" data-testid="podcast-card-link">
-      <Card className="h-full transition-all hover:shadow-md active:scale-[0.98]">
-        <div className="relative aspect-video w-full overflow-hidden rounded-t-xl">
+      <div className="h-full rounded-xl border border-border bg-card transition-colors hover:bg-secondary/20 active:scale-[0.98]">
+        <div className="relative aspect-video w-full overflow-hidden rounded-t-lg">
           <Image
             src={resolveStorageUrl(thumbnailUrl)}
             alt={title}
@@ -45,26 +43,29 @@ export function PodcastCard({
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
         </div>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary">{domain}</Badge>
-            <span className="text-xs text-muted-foreground">{year}</span>
+        <div className="p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="inline-flex rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {domain}
+            </span>
+            <span className="text-[11px] text-muted-foreground">{year}</span>
           </div>
-          <CardTitle className="line-clamp-2">{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="line-clamp-3 text-sm text-muted-foreground">{description}</p>
+          <p className="line-clamp-2 text-sm font-medium leading-snug">{title}</p>
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{description}</p>
           {visibleTags.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
+            <div className="mt-3 flex flex-wrap gap-1">
               {visibleTags.map((tag) => (
-                <Badge key={tag} variant="outline" className="text-xs">
+                <span
+                  key={tag}
+                  className="inline-flex rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                >
                   {tag}
-                </Badge>
+                </span>
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
 }

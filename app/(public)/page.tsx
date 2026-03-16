@@ -9,8 +9,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { DOMAINS } from '@/lib/schemas/common';
 import { PodcastGrid } from '@/components/library/podcast-grid';
-import { Library, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 import { CategoryGrid } from '@/components/home/category-grid';
 import type { PodcastData } from '@/lib/types';
 
@@ -54,26 +53,30 @@ export default async function HomePage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Hero section */}
-      <section className="flex flex-col items-center gap-4 pb-16 pt-12 text-center">
-        <Library className="size-12 text-primary" />
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Podcast Hub</h1>
-        <p className="max-w-2xl text-lg text-muted-foreground">
+      <section className="flex flex-col gap-3 pb-12 pt-10">
+        <h1 className="text-2xl font-semibold tracking-tight">Podcast Hub</h1>
+        <p className="max-w-2xl text-sm text-muted-foreground">
           Your central platform for technical audio content. Explore podcasts across audit
           methodology, accounting, technology, and more to sharpen your professional expertise.
         </p>
-        <Button render={<Link href="/bulletins" />} size="lg" className="mt-2">
-          Browse Library
-          <ArrowRight className="size-4" />
-        </Button>
+        <div className="mt-1">
+          <Link
+            href="/bulletins"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            Browse Library
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
       </section>
 
       {/* Recently Added */}
-      <section className="pb-16">
+      <section className="pb-12">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold tracking-tight">Recently Added</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Recently Added</h2>
           <Link
             href="/bulletins"
-            className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            className="flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             View all
             <ArrowRight className="size-3" />
@@ -83,8 +86,8 @@ export default async function HomePage() {
       </section>
 
       {/* Browse by Category */}
-      <section className="pb-16">
-        <h2 className="mb-6 text-2xl font-semibold tracking-tight">Browse by Category</h2>
+      <section className="pb-12">
+        <h2 className="mb-6 text-lg font-semibold tracking-tight">Browse by Category</h2>
         <CategoryGrid
           domains={DOMAINS.map((domain) => ({
             name: domain,

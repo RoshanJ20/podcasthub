@@ -38,8 +38,11 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="container py-6 max-w-3xl">
-      <h1 className="text-2xl font-bold mb-6">Search</h1>
+    <div className="container py-8 max-w-3xl">
+      <h1 className="text-xl font-semibold tracking-tight mb-1">Search</h1>
+      <p className="text-sm text-muted-foreground mt-1 mb-6">
+        Find bulletins by keyword or semantic query.
+      </p>
       <SearchInput onSearch={handleSearch} isLoading={isLoading} />
       <div className="mt-6">
         {isLoading ? (

@@ -13,8 +13,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { StaggeredGrid, StaggeredGridItem } from '@/components/ui/staggered-grid';
 
 interface CategoryGridProps {
@@ -35,16 +33,12 @@ export function CategoryGrid({ domains }: CategoryGridProps) {
         <StaggeredGridItem key={name}>
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <Link href={`/bulletins?domain=${encodeURIComponent(name)}` as any}>
-            <Card className="transition-shadow hover:shadow-lg">
-              <CardHeader>
-                <CardTitle>{name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Badge variant="secondary">
-                  {`${count} ${count === 1 ? 'podcast' : 'podcasts'}`}
-                </Badge>
-              </CardContent>
-            </Card>
+            <div className="rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary/30">
+              <p className="text-sm font-medium">{name}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {`${count} ${count === 1 ? 'podcast' : 'podcasts'}`}
+              </p>
+            </div>
           </Link>
         </StaggeredGridItem>
       ))}

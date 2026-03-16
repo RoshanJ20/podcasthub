@@ -5,8 +5,6 @@
  * episode count, and progress bar.
  */
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface PathCardProps {
   id: string;
@@ -29,31 +27,31 @@ export function PathCard({
 
   return (
     <Link href={`/learning-path/${id}`}>
-      <Card className="hover:shadow-md transition-shadow">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">{title}</CardTitle>
-            {domain && <Badge variant="secondary">{domain}</Badge>}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {description && <p className="text-sm text-muted-foreground mb-3">{description}</p>}
-          <div className="flex items-center justify-between text-sm mb-1">
-            <span>{episodeCount} episodes</span>
-            <span>{progress}% complete</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-green-500 h-2 rounded-full transition-all"
-              style={{ width: `${progress}%` }}
-              role="progressbar"
-              aria-valuenow={progress}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-border bg-card p-5 transition-colors hover:bg-secondary/20">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <p className="text-sm font-medium leading-snug">{title}</p>
+          {domain && (
+            <span className="inline-flex shrink-0 rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {domain}
+            </span>
+          )}
+        </div>
+        {description && <p className="text-xs text-muted-foreground mb-4">{description}</p>}
+        <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5">
+          <span>{episodeCount} episodes</span>
+          <span>{progress}% complete</span>
+        </div>
+        <div className="w-full bg-border/40 rounded-full h-1.5">
+          <div
+            className="bg-primary h-1.5 rounded-full transition-all"
+            style={{ width: `${progress}%` }}
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
+        </div>
+      </div>
     </Link>
   );
 }
