@@ -20,7 +20,7 @@ export const createPodcastSchema = z.object({
   /** Knowledge domain this podcast belongs to. */
   domain: domainSchema,
   /** Publication year (2020-2099, must be an integer). */
-  year: z.number().int().min(2020).max(2099),
+  year: z.coerce.number().int().min(2020).max(2099),
   /** Optional array of string tags. */
   tags: z.array(z.string()).optional(),
   /** Storage key or URL for the podcast thumbnail image. */
@@ -28,9 +28,9 @@ export const createPodcastSchema = z.object({
   /** Storage key or URL for the short-form audio file. */
   audioShortUrl: z.string().min(1),
   /** Optional storage key or URL for the long-form audio file. */
-  audioLongUrl: z.string().min(1).optional(),
+  audioLongUrl: z.string().min(1).nullable().optional(),
   /** Optional array of bulletin document storage keys or URLs. */
-  bulletinUrls: z.array(z.string().min(1)).optional(),
+  bulletinUrls: z.array(z.string().min(1)).nullable().optional(),
 });
 
 /** Inferred type for podcast creation input. */

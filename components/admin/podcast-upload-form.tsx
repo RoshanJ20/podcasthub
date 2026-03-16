@@ -220,7 +220,8 @@ export function PodcastUploadForm({
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.error || 'Failed to save podcast');
+        console.error('Podcast save error:', body);
+        throw new Error(body.message || 'Failed to save podcast');
       }
 
       toast.success(
