@@ -16,10 +16,17 @@ export function useHlsPlayer() {
   const { currentPodcast, audioType, isPlaying, volume, playbackRate } = usePlayerStore();
 
   /** Derive the active audio URL based on audio type selection. */
-  const audioUrl = currentPodcast
+  const rawUrl = currentPodcast
     ? audioType === 'long' && currentPodcast.audioLongUrl
       ? currentPodcast.audioLongUrl
       : currentPodcast.audioShortUrl
+    : null;
+
+  // Resolve storage keys through the media proxy to avoid private IP blocks
+  const audioUrl = rawUrl
+    ? rawUrl.startsWith('http') || rawUrl.startsWith('/')
+      ? rawUrl
+      : `/api/media?key=${encodeURIComponent(rawUrl)}`
     : null;
 
   /** Initialize HLS.js for .m3u8 streams or set native audio source. */

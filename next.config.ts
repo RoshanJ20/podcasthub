@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   output: 'standalone',
   images: {
+    dangerouslyAllowSVG: true,
     remotePatterns: [
       {
         protocol: 'http',
@@ -38,6 +39,8 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+    // Allow localhost images in development (private IP)
+    ...(process.env.NODE_ENV === 'development' ? { unoptimized: true } : {}),
   },
   async headers() {
     return [

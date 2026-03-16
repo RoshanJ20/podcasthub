@@ -67,8 +67,8 @@ async function signNewAccessToken(payload: UserPayload, secret: string): Promise
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Health check and auth routes are always accessible
-  if (pathname === '/api/health' || isAuthRoute(pathname)) {
+  // Health check, auth routes, and media proxy are always accessible
+  if (pathname === '/api/health' || pathname === '/api/media' || isAuthRoute(pathname)) {
     return NextResponse.next();
   }
 
