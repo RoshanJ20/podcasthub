@@ -35,7 +35,10 @@ import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
  * @returns NextRequest instance
  */
 function createRequest(url: string, options?: RequestInit): NextRequest {
-  return new NextRequest(new URL(url, 'http://localhost:3000'), options);
+  return new NextRequest(
+    new URL(url, 'http://localhost:3000'),
+    options as ConstructorParameters<typeof NextRequest>[1]
+  );
 }
 
 const ADMIN_USER = {

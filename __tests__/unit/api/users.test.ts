@@ -32,7 +32,10 @@ import { prisma } from '@/lib/db';
 import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
 
 function createRequest(url: string, options?: RequestInit): NextRequest {
-  return new NextRequest(new URL(url, 'http://localhost:3000'), options);
+  return new NextRequest(
+    new URL(url, 'http://localhost:3000'),
+    options as ConstructorParameters<typeof NextRequest>[1]
+  );
 }
 
 // ─── GET /api/users ─────────────────────────────────────────────────────────

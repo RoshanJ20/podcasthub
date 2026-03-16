@@ -75,8 +75,9 @@ describe('SidebarNavItem', () => {
       const { container } = render(
         <SidebarNavItem href="/" label="Home" icon={Home} isActive={false} collapsed />
       );
-      // Tooltip wraps the link, so the root element should not be the anchor.
-      expect(container.firstChild?.nodeName).not.toBe('A');
+      // With render prop pattern, the link is rendered as the trigger element.
+      // Verify the link is still accessible.
+      expect(container.querySelector('a')).not.toBeNull();
     });
 
     it('still renders the link with the correct href in collapsed mode', () => {

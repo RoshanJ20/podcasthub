@@ -75,10 +75,17 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
     >
       {/* ── Left: hamburger drawer trigger ─────────────────────────────── */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Open navigation menu" className="size-9">
-            <Menu className="size-5" />
-          </Button>
+        <SheetTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Open navigation menu"
+              className="size-9"
+            />
+          }
+        >
+          <Menu className="size-5" />
         </SheetTrigger>
 
         <SheetContent side="left" className="w-64 p-0">

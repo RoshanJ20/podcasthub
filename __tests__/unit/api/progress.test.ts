@@ -31,7 +31,10 @@ import { requireAuth } from '@/lib/auth/api-helpers';
 import { ApiError, ErrorCode } from '@/lib/api/errors';
 
 function createRequest(url: string, options?: RequestInit): NextRequest {
-  return new NextRequest(new URL(url, 'http://localhost:3000'), options);
+  return new NextRequest(
+    new URL(url, 'http://localhost:3000'),
+    options as ConstructorParameters<typeof NextRequest>[1]
+  );
 }
 
 const mockUser = { userId: 'user-1', email: 'test@test.com', role: 'public' };

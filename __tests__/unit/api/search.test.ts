@@ -26,7 +26,10 @@ import { prisma } from '@/lib/db';
 import { generateEmbedding } from '@/lib/embeddings';
 
 function createRequest(url: string, options?: RequestInit): NextRequest {
-  return new NextRequest(new URL(url, 'http://localhost:3000'), options);
+  return new NextRequest(
+    new URL(url, 'http://localhost:3000'),
+    options as ConstructorParameters<typeof NextRequest>[1]
+  );
 }
 
 const mockPodcastResults = [

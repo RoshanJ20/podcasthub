@@ -81,7 +81,7 @@ export function SidebarNavItem({
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild>{link}</TooltipTrigger>
+          <TooltipTrigger render={link} />
           <TooltipContent side="right">{label}</TooltipContent>
         </Tooltip>
       </TooltipProvider>

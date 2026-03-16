@@ -83,11 +83,13 @@ export function SidebarUserProfile({
       <div className="flex justify-center px-2 py-3">
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href="/profile" aria-label={`${name} — go to profile`}>
-                {avatar}
-              </Link>
-            </TooltipTrigger>
+            <TooltipTrigger
+              render={
+                <Link href="/profile" aria-label={`${name} — go to profile`}>
+                  {avatar}
+                </Link>
+              }
+            />
             <TooltipContent side="right">{name}</TooltipContent>
           </Tooltip>
         </TooltipProvider>

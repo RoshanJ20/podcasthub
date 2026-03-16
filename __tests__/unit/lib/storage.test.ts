@@ -19,13 +19,22 @@ vi.mock('@aws-sdk/client-s3', () => {
     // @ts-expect-error - mock constructor
     this.send = mockSend;
   });
-  const PutObjectCommand = vi.fn().mockImplementation(function (input: Record<string, unknown>) {
+  const PutObjectCommand = vi.fn().mockImplementation(function (
+    this: Record<string, unknown>,
+    input: Record<string, unknown>
+  ) {
     Object.assign(this, input, { _type: 'PutObject' });
   });
-  const GetObjectCommand = vi.fn().mockImplementation(function (input: Record<string, unknown>) {
+  const GetObjectCommand = vi.fn().mockImplementation(function (
+    this: Record<string, unknown>,
+    input: Record<string, unknown>
+  ) {
     Object.assign(this, input, { _type: 'GetObject' });
   });
-  const DeleteObjectCommand = vi.fn().mockImplementation(function (input: Record<string, unknown>) {
+  const DeleteObjectCommand = vi.fn().mockImplementation(function (
+    this: Record<string, unknown>,
+    input: Record<string, unknown>
+  ) {
     Object.assign(this, input, { _type: 'DeleteObject' });
   });
   return { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand };

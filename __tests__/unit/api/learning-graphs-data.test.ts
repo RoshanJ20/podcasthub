@@ -38,7 +38,10 @@ import { ApiError, ErrorCode } from '@/lib/api/errors';
 
 /** Creates a NextRequest for testing. */
 function createRequest(url: string, options?: RequestInit): NextRequest {
-  return new NextRequest(new URL(url, 'http://localhost:3000'), options);
+  return new NextRequest(
+    new URL(url, 'http://localhost:3000'),
+    options as ConstructorParameters<typeof NextRequest>[1]
+  );
 }
 
 type RouteContext = { params: Promise<{ id: string }> };
