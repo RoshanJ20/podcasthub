@@ -1,28 +1,27 @@
 /**
- * Unit tests for learning graph bulk data API route.
+ * Unit tests for learning graph bulk data API route (upsert-based).
  *
  * Tests cover:
- * - PUT /api/learning-graphs/[id]/data — bulk save episodes and edges
+ * - PUT /api/learning-graphs/[id]/data — upsert episodes (update existing, create new, delete removed)
+ * - Temp ID to real ID mapping for edges
+ * - Error cases: 400, 401, 403, 404
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const mockTx = {
-  episode: {
-    deleteMany: vi.fn(),
-    create: vi.fn(),
-  },
-  learningPathEdge: {
-    deleteMany: vi.fn(),
-    createMany: vi.fn(),
-  },
-};
-
 vi.mock('@/lib/db', () => ({
   prisma: {
-    $transaction: vi.fn((fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
     learningGraph: {
       findUnique: vi.fn(),
+    },
+    episode: {
+      update: vi.fn(),
+      create: vi.fn(),
+      deleteMany: vi.fn(),
+    },
+    learningPathEdge: {
+      deleteMany: vi.fn(),
+      create: vi.fn(),
     },
   },
 }));
@@ -37,6 +36,7 @@ import { prisma } from '@/lib/db';
 import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
 import { ApiError, ErrorCode } from '@/lib/api/errors';
 
+/** Creates a NextRequest for testing. */
 function createRequest(url: string, options?: RequestInit): NextRequest {
   return new NextRequest(new URL(url, 'http://localhost:3000'), options);
 }
@@ -45,23 +45,28 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 const graphId = '550e8400-e29b-41d4-a716-446655440010';
 
-const validPayload = {
+/** Existing episode IDs already in the database. */
+const existingEpisodeId1 = 'existing-ep-1';
+const existingEpisodeId2 = 'existing-ep-2';
+
+/** Payload with a mix of existing and new (temp) episodes. */
+const upsertPayload = {
   episodes: [
     {
-      tempId: 'temp-1',
-      title: 'Episode 1',
-      description: 'First episode',
+      id: existingEpisodeId1,
+      title: 'Updated Episode 1',
+      description: 'Updated description',
       audioUrl: 'https://example.com/ep1.mp3',
-      positionX: 0,
-      positionY: 0,
+      positionX: 10,
+      positionY: 20,
       nodeType: 'start',
       sortOrder: 0,
     },
     {
-      tempId: 'temp-2',
-      title: 'Episode 2',
-      description: 'Second episode',
-      audioUrl: 'https://example.com/ep2.mp3',
+      id: 'temp-new-1',
+      title: 'Brand New Episode',
+      description: 'New episode description',
+      audioUrl: 'https://example.com/new.mp3',
       positionX: 200,
       positionY: 100,
       nodeType: 'end',
@@ -70,8 +75,8 @@ const validPayload = {
   ],
   edges: [
     {
-      sourceEpisodeId: 'temp-1',
-      targetEpisodeId: 'temp-2',
+      sourceEpisodeId: existingEpisodeId1,
+      targetEpisodeId: 'temp-new-1',
       label: 'Next',
     },
   ],
@@ -82,6 +87,25 @@ const validPayload = {
 describe('PUT /api/learning-graphs/[id]/data', () => {
   let PUT: (req: NextRequest, context: RouteContext) => Promise<Response>;
 
+  /** Mock the saved graph returned at the end of the handler. */
+  const mockSavedGraph = {
+    id: graphId,
+    title: 'Test Path',
+    episodes: [
+      { id: existingEpisodeId1, title: 'Updated Episode 1', sortOrder: 0 },
+      { id: 'real-new-1', title: 'Brand New Episode', sortOrder: 1 },
+    ],
+    edges: [
+      {
+        id: 'edge-1',
+        graphId,
+        sourceEpisodeId: existingEpisodeId1,
+        targetEpisodeId: 'real-new-1',
+        label: 'Next',
+      },
+    ],
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
     vi.mocked(requireAuth).mockReturnValue({
@@ -91,25 +115,132 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
     });
     vi.mocked(requireRole).mockReturnValue(undefined);
 
-    // Graph exists
-    vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue({ id: graphId } as never);
+    // Graph exists with two existing episodes
+    vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue({
+      id: graphId,
+      episodes: [{ id: existingEpisodeId1 }, { id: existingEpisodeId2 }],
+    } as never);
 
-    // Transaction episode creates return IDs
-    mockTx.episode.deleteMany.mockResolvedValue({ count: 0 });
-    mockTx.learningPathEdge.deleteMany.mockResolvedValue({ count: 0 });
-    mockTx.episode.create
-      .mockResolvedValueOnce({ id: 'real-1', title: 'Episode 1' })
-      .mockResolvedValueOnce({ id: 'real-2', title: 'Episode 2' });
-    mockTx.learningPathEdge.createMany.mockResolvedValue({ count: 1 });
+    // Default mocks for episode operations
+    vi.mocked(prisma.episode.update).mockResolvedValue({
+      id: existingEpisodeId1,
+      title: 'Updated Episode 1',
+    } as never);
+    vi.mocked(prisma.episode.create).mockResolvedValue({
+      id: 'real-new-1',
+      title: 'Brand New Episode',
+    } as never);
+    vi.mocked(prisma.episode.deleteMany).mockResolvedValue({ count: 1 });
+    vi.mocked(prisma.learningPathEdge.deleteMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.learningPathEdge.create).mockResolvedValue({
+      id: 'edge-1',
+      graphId,
+      sourceEpisodeId: existingEpisodeId1,
+      targetEpisodeId: 'real-new-1',
+      label: 'Next',
+    } as never);
+
+    // The final findUnique call to return the saved graph
+    vi.mocked(prisma.learningGraph.findUnique)
+      .mockResolvedValueOnce({
+        id: graphId,
+        episodes: [{ id: existingEpisodeId1 }, { id: existingEpisodeId2 }],
+      } as never)
+      .mockResolvedValueOnce(mockSavedGraph as never);
 
     const mod = await import('@/app/api/learning-graphs/[id]/data/route');
     PUT = mod.PUT;
   });
 
-  it('bulk saves episodes and edges in a transaction and returns 200', async () => {
+  it('updates existing episodes in place, preserving their IDs', async () => {
     const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
       method: 'PUT',
-      body: JSON.stringify(validPayload),
+      body: JSON.stringify(upsertPayload),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
+
+    expect(res.status).toBe(200);
+    // Should update existing episode, not delete and recreate it
+    expect(prisma.episode.update).toHaveBeenCalledWith({
+      where: { id: existingEpisodeId1 },
+      data: expect.objectContaining({
+        title: 'Updated Episode 1',
+        positionX: 10,
+        positionY: 20,
+      }),
+    });
+  });
+
+  it('creates new episodes from temp IDs', async () => {
+    const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
+      method: 'PUT',
+      body: JSON.stringify(upsertPayload),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
+
+    expect(res.status).toBe(200);
+    // Should create a new episode for the temp-id entry
+    expect(prisma.episode.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        graphId,
+        title: 'Brand New Episode',
+      }),
+    });
+  });
+
+  it('deletes episodes that were removed by the user', async () => {
+    // existingEpisodeId2 is in the DB but NOT in the payload => should be deleted
+    const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
+      method: 'PUT',
+      body: JSON.stringify(upsertPayload),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
+
+    expect(res.status).toBe(200);
+    // Should delete edges referencing the removed episode first
+    expect(prisma.learningPathEdge.deleteMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          graphId,
+          OR: [
+            { sourceEpisodeId: { in: [existingEpisodeId2] } },
+            { targetEpisodeId: { in: [existingEpisodeId2] } },
+          ],
+        }),
+      })
+    );
+    // Then delete the removed episode
+    expect(prisma.episode.deleteMany).toHaveBeenCalledWith({
+      where: { id: { in: [existingEpisodeId2] } },
+    });
+  });
+
+  it('maps temp IDs to real IDs when creating edges', async () => {
+    const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
+      method: 'PUT',
+      body: JSON.stringify(upsertPayload),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await PUT(req, { params: Promise.resolve({ id: graphId }) });
+
+    // Edge should use real ID for the temp episode
+    expect(prisma.learningPathEdge.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        graphId,
+        sourceEpisodeId: existingEpisodeId1,
+        targetEpisodeId: 'real-new-1', // mapped from 'temp-new-1'
+        label: 'Next',
+      }),
+    });
+  });
+
+  it('returns the full saved graph in the response', async () => {
+    const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
+      method: 'PUT',
+      body: JSON.stringify(upsertPayload),
       headers: { 'Content-Type': 'application/json' },
     });
     const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
@@ -117,51 +248,8 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
 
     expect(res.status).toBe(200);
     expect(body.data.episodes).toHaveLength(2);
-    expect(mockTx.episode.deleteMany).toHaveBeenCalledWith({ where: { graphId } });
-    expect(mockTx.learningPathEdge.deleteMany).toHaveBeenCalledWith({ where: { graphId } });
-    expect(mockTx.episode.create).toHaveBeenCalledTimes(2);
-    expect(mockTx.learningPathEdge.createMany).toHaveBeenCalledTimes(1);
-  });
-
-  it('replaces existing episodes and edges (deletes then creates)', async () => {
-    mockTx.episode.deleteMany.mockResolvedValue({ count: 5 });
-    mockTx.learningPathEdge.deleteMany.mockResolvedValue({ count: 3 });
-    mockTx.episode.create
-      .mockReset()
-      .mockResolvedValueOnce({ id: 'real-1', title: 'Episode 1' })
-      .mockResolvedValueOnce({ id: 'real-2', title: 'Episode 2' });
-
-    const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
-      method: 'PUT',
-      body: JSON.stringify(validPayload),
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
-
-    expect(res.status).toBe(200);
-    expect(mockTx.episode.deleteMany).toHaveBeenCalledWith({ where: { graphId } });
-    expect(mockTx.learningPathEdge.deleteMany).toHaveBeenCalledWith({ where: { graphId } });
-  });
-
-  it('returns 400 if edge references non-existent episode tempId', async () => {
-    const badPayload = {
-      episodes: validPayload.episodes,
-      edges: [
-        {
-          sourceEpisodeId: 'temp-1',
-          targetEpisodeId: 'non-existent',
-        },
-      ],
-    };
-
-    const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
-      method: 'PUT',
-      body: JSON.stringify(badPayload),
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
-
-    expect(res.status).toBe(400);
+    expect(body.data.edges).toHaveLength(1);
+    expect(body.data.id).toBe(graphId);
   });
 
   it('returns 400 if episodes array is missing', async () => {
@@ -175,34 +263,13 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
     expect(res.status).toBe(400);
   });
 
-  it('handles empty edges array', async () => {
-    mockTx.episode.create
-      .mockReset()
-      .mockResolvedValueOnce({ id: 'real-1', title: 'Episode 1' })
-      .mockResolvedValueOnce({ id: 'real-2', title: 'Episode 2' });
-
-    const payload = {
-      episodes: validPayload.episodes,
-      edges: [],
-    };
-
-    const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
-
-    expect(res.status).toBe(200);
-    expect(mockTx.learningPathEdge.createMany).not.toHaveBeenCalled();
-  });
-
   it('returns 404 if graph does not exist', async () => {
+    vi.mocked(prisma.learningGraph.findUnique).mockReset();
     vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue(null);
 
     const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
       method: 'PUT',
-      body: JSON.stringify(validPayload),
+      body: JSON.stringify(upsertPayload),
       headers: { 'Content-Type': 'application/json' },
     });
     const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
@@ -217,7 +284,7 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
 
     const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
       method: 'PUT',
-      body: JSON.stringify(validPayload),
+      body: JSON.stringify(upsertPayload),
       headers: { 'Content-Type': 'application/json' },
     });
     const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
@@ -237,11 +304,88 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
 
     const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
       method: 'PUT',
-      body: JSON.stringify(validPayload),
+      body: JSON.stringify(upsertPayload),
       headers: { 'Content-Type': 'application/json' },
     });
     const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
 
     expect(res.status).toBe(403);
+  });
+
+  it('handles empty edges array without creating edges', async () => {
+    const payload = {
+      episodes: [
+        {
+          id: existingEpisodeId1,
+          title: 'Episode 1',
+          audioUrl: 'https://example.com/ep1.mp3',
+        },
+      ],
+      edges: [],
+    };
+
+    // Only one existing episode in payload, so no deletion needed
+    vi.mocked(prisma.learningGraph.findUnique)
+      .mockReset()
+      .mockResolvedValueOnce({
+        id: graphId,
+        episodes: [{ id: existingEpisodeId1 }],
+      } as never)
+      .mockResolvedValueOnce({
+        id: graphId,
+        episodes: [{ id: existingEpisodeId1, title: 'Episode 1' }],
+        edges: [],
+      } as never);
+
+    const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
+
+    expect(res.status).toBe(200);
+    expect(prisma.learningPathEdge.create).not.toHaveBeenCalled();
+  });
+
+  it('does not delete episodes when all existing episodes are in the payload', async () => {
+    const payload = {
+      episodes: [
+        { id: existingEpisodeId1, title: 'Ep 1', audioUrl: 'url1' },
+        { id: existingEpisodeId2, title: 'Ep 2', audioUrl: 'url2' },
+      ],
+      edges: [],
+    };
+
+    vi.mocked(prisma.episode.update)
+      .mockReset()
+      .mockResolvedValueOnce({ id: existingEpisodeId1 } as never)
+      .mockResolvedValueOnce({ id: existingEpisodeId2 } as never);
+
+    vi.mocked(prisma.learningGraph.findUnique)
+      .mockReset()
+      .mockResolvedValueOnce({
+        id: graphId,
+        episodes: [{ id: existingEpisodeId1 }, { id: existingEpisodeId2 }],
+      } as never)
+      .mockResolvedValueOnce({
+        id: graphId,
+        episodes: [
+          { id: existingEpisodeId1, title: 'Ep 1' },
+          { id: existingEpisodeId2, title: 'Ep 2' },
+        ],
+        edges: [],
+      } as never);
+
+    const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
+
+    expect(res.status).toBe(200);
+    // No episodes should be deleted since all existing ones are still present
+    expect(prisma.episode.deleteMany).not.toHaveBeenCalled();
   });
 });

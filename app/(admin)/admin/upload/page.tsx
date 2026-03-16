@@ -1,7 +1,7 @@
 /**
  * Admin upload page for creating new podcasts.
  *
- * Renders the PodcastUploadForm in create mode with a breadcrumb
+ * Renders the PodcastUploadWizard in create mode with a breadcrumb
  * navigation trail showing Dashboard > Upload.
  */
 'use client';
@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
-import { PodcastUploadForm } from '@/components/admin/podcast-upload-form';
+import { PodcastUploadWizard } from '@/components/admin/podcast-upload-wizard';
 
 export default function UploadPage() {
   const router = useRouter();
@@ -28,12 +28,9 @@ export default function UploadPage() {
 
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Upload New Podcast</h1>
-        <p className="text-muted-foreground">Fill in the details below to create a new podcast.</p>
       </div>
 
-      <div className="max-w-2xl">
-        <PodcastUploadForm mode="create" onSuccess={() => router.push('/admin')} />
-      </div>
+      <PodcastUploadWizard mode="create" onSuccess={() => router.push('/admin')} />
     </div>
   );
 }

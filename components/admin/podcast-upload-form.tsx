@@ -152,11 +152,6 @@ export function PodcastUploadForm({
           setIsSubmitting(false);
           return;
         }
-        if (!audioShortFile) {
-          toast.error('Short audio file is required');
-          setIsSubmitting(false);
-          return;
-        }
       }
 
       // Upload files
@@ -284,14 +279,18 @@ export function PodcastUploadForm({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">
+              Title<span className="text-destructive"> *</span>
+            </Label>
             <Input id="title" {...register('title')} placeholder="Podcast title" />
             {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">
+              Description<span className="text-destructive"> *</span>
+            </Label>
             <Textarea
               id="description"
               {...register('description')}
@@ -305,7 +304,9 @@ export function PodcastUploadForm({
 
           {/* Domain */}
           <div className="space-y-2">
-            <Label htmlFor="domain">Domain</Label>
+            <Label htmlFor="domain">
+              Domain<span className="text-destructive"> *</span>
+            </Label>
             <Select
               defaultValue={initialData?.domain}
               onValueChange={(value) => setValue('domain', value)}
@@ -326,7 +327,9 @@ export function PodcastUploadForm({
 
           {/* Year */}
           <div className="space-y-2">
-            <Label htmlFor="year">Year</Label>
+            <Label htmlFor="year">
+              Year<span className="text-destructive"> *</span>
+            </Label>
             <Input id="year" type="number" {...register('year')} />
             {errors.year && <p className="text-sm text-destructive">{errors.year.message}</p>}
           </div>
@@ -361,7 +364,9 @@ export function PodcastUploadForm({
 
           {/* Thumbnail */}
           <div className="space-y-2">
-            <Label htmlFor="thumbnail">Thumbnail Image</Label>
+            <Label htmlFor="thumbnail">
+              Thumbnail Image{mode === 'create' && <span className="text-destructive"> *</span>}
+            </Label>
             <Input
               id="thumbnail"
               type="file"
@@ -374,11 +379,9 @@ export function PodcastUploadForm({
             )}
           </div>
 
-          {/* Audio Short */}
+          {/* Brief Summary Audio */}
           <div className="space-y-2">
-            <Label htmlFor="audioShort">
-              Short Audio {mode === 'create' && <span className="text-destructive">*</span>}
-            </Label>
+            <Label htmlFor="audioShort">Brief Summary</Label>
             <Input
               id="audioShort"
               type="file"
@@ -388,9 +391,9 @@ export function PodcastUploadForm({
             {audioShortUpload.isUploading && <ProgressBar progress={audioShortUpload.progress} />}
           </div>
 
-          {/* Audio Long */}
+          {/* Detailed Overview Audio */}
           <div className="space-y-2">
-            <Label htmlFor="audioLong">Long Audio (Optional)</Label>
+            <Label htmlFor="audioLong">Detailed Overview</Label>
             <Input
               id="audioLong"
               type="file"
@@ -402,7 +405,7 @@ export function PodcastUploadForm({
 
           {/* Attachments */}
           <div className="space-y-2">
-            <Label htmlFor="bulletins">Attachments (Optional)</Label>
+            <Label htmlFor="bulletins">Attachments</Label>
             <Input
               id="bulletins"
               type="file"
@@ -413,9 +416,9 @@ export function PodcastUploadForm({
             {bulletinUpload.isUploading && <ProgressBar progress={bulletinUpload.progress} />}
           </div>
 
-          {/* Short Transcript */}
+          {/* Brief Summary Transcript */}
           <div className="space-y-2">
-            <Label htmlFor="shortTranscript">Short Transcript (Optional)</Label>
+            <Label htmlFor="shortTranscript">Brief Summary Transcript</Label>
             <Input
               id="shortTranscript"
               type="file"
@@ -435,9 +438,9 @@ export function PodcastUploadForm({
             )}
           </div>
 
-          {/* Long Transcript */}
+          {/* Detailed Overview Transcript */}
           <div className="space-y-2">
-            <Label htmlFor="longTranscript">Long Transcript (Optional)</Label>
+            <Label htmlFor="longTranscript">Detailed Overview Transcript</Label>
             <Input
               id="longTranscript"
               type="file"
@@ -458,7 +461,11 @@ export function PodcastUploadForm({
           </div>
 
           {/* Submit */}
-          <Button type="submit" disabled={isSubmitting || isUploading} className="w-full">
+          <Button
+            type="submit"
+            disabled={isSubmitting || isUploading}
+            className="w-full active:scale-[0.97]"
+          >
             {isSubmitting || isUploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -471,6 +478,10 @@ export function PodcastUploadForm({
               </>
             )}
           </Button>
+
+          <p className="text-sm text-muted-foreground italic mt-4">
+            All fields marked with * are mandatory
+          </p>
         </form>
       </CardContent>
     </Card>

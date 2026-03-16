@@ -12,11 +12,10 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  AreaChart,
-  Area,
   ResponsiveContainer,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AnimatedNumber } from '@/components/ui/animated-number';
 import { DateRangePicker } from './date-range-picker';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -68,6 +67,9 @@ export function AnalyticsCharts() {
 
   if (!data) return <div>No data available</div>;
 
+  /** Sort topics by count descending so the most popular appear first */
+  const sortedTopics = [...data.topTopics].sort((a, b) => b.count - a.count);
+
   return (
     <div className="space-y-6">
       <DateRangePicker onDateChange={fetchAnalytics} />
@@ -79,7 +81,9 @@ export function AnalyticsCharts() {
             <CardTitle>Total Podcasts</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{data.totalPodcasts}</p>
+            <p className="text-3xl font-bold">
+              <AnimatedNumber value={data.totalPodcasts} />
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -87,12 +91,14 @@ export function AnalyticsCharts() {
             <CardTitle>Learning Paths</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold">{data.totalPaths}</p>
+            <p className="text-3xl font-bold">
+              <AnimatedNumber value={data.totalPaths} />
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Domain Donut Chart */}
+      {/* Domain Pie Chart */}
       <Card>
         <CardHeader>
           <CardTitle>Listens by Domain</CardTitle>
@@ -107,9 +113,10 @@ export function AnalyticsCharts() {
                   data={data.listensByDomain}
                   dataKey="count"
                   nameKey="domain"
-                  innerRadius={60}
                   outerRadius={100}
                   label
+                  isAnimationActive={true}
+                  animationDuration={800}
                 >
                   {data.listensByDomain.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -132,14 +139,20 @@ export function AnalyticsCharts() {
           {data.monthlyTrends.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No trend data available</p>
           ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={data.monthlyTrends}>
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={data.monthlyTrends}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
-                <Area type="monotone" dataKey="count" stroke="#3b82f6" fill="#3b82f680" />
-              </AreaChart>
+                <Bar
+                  dataKey="count"
+                  fill="#3b82f6"
+                  radius={[4, 4, 0, 0]}
+                  isAnimationActive={true}
+                  animationDuration={800}
+                />
+              </BarChart>
             </ResponsiveContainer>
           )}
         </CardContent>
@@ -151,16 +164,21 @@ export function AnalyticsCharts() {
           <CardTitle>Top Topics</CardTitle>
         </CardHeader>
         <CardContent>
-          {data.topTopics.length === 0 ? (
+          {sortedTopics.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No topic data available</p>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={data.topTopics} layout="vertical">
+              <BarChart data={sortedTopics} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />
                 <YAxis dataKey="topic" type="category" width={120} />
                 <Tooltip />
-                <Bar dataKey="count" fill="#10b981" />
+                <Bar
+                  dataKey="count"
+                  fill="#10b981"
+                  isAnimationActive={true}
+                  animationDuration={800}
+                />
               </BarChart>
             </ResponsiveContainer>
           )}

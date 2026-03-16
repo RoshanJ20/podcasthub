@@ -74,7 +74,7 @@ model LearningGraph {
   domain       String
   pathType     String   @default("linear") @map("path_type")
   thumbnailUrl String?  @map("thumbnail_url")
-  isPublished  Boolean  @default(false) @map("is_published")
+  isPublished  Boolean  @default(true) @map("is_published")
   createdBy    String?  @map("created_by") @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
@@ -91,9 +91,10 @@ model LearningGraph {
 model Episode {
   id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   graphId     String   @map("graph_id") @db.Uuid
-  title       String
-  description String?
-  audioUrl    String   @map("audio_url")
+  title        String
+  description  String?
+  thumbnailUrl String?  @map("thumbnail_url")
+  audioUrl     String   @map("audio_url")
   transcript  Json     @default("[]")
   positionX   Float    @default(0) @map("position_x") @db.Real
   positionY   Float    @default(0) @map("position_y") @db.Real

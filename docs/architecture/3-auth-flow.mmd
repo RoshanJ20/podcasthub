@@ -1,0 +1,37 @@
+sequenceDiagram
+    actor U as User
+    participant B as Browser
+    participant MW as Edge Middleware
+    participant API as /api/auth/login
+    participant Auth as lib/auth
+    participant DB as PostgreSQL
+
+    U->>B: Navigate to /admin
+    B->>MW: GET /admin
+    MW->>MW: Extract access_token cookie
+    MW->>MW: Verify JWT (jose library)
+    alt No valid token
+        MW-->>B: 302 Redirect /login?redirectTo=/admin
+    end
+
+    U->>B: Submit email + password
+    B->>API: POST /api/auth/login
+    API->>Auth: Validate loginSchema (Zod)
+    API->>DB: findUnique(email) + include UserRole
+    DB-->>API: User record
+    API->>Auth: verifyPassword(input, hash) via bcrypt
+    API->>Auth: signAccessToken({userId, email, role})
+    API->>Auth: signRefreshToken({userId, email, role})
+    Auth-->>API: JWT strings (HS256)
+    API-->>B: 200 + Set-Cookie access_token 15m and refresh_token 7d
+
+    B->>MW: GET /admin (with cookies)
+    MW->>MW: Verify access_token
+    MW->>MW: Check role in admin or superadmin
+    MW->>MW: Set headers x-user-id x-user-email x-user-role
+    MW-->>B: 200 Admin page
+
+    Note over MW: On expired access_token
+    MW->>MW: Verify refresh_token
+    MW->>Auth: signAccessToken(payload)
+    MW-->>B: Response + new access_token cookie

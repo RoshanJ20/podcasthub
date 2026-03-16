@@ -2,7 +2,7 @@
  * Full-featured audio player component with HLS streaming support.
  *
  * Provides play/pause, skip +/-10s, progress seeking, volume control,
- * playback speed selection, and audio type toggling (short/long versions).
+ * playback speed selection, and audio type toggling (Brief Summary / Detailed Overview versions).
  * Integrates with the Zustand player store and uses HLS.js for adaptive
  * streaming. Supports keyboard shortcuts (spacebar for play/pause).
  */
@@ -222,10 +222,12 @@ export function AudioPlayer() {
             variant="ghost"
             size="sm"
             onClick={toggleAudioType}
-            aria-label={audioType === 'short' ? 'Short version' : 'Long version'}
+            aria-label={
+              audioType === 'short' ? 'Brief Summary version' : 'Detailed Overview version'
+            }
             className="text-xs"
           >
-            {audioType === 'short' ? 'Short' : 'Long'}
+            {audioType === 'short' ? 'Brief Summary' : 'Detailed Overview'}
           </Button>
         )}
       </div>

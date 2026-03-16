@@ -10,12 +10,12 @@ import { prisma } from '@/lib/db';
 import { parsePaginationParams, createPaginatedResponse } from '@/lib/api/pagination';
 import { ApiError, createErrorResponse, badRequest, internalError } from '@/lib/api/errors';
 import { createLearningGraphSchema } from '@/lib/schemas/learning-graph';
-import { requireAuth, requireRole, getAuthUser } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
 
 /**
  * Retrieves a paginated list of learning graphs.
  *
- * Public users see only published graphs. Admin/superadmin users see all.
+ * All learning paths are auto-published, so no visibility filtering is applied.
  * Supports query parameters:
  * - page, limit: pagination controls
  * - domain: filter by knowledge domain
@@ -29,14 +29,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { page, limit } = parsePaginationParams(url);
     const skip = (page - 1) * limit;
 
-    const user = getAuthUser(request);
-    const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
-
     // Build where clause
     const where: Record<string, unknown> = {};
-    if (!isAdmin) {
-      where.isPublished = true;
-    }
 
     const domain = url.searchParams.get('domain');
     if (domain) {
@@ -87,6 +81,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data: {
         ...result.data,
         createdBy: user.userId,
+        isPublished: true,
       },
     });
 

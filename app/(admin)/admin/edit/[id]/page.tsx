@@ -2,8 +2,8 @@
  * Admin edit page for modifying an existing podcast.
  *
  * Server Component that fetches the podcast by ID from the database
- * and renders the PodcastUploadForm in edit mode. Returns a 404 if
- * the podcast is not found.
+ * and renders the PodcastUploadWizard in edit mode via EditPodcastClient.
+ * Returns a 404 if the podcast is not found.
  */
 import { notFound } from 'next/navigation';
 

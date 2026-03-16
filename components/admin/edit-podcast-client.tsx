@@ -1,7 +1,7 @@
 /**
  * Client wrapper for the edit podcast page.
  *
- * Renders breadcrumb navigation and the PodcastUploadForm in edit mode.
+ * Renders breadcrumb navigation and the PodcastUploadWizard in edit mode.
  * Handles navigation back to the dashboard on successful update.
  */
 'use client';
@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
-import { PodcastUploadForm } from '@/components/admin/podcast-upload-form';
+import { PodcastUploadWizard } from '@/components/admin/podcast-upload-wizard';
 import type { PodcastData } from '@/lib/types';
 
 interface EditPodcastClientProps {
@@ -19,7 +19,7 @@ interface EditPodcastClientProps {
 }
 
 /**
- * Renders the edit podcast form with breadcrumb navigation.
+ * Renders the edit podcast wizard with breadcrumb navigation.
  */
 export function EditPodcastClient({ podcast }: EditPodcastClientProps) {
   const router = useRouter();
@@ -42,13 +42,11 @@ export function EditPodcastClient({ podcast }: EditPodcastClientProps) {
         </p>
       </div>
 
-      <div className="max-w-2xl">
-        <PodcastUploadForm
-          initialData={podcast}
-          mode="edit"
-          onSuccess={() => router.push('/admin')}
-        />
-      </div>
+      <PodcastUploadWizard
+        initialData={podcast}
+        mode="edit"
+        onSuccess={() => router.push('/admin')}
+      />
     </div>
   );
 }

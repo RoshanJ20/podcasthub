@@ -116,30 +116,17 @@ describe('GET /api/learning-graphs/[id]', () => {
     expect(res.status).toBe(404);
   });
 
-  it('returns 404 for unpublished graph when user is not admin', async () => {
+  it('returns graph regardless of isPublished status for any user', async () => {
     vi.mocked(getAuthUser).mockReturnValue(null);
-    vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue(unpublishedGraph as never);
-
-    const req = createRequest(`/api/learning-graphs/${graphId}`);
-    const res = await GET(req, { params: Promise.resolve({ id: graphId }) });
-
-    expect(res.status).toBe(404);
-  });
-
-  it('returns unpublished graph for admin users', async () => {
-    vi.mocked(getAuthUser).mockReturnValue({
-      userId: 'user-1',
-      email: 'admin@test.com',
-      role: 'admin',
-    });
     vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue(unpublishedGraph as never);
 
     const req = createRequest(`/api/learning-graphs/${graphId}`);
     const res = await GET(req, { params: Promise.resolve({ id: graphId }) });
     const body = await res.json();
 
+    /* All paths are auto-published, so no isPublished check is needed */
     expect(res.status).toBe(200);
-    expect(body.data.isPublished).toBe(false);
+    expect(body.data.id).toBe(graphId);
   });
 
   it('returns 500 on unexpected error', async () => {
@@ -184,25 +171,6 @@ describe('PUT /api/learning-graphs/[id]', () => {
 
     expect(res.status).toBe(200);
     expect(body.data.title).toBe('Updated Title');
-  });
-
-  it('updates isPublished flag', async () => {
-    const updated = { ...mockGraphWithRelations, isPublished: true };
-    vi.mocked(prisma.learningGraph.update).mockResolvedValue(updated as never);
-
-    const req = createRequest(`/api/learning-graphs/${graphId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ isPublished: true }),
-      headers: { 'Content-Type': 'application/json' },
-    });
-    const res = await PUT(req, { params: Promise.resolve({ id: graphId }) });
-
-    expect(res.status).toBe(200);
-    expect(prisma.learningGraph.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ isPublished: true }),
-      })
-    );
   });
 
   it('returns 401 when not authenticated', async () => {

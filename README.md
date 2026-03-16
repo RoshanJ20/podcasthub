@@ -15,18 +15,32 @@ Internal enterprise audio podcast platform for managing, distributing, and track
 
 ## Tech Stack
 
-| Layer            | Technology                          |
-| ---------------- | ----------------------------------- |
-| Framework        | Next.js 16 (App Router)             |
-| Language         | TypeScript 5                        |
-| UI               | React 19, Tailwind CSS 4, shadcn/ui |
-| Database         | PostgreSQL + Prisma ORM 7           |
-| Authentication   | Custom JWT (access + refresh)       |
-| Object Storage   | MinIO (dev) / Azure Blob (prod)     |
-| Testing          | Vitest, Testing Library, Playwright |
-| Linting          | ESLint 9, Prettier                  |
-| Containerization | Docker, Docker Compose              |
-| CI/CD            | GitHub Actions                      |
+| Layer         | Technology                              | Purpose                                             |
+| ------------- | --------------------------------------- | --------------------------------------------------- |
+| Framework     | Next.js 16 (App Router), TypeScript 5   | Full-stack React framework with SSR/SSG             |
+| Styling       | Tailwind CSS 4, shadcn/ui (Radix)       | Utility-first CSS with accessible component library |
+| State         | Zustand                                 | Client-side state (audio player, graph editor)      |
+| Forms         | React Hook Form + Zod                   | Form state management and validation                |
+| Charts        | Recharts                                | Analytics dashboard visualizations                  |
+| Graph Editor  | @xyflow/react, Dagre                    | Visual learning path editor with auto-layout        |
+| Drag & Drop   | @dnd-kit                                | Sortable lists (podcast ordering, linear editor)    |
+| PDF Viewer    | react-pdf (pdfjs-dist)                  | In-app attachment/document viewing                  |
+| Audio         | HLS.js                                  | Adaptive audio streaming with native fallback       |
+| Database      | PostgreSQL 16, Prisma ORM (v7)          | Data persistence, migrations, pgvector search       |
+| Auth          | Custom JWT (jose + bcryptjs)            | HttpOnly cookie auth with refresh token rotation    |
+| Storage       | MinIO (dev) / Azure Blob Storage (prod) | File uploads (audio, images, PDFs) via S3 API       |
+| Logging       | Pino                                    | Structured JSON logging with child loggers          |
+| Validation    | Zod v4                                  | Request body + form validation (shared schemas)     |
+| Security      | CSP, HSTS, CORS, next.config headers    | HTTP security headers, XSS/clickjack prevention     |
+| Notifications | Sonner                                  | Toast notifications                                 |
+| Icons         | Lucide React                            | Consistent icon set                                 |
+| Theming       | next-themes                             | Dark/light mode switching                           |
+| Testing       | Vitest, RTL, Playwright, MSW            | Unit, component, E2E tests (449 tests)              |
+| Linting       | ESLint 9 (flat config), Prettier        | Code quality and formatting                         |
+| Git Hooks     | Husky + lint-staged                     | Pre-commit lint/format enforcement                  |
+| Monitoring    | Sentry                                  | Error tracking and performance monitoring           |
+| CI/CD         | GitHub Actions                          | Automated lint, test, build, deploy pipelines       |
+| Deployment    | Docker, Azure Container Apps            | Containerized production deployment                 |
 
 ## Prerequisites
 

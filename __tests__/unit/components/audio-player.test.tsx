@@ -97,7 +97,7 @@ describe('AudioPlayer', () => {
     });
     const { container } = render(<AudioPlayer />);
     const toggleBtn = container.querySelector(
-      'button[aria-label="Short version"], button[aria-label="Long version"]'
+      'button[aria-label="Brief Summary version"], button[aria-label="Detailed Overview version"]'
     );
     expect(toggleBtn).not.toBeNull();
   });
@@ -108,7 +108,7 @@ describe('AudioPlayer', () => {
     });
     const { container } = render(<AudioPlayer />);
     const toggleBtn = container.querySelector(
-      'button[aria-label="Short version"], button[aria-label="Long version"]'
+      'button[aria-label="Brief Summary version"], button[aria-label="Detailed Overview version"]'
     );
     expect(toggleBtn).toBeNull();
   });

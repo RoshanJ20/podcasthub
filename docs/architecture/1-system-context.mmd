@@ -1,0 +1,24 @@
+graph TB
+    User["Audit Professional\n(Listener)"]
+    Admin["Admin\n(Content Manager)"]
+
+    System["Podcast Hub v2\nNext.js Application\n\nAudio podcast platform with transcripts,\nbookmarks, learning paths, and AI search"]
+
+    PG[("PostgreSQL 16\n+ pgvector\n\nPodcasts, users, transcripts,\nlearning graphs, embeddings")]
+    S3["Object Storage\nMinIO dev / Azure Blob prod\n\nAudio files, images,\nPDF bulletins, HLS segments"]
+    OpenAI["Azure OpenAI\ntext-embedding-3-large\n\n1536-dim embeddings\nfor semantic search"]
+
+    User -->|"Browse bulletins, play audio,\nsearch, track learning progress"| System
+    Admin -->|"Upload podcasts, manage users,\nbuild learning paths, view analytics"| System
+
+    System -->|"Prisma ORM\n+ raw pgvector queries"| PG
+    System -->|"S3 API\npresigned URLs, media proxy"| S3
+    System -->|"REST API\nembedding generation"| OpenAI
+
+    classDef person fill:#08427b,color:#fff,stroke:#08427b
+    classDef system fill:#1168bd,color:#fff,stroke:#1168bd
+    classDef external fill:#999,color:#fff,stroke:#999
+
+    class User,Admin person
+    class System system
+    class PG,S3,OpenAI external

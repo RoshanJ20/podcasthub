@@ -1,0 +1,80 @@
+graph TB
+    subgraph Browser
+        SPA["React 19 SPA\nshadcn/ui + Tailwind 4\nServer Components + Client Components"]
+        PlayerUI["Audio Player\nHLS.js adaptive streaming\nZustand player store"]
+        GraphUI["Graph Viewer and Editor\nxyflow/react + Dagre\nZustand editor store"]
+    end
+
+    subgraph NextServer["Next.js 16 Server"]
+        MW["Edge Middleware\njose JWT verification\nRoute protection + token refresh\nHeader injection: x-user-*"]
+
+        subgraph Pages["Server Components"]
+            PubPages["Public Pages\nHome, Bulletins, Podcast Detail,\nLearning Paths, Search, Profile"]
+            AuthPages["Auth Pages\nLogin, Register"]
+            AdminPages["Admin Pages\nDashboard, Upload, Edit,\nUsers, Analytics, Graph Editor"]
+        end
+
+        subgraph APILayer["API Route Handlers"]
+            AuthAPI["/api/auth/*\nlogin, register, logout,\nrefresh, me"]
+            PodcastAPI["/api/podcasts/*\nCRUD, batch, transcript"]
+            GraphAPI["/api/learning-graphs/*\nCRUD, bulk episode+edge save"]
+            SearchAPI["/api/search\ntext search + semantic search"]
+            MediaAPI["/api/media\nS3 proxy with range requests"]
+            UploadAPI["/api/upload\npresigned URLs, file upload"]
+            BookmarkAPI["/api/bookmarks/*\nCRUD per user"]
+            ProgressAPI["/api/progress/*\nepisode completion tracking"]
+            AdminAPI["/api/admin/analytics\n/api/users management"]
+        end
+
+        subgraph LibLayer["Shared Libraries"]
+            AuthLib["lib/auth\nJWT sign/verify, bcrypt,\nHttpOnly cookies, RBAC helpers"]
+            APILib["lib/api\nApiError, ErrorCode enum,\npagination, rate limiting"]
+            Schemas["lib/schemas\nZod: user, podcast,\nlearning-graph, bookmark"]
+            EmbedLib["lib/embeddings\nAzure OpenAI client\nretry with backoff"]
+            StorageLib["lib/storage\nS3Client, presigned URLs,\nfile validation"]
+            DB["lib/db\nPrisma + pg.Pool singleton"]
+            Logger["lib/logger\nPino structured JSON"]
+        end
+    end
+
+    PG[("PostgreSQL 16\npgvector extension\n\n10 models:\nUser, Podcast, Transcript,\nLearningGraph, Episode,\nEdge, Bookmark, Role,\nProgress, Activity")]
+    S3["MinIO / Azure Blob\nS3-compatible\n\nBuckets:\naudio, images, PDFs,\nHLS segments"]
+    AzureOAI["Azure OpenAI\ntext-embedding-3-large\n1536 dimensions"]
+
+    SPA -->|"HTTP requests"| MW
+    PlayerUI -->|"GET with Range header"| MediaAPI
+    GraphUI -->|"PUT bulk save"| GraphAPI
+
+    MW -->|"JWT valid"| Pages
+    MW -->|"JWT valid + headers"| APILayer
+
+    AuthAPI --> AuthLib
+    PodcastAPI --> DB
+    GraphAPI --> DB
+    SearchAPI --> EmbedLib
+    SearchAPI --> DB
+    MediaAPI --> StorageLib
+    UploadAPI --> StorageLib
+    BookmarkAPI --> DB
+    ProgressAPI --> DB
+    AdminAPI --> DB
+
+    APILayer --> APILib
+    APILayer --> Schemas
+    APILayer --> Logger
+
+    DB -->|"Prisma queries\n+ raw pgvector SQL"| PG
+    StorageLib -->|"S3 protocol"| S3
+    EmbedLib -->|"POST /embeddings"| AzureOAI
+
+    classDef browser fill:#438dd5,color:#fff,stroke:#438dd5
+    classDef server fill:#1168bd,color:#fff,stroke:#1168bd
+    classDef lib fill:#2694ab,color:#fff,stroke:#2694ab
+    classDef infra fill:#999,color:#fff,stroke:#999
+    classDef mw fill:#d4456e,color:#fff,stroke:#d4456e
+
+    class SPA,PlayerUI,GraphUI browser
+    class PubPages,AuthPages,AdminPages,AuthAPI,PodcastAPI,GraphAPI,SearchAPI,MediaAPI,UploadAPI,BookmarkAPI,ProgressAPI,AdminAPI server
+    class AuthLib,APILib,Schemas,EmbedLib,StorageLib,DB,Logger lib
+    class PG,S3,AzureOAI infra
+    class MW mw

@@ -10,7 +10,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ApiError, createErrorResponse, notFound, internalError } from '@/lib/api/errors';
 import { updateLearningGraphSchema } from '@/lib/schemas/learning-graph';
-import { requireAuth, requireRole, getAuthUser } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
 
 /** Route context providing the learning graph ID path parameter. */
 type RouteContext = { params: Promise<{ id: string }> };
@@ -18,8 +18,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 /**
  * Retrieves a single learning graph by ID with episodes and edges.
  *
- * Public users can only see published graphs.
- * Admin/superadmin users can see unpublished graphs.
+ * All learning paths are auto-published, so no visibility check is needed.
  *
  * @param request - The incoming Next.js request
  * @param context - Route context containing the graph ID
@@ -28,8 +27,6 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function GET(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   try {
     const { id } = await context.params;
-    const user = getAuthUser(request);
-    const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
     const graph = await prisma.learningGraph.findUnique({
       where: { id },
@@ -37,10 +34,6 @@ export async function GET(request: NextRequest, context: RouteContext): Promise<
     });
 
     if (!graph) {
-      return createErrorResponse(notFound('Learning graph'));
-    }
-
-    if (!graph.isPublished && !isAdmin) {
       return createErrorResponse(notFound('Learning graph'));
     }
 
@@ -58,7 +51,6 @@ export async function GET(request: NextRequest, context: RouteContext): Promise<
  *
  * Requires authentication with admin or superadmin role.
  * Validates the request body against updateLearningGraphSchema.
- * Also accepts isPublished boolean for publish/unpublish.
  *
  * @param request - The incoming Next.js request with update data
  * @param context - Route context containing the graph ID
@@ -72,27 +64,16 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
     const { id } = await context.params;
     const body = await request.json();
 
-    // Extract isPublished separately since it's not in the creation schema
-    const { isPublished, ...rest } = body;
-
-    // Validate the schema fields if any are present
-    if (Object.keys(rest).length > 0) {
-      const result = updateLearningGraphSchema.safeParse(rest);
-      if (!result.success) {
-        return createErrorResponse(
-          new ApiError(400, 'BAD_REQUEST' as never, 'Validation failed', result.error.flatten())
-        );
-      }
-    }
-
-    const updateData: Record<string, unknown> = { ...rest };
-    if (typeof isPublished === 'boolean') {
-      updateData.isPublished = isPublished;
+    const result = updateLearningGraphSchema.safeParse(body);
+    if (!result.success) {
+      return createErrorResponse(
+        new ApiError(400, 'BAD_REQUEST' as never, 'Validation failed', result.error.flatten())
+      );
     }
 
     const graph = await prisma.learningGraph.update({
       where: { id },
-      data: updateData,
+      data: result.data,
     });
 
     return NextResponse.json({ data: graph });
