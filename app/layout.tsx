@@ -10,6 +10,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { CommandPalette } from '@/components/layout/command-palette';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -42,6 +43,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <CommandPalette />
           {children}
           <Toaster richColors position="bottom-right" />
         </ThemeProvider>

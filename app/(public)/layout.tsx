@@ -1,18 +1,29 @@
 /**
  * Layout for all public-facing pages in Podcast Hub.
  *
- * Renders the PublicNav at the top, page content in the main area,
- * and the MiniPlayer fixed at the bottom for persistent audio playback.
+ * Renders the unified sidebar on desktop, mobile top bar + bottom player
+ * on mobile, and page content in the main area with page transitions.
  */
-import { PublicNav } from '@/components/layout/public-nav';
-import { MiniPlayer } from '@/components/audio-player/mini-player';
+import { UnifiedSidebar } from '@/components/layout/unified-sidebar';
+import { MobileTopBar } from '@/components/layout/mobile-top-bar';
+import { MobileBottomPlayer } from '@/components/layout/mobile-bottom-player';
+import { PageTransition } from '@/components/layout/page-transition';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
+  // TODO(auth): Replace with session data from getUserSession()
+  const userName = 'User';
+  const userRole = 'Member';
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <PublicNav />
-      <main className="flex-1">{children}</main>
-      <MiniPlayer />
+    <div className="flex min-h-screen">
+      <UnifiedSidebar userName={userName} userRole={userRole} />
+      <div className="flex flex-1 flex-col">
+        <MobileTopBar userName={userName} userRole={userRole} />
+        <main className="flex-1 p-4 md:p-6 lg:p-8">
+          <PageTransition>{children}</PageTransition>
+        </main>
+        <MobileBottomPlayer />
+      </div>
     </div>
   );
 }
