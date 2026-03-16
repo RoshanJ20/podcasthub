@@ -117,7 +117,8 @@ export function PodcastUploadWizard({
 
   /* ---------- React Hook Form ---------- */
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       title: initialData?.title ?? '',
       description: initialData?.description ?? '',

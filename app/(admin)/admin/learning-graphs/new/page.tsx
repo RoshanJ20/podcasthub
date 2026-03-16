@@ -100,7 +100,12 @@ export default function NewLearningPathPage() {
 
             <div className="space-y-2">
               <Label>Domain</Label>
-              <Select value={domain} onValueChange={setDomain}>
+              <Select
+                value={domain}
+                onValueChange={(value) => {
+                  if (value) setDomain(value);
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a domain" />
                 </SelectTrigger>

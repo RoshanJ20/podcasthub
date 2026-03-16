@@ -115,7 +115,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const podcast = await prisma.podcast.create({
-      data: result.data,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: result.data as any,
     });
 
     return NextResponse.json({ data: podcast }, { status: 201 });

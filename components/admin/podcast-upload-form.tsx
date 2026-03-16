@@ -106,7 +106,8 @@ export function PodcastUploadForm({
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       title: initialData?.title ?? '',
       description: initialData?.description ?? '',
@@ -309,7 +310,9 @@ export function PodcastUploadForm({
             </Label>
             <Select
               defaultValue={initialData?.domain}
-              onValueChange={(value) => setValue('domain', value)}
+              onValueChange={(value) => {
+                if (value) setValue('domain', value);
+              }}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select a domain" />

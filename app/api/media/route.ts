@@ -68,7 +68,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       headers['Accept-Ranges'] = response.AcceptRanges;
     }
 
-    return new NextResponse(bytes, {
+    return new NextResponse(Buffer.from(bytes), {
       status: range && response.ContentRange ? 206 : 200,
       headers,
     });

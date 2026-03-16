@@ -27,7 +27,7 @@ export interface EpisodePlayerProps {
   description: string | null;
   audioUrl: string;
   thumbnailUrl?: string | null;
-  transcript?: string | null;
+  transcript?: string | string[] | null;
   isCompleted: boolean;
   graphId: string;
   onComplete: () => void;
@@ -154,7 +154,7 @@ export function EpisodePlayer({
             min={0}
             max={duration || 100}
             value={[currentTime]}
-            onValueChange={(val: number[]) => seekTo(val[0])}
+            onValueChange={(value) => seekTo(Array.isArray(value) ? value[0] : value)}
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{formatTime(currentTime)}</span>
@@ -179,7 +179,7 @@ export function EpisodePlayer({
             max={1}
             step={0.01}
             value={[volume]}
-            onValueChange={(val: number[]) => changeVolume(val[0])}
+            onValueChange={(value) => changeVolume(Array.isArray(value) ? value[0] : value)}
             className="w-20"
           />
         </div>

@@ -21,4 +21,6 @@ export interface PodcastData {
   isArchived: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Optional transcripts associated with this podcast (short and long form). */
+  transcripts?: Array<{ transcriptType: string; fullText: string }>;
 }

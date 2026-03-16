@@ -12,7 +12,8 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { MoreHorizontal, Pencil, Eye, Archive, ArchiveRestore } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,21 +88,21 @@ export function PodcastTableActions({ podcast, onRefresh }: PodcastTableActionsP
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">Open actions menu</span>
-          </Button>
+        <DropdownMenuTrigger
+          className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'h-8 w-8')}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+          <span className="sr-only">Open actions menu</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild>
-            <Link href={`/admin/edit/${podcast.id}`}>
+          <DropdownMenuItem>
+            <Link href={`/admin/edit/${podcast.id}`} className="flex items-center w-full">
               <Pencil className="mr-2 h-4 w-4" />
               Edit
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href={`/podcast/${podcast.id}`}>
+          <DropdownMenuItem>
+            <Link href={`/podcast/${podcast.id}`} className="flex items-center w-full">
               <Eye className="mr-2 h-4 w-4" />
               View
             </Link>

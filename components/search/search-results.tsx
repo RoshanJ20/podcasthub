@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { StaggeredGrid, StaggeredGridItem } from '@/components/ui/staggered-grid';
 
-interface BasicResult {
+export interface BasicResult {
   id: string;
   title: string;
   description: string | null;
@@ -13,7 +13,7 @@ interface BasicResult {
   tags: string[];
 }
 
-interface SemanticResult {
+export interface SemanticResult {
   id: string;
   podcastId: string;
   podcastTitle: string;

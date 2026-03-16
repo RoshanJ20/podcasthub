@@ -31,6 +31,12 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   images: {
     dangerouslyAllowSVG: true,
+    localPatterns: [
+      {
+        pathname: '/api/media/**',
+        search: '',
+      },
+    ],
     remotePatterns: [
       {
         protocol: 'http',

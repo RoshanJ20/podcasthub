@@ -114,7 +114,7 @@ export function AudioPlayer() {
           min={0}
           max={duration || 100}
           value={[currentTime]}
-          onValueChange={(val: number[]) => seekTo(val[0])}
+          onValueChange={(value) => seekTo(Array.isArray(value) ? value[0] : value)}
         />
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>{formatTime(currentTime)}</span>
@@ -165,7 +165,7 @@ export function AudioPlayer() {
             max={1}
             step={0.01}
             value={[volume]}
-            onValueChange={(val: number[]) => setVolume(val[0])}
+            onValueChange={(value) => setVolume(Array.isArray(value) ? value[0] : value)}
             className="w-24"
           />
         </div>

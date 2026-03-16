@@ -125,7 +125,9 @@ export function UsersTable() {
                   <TableCell>
                     <Select
                       value={user.role}
-                      onValueChange={(value) => handleRoleChange(user.id, value)}
+                      onValueChange={(value) => {
+                        if (value) handleRoleChange(user.id, value);
+                      }}
                     >
                       <SelectTrigger className="w-32">
                         <SelectValue />

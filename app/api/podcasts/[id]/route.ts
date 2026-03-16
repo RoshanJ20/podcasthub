@@ -75,7 +75,8 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
 
     const podcast = await prisma.podcast.update({
       where: { id },
-      data: result.data,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data: result.data as any,
     });
 
     return NextResponse.json({ data: podcast });

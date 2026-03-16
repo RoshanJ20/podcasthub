@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { SearchInput } from '@/components/search/search-input';
+import type { BasicResult, SemanticResult } from '@/components/search/search-results';
 import { BasicResults, SemanticResults } from '@/components/search/search-results';
 
 export default function SearchPage() {
-  const [results, setResults] = useState<Record<string, unknown>[]>([]);
+  const [results, setResults] = useState<BasicResult[] | SemanticResult[]>([]);
   const [searchMode, setSearchMode] = useState<'basic' | 'semantic'>('basic');
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
@@ -45,9 +46,9 @@ export default function SearchPage() {
           <div className="text-center py-8 text-muted-foreground">Searching...</div>
         ) : hasSearched ? (
           searchMode === 'basic' ? (
-            <BasicResults results={results} />
+            <BasicResults results={results as BasicResult[]} />
           ) : (
-            <SemanticResults results={results} />
+            <SemanticResults results={results as SemanticResult[]} />
           )
         ) : null}
       </div>
