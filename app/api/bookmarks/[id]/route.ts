@@ -48,9 +48,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json();
     const parsed = updateBookmarkSchema.safeParse(body);
     if (!parsed.success) {
-      return createErrorResponse(
-        badRequest('Invalid update data', parsed.error.flatten())
-      );
+      return createErrorResponse(badRequest('Invalid update data', parsed.error.flatten()));
     }
 
     const updated = await prisma.bookmark.update({

@@ -115,7 +115,7 @@ export function scheduleAutoSave(): void {
  */
 function buildSavePayload(
   nodes: GraphNode[],
-  edges: GraphEdge[],
+  edges: GraphEdge[]
 ): {
   episodes: Array<{
     id: string;
@@ -163,12 +163,10 @@ function buildSavePayload(
  */
 function reconcileServerResponse(
   data: { episodes: ApiEpisode[]; edges?: ApiEdge[] },
-  clientNodes: GraphNode[],
+  clientNodes: GraphNode[]
 ): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const nodes: GraphNode[] = (data.episodes ?? []).map((ep) => {
-    const clientNode = clientNodes.find(
-      (n) => (ep.tempId && n.id === ep.tempId) || n.id === ep.id,
-    );
+    const clientNode = clientNodes.find((n) => (ep.tempId && n.id === ep.tempId) || n.id === ep.id);
     return {
       id: ep.id,
       title: ep.title,

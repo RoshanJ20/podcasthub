@@ -19,10 +19,7 @@ import { ApiError, createErrorResponse, internalError } from '@/lib/api/errors';
  * @returns An object containing a `createdAt` filter suitable for Prisma `where`
  *          clauses, or an empty object when neither bound is provided
  */
-function buildDateFilter(
-  from: string | null,
-  to: string | null,
-): Record<string, unknown> {
+function buildDateFilter(from: string | null, to: string | null): Record<string, unknown> {
   if (!from && !to) return {};
   const createdAt: Record<string, Date> = {};
   if (from) createdAt.gte = new Date(from);
@@ -38,7 +35,7 @@ function buildDateFilter(
  * @returns An array of `{ domain, count }` objects sorted by insertion order
  */
 function aggregateDomainCounts(
-  activities: Array<{ podcast: { domain: string } | null }>,
+  activities: Array<{ podcast: { domain: string } | null }>
 ): Array<{ domain: string; count: number }> {
   const counts: Record<string, number> = {};
   for (const activity of activities) {
@@ -56,7 +53,7 @@ function aggregateDomainCounts(
  * @returns An array of `{ month, count }` objects sorted chronologically
  */
 function aggregateMonthlyTrends(
-  activities: Array<{ createdAt: Date }>,
+  activities: Array<{ createdAt: Date }>
 ): Array<{ month: string; count: number }> {
   const counts: Record<string, number> = {};
   for (const activity of activities) {
@@ -77,7 +74,7 @@ function aggregateMonthlyTrends(
  * @returns An array of `{ topic, count }` objects with human-readable titles
  */
 async function resolveTopTopics(
-  groupedTopics: Array<{ podcastId: string | null; _count: { id: number } }>,
+  groupedTopics: Array<{ podcastId: string | null; _count: { id: number } }>
 ): Promise<Array<{ topic: string; count: number }>> {
   const podcastIds = groupedTopics
     .filter((t) => t.podcastId !== null)
@@ -104,10 +101,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     requireRole(user, ['admin', 'superadmin']);
 
     const url = new URL(request.url);
-    const dateFilter = buildDateFilter(
-      url.searchParams.get('from'),
-      url.searchParams.get('to'),
-    );
+    const dateFilter = buildDateFilter(url.searchParams.get('from'), url.searchParams.get('to'));
     const activityDateFilter = { activityType: 'listen' as const, ...dateFilter };
 
     const [totalPodcasts, totalPaths, listenActivities, monthlyActivities, topTopics] =

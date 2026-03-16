@@ -54,7 +54,9 @@ export function BasicResults({ results }: { results: BasicResult[] }) {
                   {result.domain && <Badge variant="secondary">{result.domain}</Badge>}
                 </div>
                 {result.description && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{result.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    {result.description}
+                  </p>
                 )}
               </CardContent>
             </Card>

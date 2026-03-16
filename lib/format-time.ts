@@ -21,7 +21,7 @@
  * @returns A formatted time string (e.g., "2:05" or "1:01:01")
  */
 export function formatTime(seconds: number): string {
-  if (!seconds || isNaN(seconds)) return '0:00';
+  if (!seconds || isNaN(seconds) || seconds < 0) return '0:00';
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = Math.floor(seconds % 60);

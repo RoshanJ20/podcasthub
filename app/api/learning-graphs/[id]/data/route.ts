@@ -64,7 +64,7 @@ function buildEpisodeData(ep: Record<string, unknown>) {
 async function upsertEpisodes(
   graphId: string,
   episodes: Array<Record<string, unknown>>,
-  existingEpisodeIds: Set<string>,
+  existingEpisodeIds: Set<string>
 ): Promise<Map<string, string>> {
   const incomingIds = new Set<string>();
   const tempIdToRealId = new Map<string, string>();
@@ -113,7 +113,7 @@ async function upsertEpisodes(
 async function recreateEdges(
   graphId: string,
   edges: Array<Record<string, unknown>>,
-  idMap: Map<string, string>,
+  idMap: Map<string, string>
 ): Promise<void> {
   await prisma.learningPathEdge.deleteMany({ where: { graphId } });
 
