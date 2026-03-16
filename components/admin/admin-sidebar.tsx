@@ -26,9 +26,9 @@ interface NavItem {
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { label: 'Upload', href: '/admin/upload', icon: Upload },
-  { label: 'Learning Paths', href: '/admin/learning-graphs', icon: Route, disabled: true },
-  { label: 'Users', href: '/admin/users', icon: Users, disabled: true },
-  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3, disabled: true },
+  { label: 'Learning Paths', href: '/admin/learning-graphs', icon: Route },
+  { label: 'Users', href: '/admin/users', icon: Users },
+  { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
 ];
 
 /**
