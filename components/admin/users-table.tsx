@@ -119,7 +119,7 @@ export function UsersTable() {
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user.id} className="transition-colors hover:bg-secondary/50">
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.name ?? '-'}</TableCell>
                   <TableCell>

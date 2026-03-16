@@ -6,14 +6,17 @@
  * Renders episodes as nodes and connections as edges in a draggable canvas.
  * Supports connecting nodes, auto-layout via dagre, and saving to API.
  */
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { toast } from 'sonner';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { ReactFlow, Background, Controls, MiniMap, type Connection } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useGraphEditorStore } from '@/stores/graph-editor-store';
 import { EpisodeNode } from './episode-node';
 import { EpisodeSidebar } from './episode-sidebar';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, Save } from 'lucide-react';
+import { LayoutGrid } from 'lucide-react';
+import { AutoSaveStatus } from '@/components/learning-path/auto-save-status';
 
 const nodeTypes = { episode: EpisodeNode };
 
@@ -21,18 +24,22 @@ interface GraphEditorProps {
   graphId: string;
 }
 
-export function GraphEditor({ graphId }: GraphEditorProps) {
-  const {
-    nodes,
-    edges,
-    isDirty,
-    addEdge,
-    removeNode,
-    removeEdge,
-    setLayout,
-    save,
-    setSelectedNode,
-  } = useGraphEditorStore();
+export function GraphEditor({ graphId: _graphId }: GraphEditorProps) {
+  const { nodes, edges, isDirty, addEdge, removeNode, removeEdge, setLayout, setSelectedNode } =
+    useGraphEditorStore();
+
+  useUnsavedChangesWarning(isDirty);
+
+  /* Show toast when auto-save encounters an error */
+  const lastSaveError = useGraphEditorStore((s) => s.lastSaveError);
+  const prevErrorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (lastSaveError && lastSaveError !== prevErrorRef.current) {
+      toast.error(lastSaveError);
+    }
+    prevErrorRef.current = lastSaveError;
+  }, [lastSaveError]);
 
   const rfNodes = useMemo(
     () =>
@@ -84,22 +91,15 @@ export function GraphEditor({ graphId }: GraphEditorProps) {
     [setSelectedNode]
   );
 
-  const handleSave = useCallback(() => save(graphId), [save, graphId]);
-
   return (
     <div className="flex h-[calc(100vh-200px)]">
       <div className="flex-1 relative">
-        {isDirty && (
-          <div className="absolute top-2 left-2 z-10 bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
-            Unsaved changes
-          </div>
-        )}
+        <div className="absolute top-2 left-2 z-10">
+          <AutoSaveStatus />
+        </div>
         <div className="absolute top-2 right-2 z-10 flex gap-2">
           <Button variant="outline" size="sm" onClick={setLayout}>
             <LayoutGrid className="h-4 w-4 mr-1" /> Auto Layout
-          </Button>
-          <Button size="sm" onClick={handleSave} disabled={!isDirty}>
-            <Save className="h-4 w-4 mr-1" /> Save
           </Button>
         </div>
         <ReactFlow

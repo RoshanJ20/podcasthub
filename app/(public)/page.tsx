@@ -9,10 +9,9 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { DOMAINS } from '@/lib/schemas/common';
 import { PodcastGrid } from '@/components/library/podcast-grid';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Library, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { CategoryGrid } from '@/components/home/category-grid';
 import type { PodcastData } from '@/lib/types';
 
 export default async function HomePage() {
@@ -84,26 +83,12 @@ export default async function HomePage() {
       {/* Browse by Category */}
       <section className="pb-16">
         <h2 className="mb-6 text-2xl font-semibold tracking-tight">Browse by Category</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {DOMAINS.map((domain) => {
-            const count = countByDomain.get(domain) ?? 0;
-            return (
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              <Link key={domain} href={`/bulletins?domain=${encodeURIComponent(domain)}` as any}>
-                <Card className="transition-shadow hover:shadow-lg">
-                  <CardHeader>
-                    <CardTitle>{domain}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Badge variant="secondary">
-                      {`${count} ${count === 1 ? 'podcast' : 'podcasts'}`}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
+        <CategoryGrid
+          domains={DOMAINS.map((domain) => ({
+            name: domain,
+            count: countByDomain.get(domain) ?? 0,
+          }))}
+        />
       </section>
     </div>
   );

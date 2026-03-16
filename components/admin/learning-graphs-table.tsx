@@ -1,7 +1,9 @@
 'use client';
 
 /**
- * Admin learning graphs data table with publish toggle and delete actions.
+ * Admin learning graphs data table with delete actions.
+ *
+ * All learning paths are auto-published, so no publish/draft toggle is needed.
  */
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -25,13 +27,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Edit, Plus, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface LearningGraph {
   id: string;
   title: string;
   domain: string;
   pathType: string;
-  isPublished: boolean;
   createdAt: Date;
   _count?: { episodes: number };
 }
@@ -45,22 +47,20 @@ export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handlePublishToggle = async (id: string, isPublished: boolean) => {
-    await fetch(`/api/learning-graphs/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isPublished: !isPublished }),
-    });
-    router.refresh();
-  };
-
   const handleDelete = async () => {
     if (!deleteId) return;
     setIsDeleting(true);
-    await fetch(`/api/learning-graphs/${deleteId}`, { method: 'DELETE' });
-    setDeleteId(null);
-    setIsDeleting(false);
-    router.refresh();
+    try {
+      const res = await fetch(`/api/learning-graphs/${deleteId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      toast.success('Learning path deleted');
+    } catch {
+      toast.error('Failed to delete learning path');
+    } finally {
+      setDeleteId(null);
+      setIsDeleting(false);
+      router.refresh();
+    }
   };
 
   return (
@@ -81,13 +81,12 @@ export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
             <TableHead>Domain</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Episodes</TableHead>
-            <TableHead>Published</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {graphs.map((graph) => (
-            <TableRow key={graph.id}>
+            <TableRow key={graph.id} className="transition-colors hover:bg-secondary/50">
               <TableCell className="font-medium">{graph.title}</TableCell>
               <TableCell>
                 <Badge variant="secondary">{graph.domain}</Badge>
@@ -96,15 +95,6 @@ export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
                 <Badge variant="outline">{graph.pathType}</Badge>
               </TableCell>
               <TableCell>{graph._count?.episodes ?? 0}</TableCell>
-              <TableCell>
-                <Button
-                  variant={graph.isPublished ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => handlePublishToggle(graph.id, graph.isPublished)}
-                >
-                  {graph.isPublished ? 'Published' : 'Draft'}
-                </Button>
-              </TableCell>
               <TableCell>
                 <div className="flex gap-1">
                   <Link href={`/admin/learning-graphs/${graph.id}`}>
@@ -121,7 +111,7 @@ export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
           ))}
           {graphs.length === 0 && (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                 No learning paths yet. Click &quot;New Path&quot; to create one.
               </TableCell>
             </TableRow>

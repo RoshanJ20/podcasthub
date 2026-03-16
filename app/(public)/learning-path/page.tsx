@@ -1,11 +1,12 @@
 /**
  * Public learning paths listing page.
  *
- * Server component that shows published learning paths with domain filtering
- * and progress indicators for authenticated users.
+ * Server component that fetches all learning paths (auto-published), then
+ * delegates rendering to PathListClient which fetches per-user progress
+ * client-side.
  */
 import { prisma } from '@/lib/db';
-import { PathCard } from '@/components/learning-path/path-card';
+import { PathListClient } from '@/components/learning-path/path-list-client';
 
 export default async function LearningPathsPage({
   searchParams,
@@ -16,29 +17,24 @@ export default async function LearningPathsPage({
 
   const paths = await prisma.learningGraph.findMany({
     where: {
-      isPublished: true,
       ...(domain ? { domain } : {}),
     },
     include: { _count: { select: { episodes: true } } },
     orderBy: { createdAt: 'desc' },
   });
 
+  const pathData = paths.map((p) => ({
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    domain: p.domain,
+    episodeCount: p._count.episodes,
+  }));
+
   return (
     <div className="container py-6">
       <h1 className="text-2xl font-bold mb-6">Learning Paths</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {paths.map((path) => (
-          <PathCard
-            key={path.id}
-            id={path.id}
-            title={path.title}
-            description={path.description}
-            domain={path.domain}
-            episodeCount={path._count.episodes}
-            completedCount={0}
-          />
-        ))}
-      </div>
+      <PathListClient paths={pathData} />
       {paths.length === 0 && (
         <p className="text-muted-foreground text-center py-8">No learning paths available yet.</p>
       )}

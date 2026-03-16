@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor U as User
+    participant Search as Search Page
+    participant API as /api/search
+    participant Embed as lib/embeddings
+    participant Azure as Azure OpenAI
+    participant DB as PostgreSQL + pgvector
+
+    U->>Search: Enter query revenue recognition standards
+    Search->>API: POST /api/search with query
+    API->>Embed: generateEmbedding query
+    Embed->>Azure: POST /openai/deployments/text-embedding-3-large/embeddings
+    Note over Embed,Azure: Retry up to 3x with exponential backoff on 429/5xx
+    Azure-->>Embed: float array 1536 dims
+    Embed-->>API: embedding vector
+
+    API->>DB: Raw SQL with pgvector
+    Note over API,DB: SELECT p.*, t.fullText,<br/>1 - (t.embedding <=> query::vector) AS similarity<br/>FROM transcripts t JOIN podcasts p<br/>WHERE similarity > 0.7<br/>ORDER BY similarity DESC LIMIT 10
+    DB-->>API: Matching transcripts + podcasts
+
+    API-->>Search: podcast, transcript, similarity_score array
+    Search-->>U: Ranked results with similarity scores

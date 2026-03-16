@@ -6,6 +6,7 @@
  */
 import { FileAudio } from 'lucide-react';
 import { PodcastCard } from '@/components/library/podcast-card';
+import { StaggeredGrid, StaggeredGridItem } from '@/components/ui/staggered-grid';
 import type { PodcastData } from '@/lib/types';
 
 export interface PodcastGridProps {
@@ -24,19 +25,20 @@ export function PodcastGrid({ podcasts }: PodcastGridProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <StaggeredGrid className="grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {podcasts.map((podcast) => (
-        <PodcastCard
-          key={podcast.id}
-          id={podcast.id}
-          title={podcast.title}
-          description={podcast.description}
-          domain={podcast.domain}
-          year={podcast.year}
-          tags={podcast.tags}
-          thumbnailUrl={podcast.thumbnailUrl}
-        />
+        <StaggeredGridItem key={podcast.id}>
+          <PodcastCard
+            id={podcast.id}
+            title={podcast.title}
+            description={podcast.description}
+            domain={podcast.domain}
+            year={podcast.year}
+            tags={podcast.tags}
+            thumbnailUrl={podcast.thumbnailUrl}
+          />
+        </StaggeredGridItem>
       ))}
-    </div>
+    </StaggeredGrid>
   );
 }

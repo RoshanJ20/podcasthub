@@ -6,7 +6,24 @@
  */
 import { z } from 'zod';
 
-/** All valid knowledge domains in Podcast Hub. */
+/** Knowledge domains specific to podcast content. */
+export const PODCAST_DOMAINS = [
+  'Audit Methodology',
+  'Accounting and Reporting',
+  'Audit Technology',
+  'Quality and Risk',
+  'LEAP',
+] as const;
+
+/** Knowledge domains specific to learning series content. */
+export const LEARNING_SERIES_DOMAINS = ['Auditing', 'Accounting and Reporting'] as const;
+
+/**
+ * All valid knowledge domains in Podcast Hub.
+ *
+ * Manually maintained union of PODCAST_DOMAINS and LEARNING_SERIES_DOMAINS
+ * with duplicates removed. Keep in sync when adding new domains.
+ */
 export const DOMAINS = [
   'Audit Methodology',
   'Accounting and Reporting',

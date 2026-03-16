@@ -2,7 +2,7 @@
  * Unit tests for learning graph list and creation API routes.
  *
  * Tests cover:
- * - GET /api/learning-graphs — paginated list with visibility rules and domain filter
+ * - GET /api/learning-graphs — paginated list (all auto-published) with domain filter
  * - POST /api/learning-graphs — create learning graph (admin/superadmin only)
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -69,26 +69,29 @@ describe('GET /api/learning-graphs', () => {
     GET = mod.GET;
   });
 
-  it('returns only published paths for unauthenticated users', async () => {
+  it('returns all paths for unauthenticated users without isPublished filter', async () => {
     vi.mocked(getAuthUser).mockReturnValue(null);
-    vi.mocked(prisma.learningGraph.findMany).mockResolvedValue([mockGraph] as never);
-    vi.mocked(prisma.learningGraph.count).mockResolvedValue(1);
+    vi.mocked(prisma.learningGraph.findMany).mockResolvedValue([
+      mockGraph,
+      mockDraftGraph,
+    ] as never);
+    vi.mocked(prisma.learningGraph.count).mockResolvedValue(2);
 
     const req = createRequest('/api/learning-graphs');
     const res = await GET(req);
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.data).toHaveLength(1);
-    expect(body.data[0].title).toBe('Published Path');
+    expect(body.data).toHaveLength(2);
+    /* No isPublished filter should be applied — all paths are auto-published */
     expect(prisma.learningGraph.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ isPublished: true }),
+        where: expect.not.objectContaining({ isPublished: true }),
       })
     );
   });
 
-  it('returns all paths for admin users', async () => {
+  it('returns all paths for admin users without isPublished filter', async () => {
     vi.mocked(getAuthUser).mockReturnValue({
       userId: 'user-1',
       email: 'admin@test.com',
@@ -105,7 +108,7 @@ describe('GET /api/learning-graphs', () => {
     const body = await res.json();
 
     expect(body.data).toHaveLength(2);
-    // Admin should see all — no isPublished filter
+    /* No isPublished filter for admin either — all paths are auto-published */
     expect(prisma.learningGraph.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.not.objectContaining({ isPublished: true }),

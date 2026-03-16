@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DOMAINS } from '@/lib/schemas/common';
+import { LEARNING_SERIES_DOMAINS } from '@/lib/schemas/common';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -88,7 +88,7 @@ export default function NewLearningPathPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 value={description}
@@ -105,7 +105,7 @@ export default function NewLearningPathPage() {
                   <SelectValue placeholder="Select a domain" />
                 </SelectTrigger>
                 <SelectContent>
-                  {DOMAINS.map((d) => (
+                  {LEARNING_SERIES_DOMAINS.map((d) => (
                     <SelectItem key={d} value={d}>
                       {d}
                     </SelectItem>
