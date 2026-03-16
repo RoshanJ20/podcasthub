@@ -26,6 +26,30 @@ const activitySchema = z.object({
   metadata: z.record(z.string(), z.any()).optional(),
 });
 
+/**
+ * Handles POST requests to log user activity.
+ *
+ * Validates the activity payload against activitySchema and persists
+ * the activity record (listen, bookmark, complete_episode, view_path, search).
+ * Returns 201 immediately upon successful creation.
+ *
+ * @param request - The incoming Next.js request object with activity data in the body
+ * @returns JSON response with null body and 201 status on success
+ * @throws {ApiError} 400 if the activity data fails schema validation
+ * @throws {ApiError} 401 if the user is not authenticated
+ */
+/**
+ * Handles POST requests to log user activity.
+ *
+ * Records a fire-and-forget activity entry (listen, bookmark, complete_episode,
+ * view_path, or search) for the authenticated user. Validates the request body
+ * against the activitySchema before persisting.
+ *
+ * @param request - The incoming Next.js request object containing activity data
+ * @returns JSON response with null body and 201 status on success
+ * @throws {ApiError} 400 if the activity data fails schema validation
+ * @throws {ApiError} 401 if the user is not authenticated
+ */
 export async function POST(request: NextRequest) {
   try {
     const user = requireAuth(request);

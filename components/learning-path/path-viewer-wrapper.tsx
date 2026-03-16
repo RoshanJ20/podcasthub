@@ -44,13 +44,13 @@ export function PathViewerWrapper({
   useEffect(() => {
     async function fetchProgress() {
       try {
-        const res = await fetch('/api/progress');
-        if (!res.ok) return;
-        const json = await res.json();
+        const response = await fetch('/api/progress');
+        if (!response.ok) return;
+        const progressResponse = await response.json();
         const ids = new Set<string>(
-          (json.data ?? [])
-            .filter((p: { graph?: { id: string } }) => p.graph?.id === graphId)
-            .map((p: { episode?: { id: string } }) => p.episode?.id)
+          (progressResponse.data ?? [])
+            .filter((progress: { graph?: { id: string } }) => progress.graph?.id === graphId)
+            .map((progress: { episode?: { id: string } }) => progress.episode?.id)
             .filter(Boolean)
         );
         setCompletedIds(ids);

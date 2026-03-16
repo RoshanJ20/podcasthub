@@ -79,6 +79,7 @@ export function useFileUpload(): UseFileUploadReturn {
         xhr.addEventListener('abort', () => reject(new Error('Upload was aborted')));
 
         xhr.open('POST', '/api/upload/file');
+        xhr.timeout = 120000; // 2 minutes for file uploads
         xhr.send(formData);
       });
 

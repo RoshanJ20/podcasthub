@@ -1,3 +1,10 @@
+/**
+ * Search input component with mode toggle for basic and semantic search.
+ *
+ * Key responsibilities:
+ * - Provides a search text input with icon
+ * - Supports toggling between basic keyword and AI-powered semantic search modes
+ */
 'use client';
 
 import { useState } from 'react';
@@ -10,6 +17,14 @@ interface SearchInputProps {
   isLoading?: boolean;
 }
 
+/**
+ * Renders a search input field with mode toggle for basic and semantic search.
+ *
+ * @param props - Component props
+ * @param props.onSearch - Callback invoked with the query string and selected search mode
+ * @param props.isLoading - Whether a search request is in progress (disables submit)
+ * @returns Search form with input, submit button, and mode toggle
+ */
 export function SearchInput({ onSearch, isLoading }: SearchInputProps) {
   const [query, setQuery] = useState('');
   const [mode, setMode] = useState<'basic' | 'semantic'>('basic');

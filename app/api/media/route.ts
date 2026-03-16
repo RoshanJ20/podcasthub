@@ -9,24 +9,32 @@
  */
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { s3Client } from '@/lib/storage';
+import { createErrorResponse, badRequest, notFound, internalError } from '@/lib/api/errors';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('media-api');
 
 const UPLOAD_BUCKET = process.env.S3_UPLOAD_BUCKET ?? 'podcast-hub-uploads';
 
-const s3Client = new S3Client({
-  endpoint: process.env.S3_ENDPOINT,
-  region: process.env.S3_REGION ?? 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.S3_ACCESS_KEY ?? '',
-    secretAccessKey: process.env.S3_SECRET_KEY ?? '',
-  },
-  forcePathStyle: true,
-});
-
+/**
+ * Handles GET requests to proxy media files from MinIO/S3 storage.
+ *
+ * Retrieves the file identified by the 'key' query parameter from the S3 bucket
+ * and streams it back to the client. Supports HTTP range requests for audio seeking.
+ * Infers content type from the file extension when S3 does not provide one.
+ *
+ * @param request - The incoming Next.js request object with a 'key' query parameter
+ * @returns Binary response with appropriate Content-Type, Content-Length, and range headers
+ * @throws {ApiError} 400 if the 'key' query parameter is missing
+ * @throws {ApiError} 404 if the file is not found in S3
+ * @throws {ApiError} 500 if the S3 retrieval fails
+ */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const key = request.nextUrl.searchParams.get('key');
   if (!key) {
-    return NextResponse.json({ error: 'key parameter required' }, { status: 400 });
+    return createErrorResponse(badRequest('key parameter required'));
   }
 
   try {
@@ -40,7 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const response = await s3Client.send(command);
     const body = response.Body;
     if (!body) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 });
+      return createErrorResponse(notFound('File'));
     }
 
     const bytes = await body.transformToByteArray();
@@ -73,8 +81,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       headers,
     });
   } catch (error) {
-    console.error('Media proxy error:', error);
-    return NextResponse.json({ error: 'File not found' }, { status: 404 });
+    log.error({ error }, 'Media proxy failed');
+    return createErrorResponse(internalError('Failed to retrieve file'));
   }
 }
 

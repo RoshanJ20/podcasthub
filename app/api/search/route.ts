@@ -21,9 +21,9 @@ import { parsePaginationParams } from '@/lib/api/pagination';
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const url = new URL(request.url);
-    const q = url.searchParams.get('q');
+    const searchQuery = url.searchParams.get('q');
 
-    if (!q || !q.trim()) {
+    if (!searchQuery || !searchQuery.trim()) {
       return createErrorResponse(badRequest('Query parameter "q" is required'));
     }
 
@@ -33,9 +33,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const where = {
       isArchived: false,
       OR: [
-        { title: { contains: q, mode: 'insensitive' as const } },
-        { description: { contains: q, mode: 'insensitive' as const } },
-        { tags: { has: q.toLowerCase() } },
+        { title: { contains: searchQuery, mode: 'insensitive' as const } },
+        { description: { contains: searchQuery, mode: 'insensitive' as const } },
+        { tags: { has: searchQuery.toLowerCase() } },
       ],
     };
 
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       prisma.podcast.count({ where }),
     ]);
 
-    return NextResponse.json({ results, query: q, total, page, limit });
+    return NextResponse.json({ results, query: searchQuery, total, page, limit });
   } catch (error) {
     if (error instanceof ApiError) {
       return createErrorResponse(error);

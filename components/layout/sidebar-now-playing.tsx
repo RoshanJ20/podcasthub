@@ -19,23 +19,7 @@ import { Play, Pause } from 'lucide-react';
 import { usePlayerStore } from '@/stores/player-store';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import { cn } from '@/lib/utils';
-
-/**
- * Formats a duration in seconds to a human-readable mm:ss string.
- *
- * @param seconds - Total elapsed or remaining seconds (may be fractional).
- * @returns Zero-padded minutes and seconds, e.g. `"3:07"`.
- *
- * @example
- * formatTime(187) // "3:07"
- * formatTime(0)   // "0:00"
- */
-export function formatTime(seconds: number): string {
-  const safeSeconds = Math.max(0, Math.floor(seconds));
-  const minutes = Math.floor(safeSeconds / 60);
-  const remainingSeconds = safeSeconds % 60;
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-}
+import { formatTime } from '@/lib/format-time';
 
 /**
  * Props for the SidebarNowPlaying component.

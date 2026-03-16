@@ -54,7 +54,10 @@ export function useHlsPlayer() {
     if (!audio) return;
     if (isPlaying) {
       const result = audio.play();
-      if (result && typeof result.catch === 'function') result.catch(() => {});
+      if (result && typeof result.catch === 'function')
+        result.catch(() => {
+          /* Autoplay blocked by browser — expected, non-critical */
+        });
     } else audio.pause();
   }, [isPlaying]);
 

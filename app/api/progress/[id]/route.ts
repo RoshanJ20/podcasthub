@@ -15,6 +15,19 @@ import {
   forbidden,
 } from '@/lib/api/errors';
 
+/**
+ * Handles DELETE requests to unmark an episode completion.
+ *
+ * Verifies the progress record exists and belongs to the authenticated user
+ * before deleting it.
+ *
+ * @param request - The incoming Next.js request object
+ * @param params - Route parameters containing the progress record ID
+ * @returns JSON response with a confirmation message
+ * @throws {ApiError} 401 if the user is not authenticated
+ * @throws {ApiError} 403 if the user does not own the progress record
+ * @throws {ApiError} 404 if the progress record is not found
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

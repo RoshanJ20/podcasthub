@@ -115,6 +115,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const podcast = await prisma.podcast.create({
+      // WORKAROUND: Prisma create returns broader type than our schema output — safe to cast
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: result.data as any,
     });

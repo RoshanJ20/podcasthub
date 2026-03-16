@@ -1,3 +1,10 @@
+/**
+ * Date range picker component for filtering analytics data.
+ *
+ * Key responsibilities:
+ * - Provides start/end date inputs for analytics filtering
+ * - Communicates selected range to parent via callback props
+ */
 'use client';
 
 import { useState } from 'react';
@@ -9,6 +16,13 @@ interface DateRangePickerProps {
   onDateChange: (from: string, to: string) => void;
 }
 
+/**
+ * Renders date range inputs for filtering analytics data.
+ *
+ * @param props - Component props
+ * @param props.onDateChange - Callback invoked with (from, to) strings when the user applies a date range
+ * @returns Date range picker with from/to date inputs
+ */
 export function DateRangePicker({ onDateChange }: DateRangePickerProps) {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');

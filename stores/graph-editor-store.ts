@@ -105,6 +105,92 @@ export function scheduleAutoSave(): void {
   }, AUTO_SAVE_DELAY_MS);
 }
 
+/**
+ * Builds the save payload from the current editor state, transforming client
+ * nodes and edges into the API-expected format with positional sort orders.
+ *
+ * @param nodes - The current graph nodes from the editor store
+ * @param edges - The current graph edges from the editor store
+ * @returns An object with `episodes` and `edges` arrays ready for the PUT API
+ */
+function buildSavePayload(
+  nodes: GraphNode[],
+  edges: GraphEdge[]
+): {
+  episodes: Array<{
+    id: string;
+    title: string;
+    podcastId: string;
+    positionX: number;
+    positionY: number;
+    nodeType: string;
+    sortOrder: number;
+    description: string;
+    audioUrl: string;
+    thumbnailUrl: string;
+    transcript: string;
+  }>;
+  edges: Array<{ sourceEpisodeId: string; targetEpisodeId: string }>;
+} {
+  return {
+    episodes: nodes.map((n, i) => ({
+      id: n.id,
+      title: n.title,
+      podcastId: n.podcastId,
+      positionX: n.positionX,
+      positionY: n.positionY,
+      nodeType: n.nodeType,
+      sortOrder: i,
+      description: n.description ?? '',
+      audioUrl: n.audioUrl ?? '',
+      thumbnailUrl: n.thumbnailUrl ?? '',
+      transcript: n.transcript ?? '',
+    })),
+    edges: edges.map((e) => ({
+      sourceEpisodeId: e.source,
+      targetEpisodeId: e.target,
+    })),
+  };
+}
+
+/**
+ * Reconciles server-returned episodes with client nodes, producing updated
+ * GraphNode and GraphEdge arrays with server-assigned IDs.
+ *
+ * @param data - The API response data containing episodes and optional edges
+ * @param clientNodes - The original client-side nodes for fallback values
+ * @returns An object with reconciled `nodes` and `edges` arrays
+ */
+function reconcileServerResponse(
+  data: { episodes: ApiEpisode[]; edges?: ApiEdge[] },
+  clientNodes: GraphNode[]
+): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  const nodes: GraphNode[] = (data.episodes ?? []).map((ep) => {
+    const clientNode = clientNodes.find((n) => (ep.tempId && n.id === ep.tempId) || n.id === ep.id);
+    return {
+      id: ep.id,
+      title: ep.title,
+      podcastId: ep.podcastId,
+      positionX: ep.positionX,
+      positionY: ep.positionY,
+      nodeType: ep.nodeType as GraphNode['nodeType'],
+      sortOrder: ep.sortOrder,
+      description: clientNode?.description ?? ep.description ?? '',
+      audioUrl: clientNode?.audioUrl ?? ep.audioUrl ?? '',
+      thumbnailUrl: clientNode?.thumbnailUrl ?? ep.thumbnailUrl ?? '',
+      transcript: clientNode?.transcript ?? ep.transcript ?? '',
+    };
+  });
+
+  const edges: GraphEdge[] = (data.edges ?? []).map((e) => ({
+    id: e.id,
+    source: e.sourceEpisodeId,
+    target: e.targetEpisodeId,
+  }));
+
+  return { nodes, edges };
+}
+
 export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
   nodes: [],
   edges: [],
@@ -179,73 +265,39 @@ export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
 
     try {
       const { nodes, edges } = get();
+      const payload = buildSavePayload(nodes, edges);
 
-      const response = await fetch(`/api/learning-graphs/${graphId}/data`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          episodes: nodes.map((n, i) => ({
-            id: n.id,
-            title: n.title,
-            podcastId: n.podcastId,
-            positionX: n.positionX,
-            positionY: n.positionY,
-            nodeType: n.nodeType,
-            sortOrder: i,
-            description: n.description ?? '',
-            audioUrl: n.audioUrl ?? '',
-            thumbnailUrl: n.thumbnailUrl ?? '',
-            transcript: n.transcript ?? '',
-          })),
-          edges: edges.map((e) => ({
-            sourceEpisodeId: e.source,
-            targetEpisodeId: e.target,
-          })),
-        }),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`Save failed (${response.status}): ${errorBody}`);
-      }
+      try {
+        const response = await fetch(`/api/learning-graphs/${graphId}/data`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        });
 
-      const { data } = (await response.json()) as {
-        data: { episodes: ApiEpisode[]; edges?: ApiEdge[] };
-      };
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(`Save failed (${response.status}): ${errorBody}`);
+        }
 
-      /** Reconcile client nodes with server-assigned IDs. */
-      const reconciledNodes: GraphNode[] = (data.episodes ?? []).map((ep) => {
-        /* Find the matching client node — prefer tempId match, fall back to id match. */
-        const clientNode = nodes.find((n) => (ep.tempId && n.id === ep.tempId) || n.id === ep.id);
-
-        return {
-          id: ep.id,
-          title: ep.title,
-          podcastId: ep.podcastId,
-          positionX: ep.positionX,
-          positionY: ep.positionY,
-          nodeType: ep.nodeType as GraphNode['nodeType'],
-          sortOrder: ep.sortOrder,
-          description: clientNode?.description ?? ep.description ?? '',
-          audioUrl: clientNode?.audioUrl ?? ep.audioUrl ?? '',
-          thumbnailUrl: clientNode?.thumbnailUrl ?? ep.thumbnailUrl ?? '',
-          transcript: clientNode?.transcript ?? ep.transcript ?? '',
+        const { data } = (await response.json()) as {
+          data: { episodes: ApiEpisode[]; edges?: ApiEdge[] };
         };
-      });
 
-      /** Reconcile edges from the server response. */
-      const reconciledEdges: GraphEdge[] = (data.edges ?? []).map((e) => ({
-        id: e.id,
-        source: e.sourceEpisodeId,
-        target: e.targetEpisodeId,
-      }));
+        const reconciled = reconcileServerResponse(data, nodes);
 
-      set({
-        nodes: reconciledNodes,
-        edges: reconciledEdges,
-        isDirty: false,
-        isSaving: false,
-      });
+        set({
+          nodes: reconciled.nodes,
+          edges: reconciled.edges,
+          isDirty: false,
+          isSaving: false,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown save error';
       set({ isSaving: false, lastSaveError: message });

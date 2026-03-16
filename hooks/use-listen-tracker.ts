@@ -26,6 +26,8 @@ export function useListenTracker(podcastId: string | null) {
       if (now - lastLoggedRef.current < 25_000) return;
 
       lastLoggedRef.current = now;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
       try {
         await fetch('/api/activity', {
           method: 'POST',
@@ -34,9 +36,12 @@ export function useListenTracker(podcastId: string | null) {
             activityType: 'listen',
             podcastId,
           }),
+          signal: controller.signal,
         });
-      } catch {
-        // Silently fail — fire-and-forget
+      } catch (error) {
+        console.warn('Activity tracking failed:', error);
+      } finally {
+        clearTimeout(timeoutId);
       }
     };
 

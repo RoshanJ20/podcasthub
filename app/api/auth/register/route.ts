@@ -29,6 +29,9 @@ import { signAccessToken, signRefreshToken } from '@/lib/auth/jwt';
 import { setAuthCookies } from '@/lib/auth/cookies';
 import { prisma } from '@/lib/db';
 import { badRequest, validationFailed, internalError, createErrorResponse } from '@/lib/api/errors';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('auth-register');
 
 /**
  * Handles user registration.
@@ -110,7 +113,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return response;
   } catch (error) {
-    console.error('Registration error:', error);
+    log.error({ error }, 'Registration failed');
     return createErrorResponse(internalError());
   }
 }

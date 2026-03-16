@@ -31,6 +31,7 @@ export function CategoryGrid({ domains }: CategoryGridProps) {
     <StaggeredGrid className="grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {domains.map(({ name, count }) => (
         <StaggeredGridItem key={name}>
+          {/* WORKAROUND: Next.js App Router typed routes don't support dynamic segments — safe to cast */}
           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           <Link href={`/bulletins?domain=${encodeURIComponent(name)}` as any}>
             <div className="rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary/30">

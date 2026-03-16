@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BookmarkPlus, Pencil, Trash2, Clock, Check, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatTime } from '@/lib/format-time';
 
 interface Bookmark {
   id: string;
@@ -28,18 +29,6 @@ interface BookmarkPanelProps {
   onSeek?: (time: number) => void;
 }
 
-/** Format seconds as m:ss or h:mm:ss. */
-function formatTime(seconds: number): string {
-  if (!isFinite(seconds) || seconds < 0) return '0:00';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  }
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
 export function BookmarkPanel({ podcastId, onSeek }: BookmarkPanelProps) {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,14 +41,14 @@ export function BookmarkPanel({ podcastId, onSeek }: BookmarkPanelProps) {
 
   const fetchBookmarks = useCallback(async () => {
     try {
-      const res = await fetch(`/api/bookmarks?podcastId=${podcastId}`);
-      if (!res.ok) return;
-      const json = await res.json();
-      const items: Bookmark[] = json.data ?? [];
+      const response = await fetch(`/api/bookmarks?podcastId=${podcastId}`);
+      if (!response.ok) return;
+      const bookmarksResponse = await response.json();
+      const items: Bookmark[] = bookmarksResponse.data ?? [];
       items.sort((a, b) => a.timestampSeconds - b.timestampSeconds);
       setBookmarks(items);
-    } catch {
-      // silently ignore fetch errors
+    } catch (error) {
+      console.warn('Failed to fetch bookmarks:', error);
     } finally {
       setLoading(false);
     }
@@ -76,22 +65,22 @@ export function BookmarkPanel({ podcastId, onSeek }: BookmarkPanelProps) {
       return;
     }
 
-    const ts = Math.floor(currentTime);
+    const timestampSeconds = Math.floor(currentTime);
     try {
-      const res = await fetch('/api/bookmarks', {
+      const response = await fetch('/api/bookmarks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           podcastId,
-          timestampSeconds: ts,
+          timestampSeconds,
           note: newNote.trim() || undefined,
         }),
       });
-      if (!res.ok) {
+      if (!response.ok) {
         toast.error('Failed to add bookmark');
         return;
       }
-      toast.success(`Bookmark added at ${formatTime(ts)}`);
+      toast.success(`Bookmark added at ${formatTime(timestampSeconds)}`);
       setAddingNote(false);
       setNewNote('');
       await fetchBookmarks();
@@ -109,8 +98,8 @@ export function BookmarkPanel({ podcastId, onSeek }: BookmarkPanelProps) {
   /** Delete a bookmark. */
   const handleDelete = async (id: string) => {
     try {
-      const res = await fetch(`/api/bookmarks/${id}`, { method: 'DELETE' });
-      if (!res.ok) {
+      const response = await fetch(`/api/bookmarks/${id}`, { method: 'DELETE' });
+      if (!response.ok) {
         toast.error('Failed to delete bookmark');
         return;
       }
@@ -129,12 +118,12 @@ export function BookmarkPanel({ podcastId, onSeek }: BookmarkPanelProps) {
   /** Save an edited bookmark note. */
   const saveEdit = async (id: string) => {
     try {
-      const res = await fetch(`/api/bookmarks/${id}`, {
+      const response = await fetch(`/api/bookmarks/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note: editNote.trim() }),
       });
-      if (!res.ok) {
+      if (!response.ok) {
         toast.error('Failed to update bookmark');
         return;
       }

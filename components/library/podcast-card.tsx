@@ -31,6 +31,7 @@ export function PodcastCard({
   const visibleTags = tags.slice(0, 3);
 
   return (
+    // WORKAROUND: Next.js App Router typed routes don't support dynamic segments — safe to cast
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <Link href={`/podcast/${id}` as any} className="group block" data-testid="podcast-card-link">
       <div className="flex h-full flex-col rounded-xl border border-border bg-card transition-colors hover:bg-secondary/20 active:scale-[0.98]">

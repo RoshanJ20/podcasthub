@@ -32,6 +32,7 @@ export const logger = pino({
     : {}),
   base: {
     env: process.env.NODE_ENV,
+    service_name: 'podcast-hub-v2',
   },
 });
 

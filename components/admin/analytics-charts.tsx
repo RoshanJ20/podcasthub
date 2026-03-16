@@ -1,3 +1,11 @@
+/**
+ * Analytics charts component for the admin dashboard.
+ *
+ * Key responsibilities:
+ * - Fetches and displays analytics data (plays, users, top podcasts)
+ * - Renders interactive charts using Recharts
+ * - Supports date range filtering via DateRangePicker
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -28,6 +36,11 @@ interface AnalyticsData {
   topTopics: { topic: string; count: number }[];
 }
 
+/**
+ * Renders analytics charts and statistics for the admin dashboard.
+ *
+ * @returns Analytics dashboard with play counts, user stats, and top podcasts chart
+ */
 export function AnalyticsCharts() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,10 +51,11 @@ export function AnalyticsCharts() {
       const params = new URLSearchParams();
       if (from) params.set('from', from);
       if (to) params.set('to', to);
-      const res = await fetch(`/api/admin/analytics?${params}`);
-      const json = await res.json();
-      setData(json);
-    } catch {
+      const response = await fetch(`/api/admin/analytics?${params}`);
+      const analyticsResponse = await response.json();
+      setData(analyticsResponse);
+    } catch (error) {
+      console.warn('Failed to fetch analytics:', error);
       setData(null);
     } finally {
       setIsLoading(false);

@@ -1,9 +1,17 @@
+/**
+ * Search results display components for basic and semantic search.
+ *
+ * Key responsibilities:
+ * - Renders basic keyword search results with podcast metadata
+ * - Renders semantic search results with similarity scores and transcript excerpts
+ */
 'use client';
 
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { StaggeredGrid, StaggeredGridItem } from '@/components/ui/staggered-grid';
+import { formatTime } from '@/lib/format-time';
 
 export interface BasicResult {
   id: string;
@@ -23,29 +31,32 @@ export interface SemanticResult {
   similarity: number;
 }
 
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
+/**
+ * Renders basic keyword search results as a list of podcast cards.
+ *
+ * @param props - Component props
+ * @param props.results - Array of podcast search results to display
+ * @returns List of podcast result cards with title, domain, and description
+ */
 export function BasicResults({ results }: { results: BasicResult[] }) {
   if (results.length === 0)
     return <p className="text-muted-foreground text-center py-8">No results found</p>;
 
   return (
     <StaggeredGrid className="grid-cols-1 gap-3">
-      {results.map((r) => (
-        <StaggeredGridItem key={r.id}>
-          <Link href={`/podcast/${r.id}`}>
+      {results.map((result) => (
+        <StaggeredGridItem key={result.id}>
+          <Link href={`/podcast/${result.id}`}>
             <Card className="hover:shadow-md transition-shadow">
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium">{r.title}</h3>
-                  {r.domain && <Badge variant="secondary">{r.domain}</Badge>}
+                  <h3 className="font-medium">{result.title}</h3>
+                  {result.domain && <Badge variant="secondary">{result.domain}</Badge>}
                 </div>
-                {r.description && (
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>
+                {result.description && (
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                    {result.description}
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -56,24 +67,31 @@ export function BasicResults({ results }: { results: BasicResult[] }) {
   );
 }
 
+/**
+ * Renders semantic search results with similarity scores and transcript excerpts.
+ *
+ * @param props - Component props
+ * @param props.results - Array of semantic search results with scores
+ * @returns List of semantic result cards with similarity percentage and excerpts
+ */
 export function SemanticResults({ results }: { results: SemanticResult[] }) {
   if (results.length === 0)
     return <p className="text-muted-foreground text-center py-8">No results found</p>;
 
   return (
     <StaggeredGrid className="grid-cols-1 gap-3">
-      {results.map((r) => (
-        <StaggeredGridItem key={r.id}>
-          <Link href={`/podcast/${r.podcastId}?t=${Math.floor(r.startTime)}`}>
+      {results.map((result) => (
+        <StaggeredGridItem key={result.id}>
+          <Link href={`/podcast/${result.podcastId}?t=${Math.floor(result.startTime)}`}>
             <Card className="hover:shadow-md transition-shadow">
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium">{r.podcastTitle}</h3>
-                  <Badge variant="outline">{Math.round(r.similarity * 100)}% match</Badge>
+                  <h3 className="font-medium">{result.podcastTitle}</h3>
+                  <Badge variant="outline">{Math.round(result.similarity * 100)}% match</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">&quot;{r.content}&quot;</p>
+                <p className="text-sm text-muted-foreground mt-1">&quot;{result.content}&quot;</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {formatTime(r.startTime)} - {formatTime(r.endTime)}
+                  {formatTime(result.startTime)} - {formatTime(result.endTime)}
                 </p>
               </CardContent>
             </Card>

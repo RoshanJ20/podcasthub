@@ -33,6 +33,9 @@ import {
   internalError,
   createErrorResponse,
 } from '@/lib/api/errors';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('auth-login');
 
 /**
  * Handles user login authentication.
@@ -100,7 +103,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
+    log.error({ error }, 'Login failed');
     return createErrorResponse(internalError());
   }
 }

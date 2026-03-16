@@ -14,9 +14,24 @@ import {
   internalError,
   notFound,
   forbidden,
+  badRequest,
 } from '@/lib/api/errors';
 import { updateBookmarkSchema } from '@/lib/schemas/bookmark';
 
+/**
+ * Handles PUT requests to update an existing bookmark's note.
+ *
+ * Verifies the bookmark exists and belongs to the authenticated user before
+ * applying the update. Validates the request body against updateBookmarkSchema.
+ *
+ * @param request - The incoming Next.js request object with update data in the body
+ * @param params - Route parameters containing the bookmark ID
+ * @returns JSON response with the updated bookmark
+ * @throws {ApiError} 400 if the update data fails schema validation
+ * @throws {ApiError} 401 if the user is not authenticated
+ * @throws {ApiError} 403 if the user does not own the bookmark
+ * @throws {ApiError} 404 if the bookmark is not found
+ */
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = requireAuth(request);
@@ -33,9 +48,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const body = await request.json();
     const parsed = updateBookmarkSchema.safeParse(body);
     if (!parsed.success) {
-      return createErrorResponse(
-        new ApiError(400, 'BAD_REQUEST' as never, 'Invalid update data', parsed.error.flatten())
-      );
+      return createErrorResponse(badRequest('Invalid update data', parsed.error.flatten()));
     }
 
     const updated = await prisma.bookmark.update({
@@ -50,6 +63,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
+/**
+ * Handles DELETE requests to remove a bookmark.
+ *
+ * Verifies the bookmark exists and belongs to the authenticated user before
+ * deleting it.
+ *
+ * @param request - The incoming Next.js request object
+ * @param params - Route parameters containing the bookmark ID
+ * @returns JSON response with a confirmation message
+ * @throws {ApiError} 401 if the user is not authenticated
+ * @throws {ApiError} 403 if the user does not own the bookmark
+ * @throws {ApiError} 404 if the bookmark is not found
+ */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
