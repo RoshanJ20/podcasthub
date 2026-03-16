@@ -7,7 +7,6 @@
  */
 import Link from 'next/link';
 import { prisma } from '@/lib/db';
-import type { PodcastModel } from '@/lib/generated/prisma/models/Podcast';
 import { DOMAINS } from '@/lib/schemas/common';
 import { PodcastGrid } from '@/components/library/podcast-grid';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +29,7 @@ export default async function HomePage() {
     }),
   ]);
 
-  const recentPodcastData: PodcastData[] = recentPodcasts.map((p: PodcastModel) => ({
+  const recentPodcastData: PodcastData[] = recentPodcasts.map((p) => ({
     id: p.id,
     title: p.title,
     description: p.description,

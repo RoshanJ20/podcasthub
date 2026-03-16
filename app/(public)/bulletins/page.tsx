@@ -7,7 +7,6 @@
  */
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/db';
-import type { PodcastModel } from '@/lib/generated/prisma/models/Podcast';
 import { LibraryFilters } from '@/components/library/library-filters';
 import { PodcastGrid } from '@/components/library/podcast-grid';
 import { PaginationControls } from '@/components/library/pagination-controls';
@@ -63,7 +62,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  const podcastData: PodcastData[] = podcasts.map((p: PodcastModel) => ({
+  const podcastData: PodcastData[] = podcasts.map((p) => ({
     id: p.id,
     title: p.title,
     description: p.description,
