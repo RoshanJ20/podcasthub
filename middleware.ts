@@ -1,67 +1,96 @@
 /**
  * Next.js middleware for Podcast Hub v2 authentication and authorization.
  *
+ * Uses `jose` library for JWT verification (Edge runtime compatible).
+ * `jsonwebtoken` does NOT work in Edge middleware — it requires Node.js crypto.
+ *
  * Key responsibilities:
- * - Protects admin routes by verifying JWT and checking admin/superadmin role
- * - Protects API routes by verifying JWT and returning 401 JSON on failure
- * - Protects page routes by verifying JWT and redirecting to /login on failure
- * - Allows public routes without authentication but attaches user info if available
- *
- * Dependencies:
- * - next/server (NextResponse, NextRequest)
- * - @/lib/auth/jwt (verifyAccessToken)
- * - @/lib/auth/middleware-helpers (route classifiers)
- * - @/lib/auth/cookies (ACCESS_TOKEN_COOKIE)
- *
- * @route Runs on all routes except static files, _next, and favicon.ico
+ * - Protects admin routes (requires admin/superadmin role)
+ * - Protects write API routes (requires valid JWT)
+ * - Allows public GET API routes without auth
+ * - Auto-refreshes expired access tokens using refresh tokens
  */
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyAccessToken } from '@/lib/auth/jwt';
+import { jwtVerify, SignJWT } from 'jose';
 import {
   isPublicRoute,
   isAuthRoute,
   isAdminRoute,
   isApiRoute,
 } from '@/lib/auth/middleware-helpers';
-import { ACCESS_TOKEN_COOKIE } from '@/lib/auth/cookies';
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '@/lib/auth/cookies';
+
+interface UserPayload {
+  userId: string;
+  email: string;
+  role: string;
+}
 
 /**
- * Next.js middleware that enforces authentication and authorization.
- *
- * Route handling priority:
- * 1. Health check (/api/health) — always allowed
- * 2. Auth API routes (/api/auth/*) — always allowed
- * 3. Admin routes (/admin/*) — requires valid JWT with admin or superadmin role
- * 4. Protected API routes (/api/*) — requires valid JWT, returns 401 JSON if invalid
- * 5. Public routes (/, /login, /bulletins, etc.) — allowed, attaches user info if present
- * 6. All other routes — requires valid JWT, redirects to /login if invalid
- *
- * @param request - The incoming Next.js request object.
- * @returns A NextResponse — either a redirect, a 401 JSON, or the request with user headers.
+ * Verifies a JWT using the jose library (Edge-compatible).
  */
-export function middleware(request: NextRequest): NextResponse {
+async function verifyToken(token: string, secret: string): Promise<UserPayload | null> {
+  try {
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(secret));
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+      role: payload.role as string,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Signs a new access token using jose (Edge-compatible).
+ */
+async function signNewAccessToken(payload: UserPayload, secret: string): Promise<string> {
+  const expiry = process.env.JWT_ACCESS_EXPIRY || '15m';
+  // Parse expiry string to seconds
+  const match = expiry.match(/^(\d+)(m|h|d)$/);
+  let expiresIn = '15m';
+  if (match) {
+    const [, num, unit] = match;
+    const seconds = unit === 'm' ? +num * 60 : unit === 'h' ? +num * 3600 : +num * 86400;
+    expiresIn = `${seconds}s`;
+  }
+
+  return new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(expiresIn)
+    .sign(new TextEncoder().encode(secret));
+}
+
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Health check is always accessible
-  if (pathname === '/api/health') {
+  // Health check and auth routes are always accessible
+  if (pathname === '/api/health' || isAuthRoute(pathname)) {
     return NextResponse.next();
   }
 
-  // Auth API routes are always accessible (login, register, refresh, logout)
-  if (isAuthRoute(pathname)) {
-    return NextResponse.next();
+  const accessSecret = process.env.JWT_ACCESS_SECRET || '';
+  const refreshSecret = process.env.JWT_REFRESH_SECRET || '';
+
+  // Try access token first
+  const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+  const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+  let user: UserPayload | null = null;
+  let newAccessToken: string | null = null;
+
+  if (accessToken) {
+    user = await verifyToken(accessToken, accessSecret);
   }
 
-  // Attempt to extract and verify the JWT from the access_token cookie
-  const token = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
-  let user: { userId: string; email: string; role: string } | null = null;
-
-  if (token) {
-    try {
-      user = verifyAccessToken(token);
-    } catch {
-      // Token is invalid or expired — user remains null
+  // If access token invalid/expired, try refresh
+  if (!user && refreshToken) {
+    const refreshPayload = await verifyToken(refreshToken, refreshSecret);
+    if (refreshPayload) {
+      user = refreshPayload;
+      newAccessToken = await signNewAccessToken(refreshPayload, accessSecret);
     }
   }
 
@@ -72,83 +101,75 @@ export function middleware(request: NextRequest): NextResponse {
       loginUrl.searchParams.set('redirectTo', pathname);
       return NextResponse.redirect(loginUrl);
     }
-
     if (user.role !== 'admin' && user.role !== 'superadmin') {
-      const unauthorizedUrl = new URL('/unauthorized', request.url);
-      return NextResponse.redirect(unauthorizedUrl);
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
     }
-
-    // Attach user info to request headers for downstream use
-    return addUserHeaders(request, user);
+    return addUserHeaders(request, user, newAccessToken);
   }
 
-  // Protected API routes: return 401 JSON if no valid token
+  // API routes: public GETs allowed, writes require auth
   if (isApiRoute(pathname)) {
+    const isPublicApi =
+      request.method === 'GET' &&
+      (pathname.startsWith('/api/podcasts') ||
+        pathname.startsWith('/api/learning-graphs') ||
+        pathname.startsWith('/api/search'));
+
+    if (isPublicApi) {
+      if (user) return addUserHeaders(request, user, newAccessToken);
+      return NextResponse.next();
+    }
+
     if (!user) {
       return NextResponse.json(
-        {
-          status: 401,
-          error_code: 'UNAUTHORIZED',
-          message: 'Unauthorized',
-        },
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Unauthorized' },
         { status: 401 }
       );
     }
-
-    return addUserHeaders(request, user);
+    return addUserHeaders(request, user, newAccessToken);
   }
 
-  // Public routes: allow access, attach user info if available
+  // Public page routes
   if (isPublicRoute(pathname)) {
-    if (user) {
-      return addUserHeaders(request, user);
-    }
+    if (user) return addUserHeaders(request, user, newAccessToken);
     return NextResponse.next();
   }
 
-  // All other routes (protected pages): redirect to login if no valid token
+  // All other routes: require auth
   if (!user) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirectTo', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  return addUserHeaders(request, user);
+  return addUserHeaders(request, user, newAccessToken);
 }
 
-/**
- * Attaches authenticated user information to request headers.
- *
- * Sets x-user-id, x-user-email, and x-user-role headers so that
- * downstream API route handlers and server components can access
- * the current user without re-verifying the JWT.
- *
- * @param request - The incoming Next.js request.
- * @param user - The verified JWT payload containing user info.
- * @returns A NextResponse with user information headers attached.
- */
 function addUserHeaders(
   request: NextRequest,
-  user: { userId: string; email: string; role: string }
+  user: UserPayload,
+  refreshedAccessToken?: string | null
 ): NextResponse {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-user-id', user.userId);
   requestHeaders.set('x-user-email', user.email);
   requestHeaders.set('x-user-role', user.role);
 
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+
+  if (refreshedAccessToken) {
+    response.cookies.set(ACCESS_TOKEN_COOKIE, refreshedAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 15 * 60,
+    });
+  }
+
+  return response;
 }
 
-/**
- * Next.js middleware matcher configuration.
- *
- * Excludes static files, Next.js internals, and common image formats
- * from middleware processing to avoid unnecessary JWT verification overhead.
- */
 export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 };
