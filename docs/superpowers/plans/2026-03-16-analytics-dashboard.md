@@ -16,34 +16,42 @@
 
 ### New Files
 
-| File                                                           | Responsibility                                                                                          |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `lib/analytics-types.ts`                                       | Shared TypeScript interfaces for all analytics API responses (compact, overview, content, paths, users) |
-| `components/ui/sparkline.tsx`                                  | Reusable tiny area chart (60px height, gradient fill, theme-aware)                                      |
-| `components/ui/proportion-bar.tsx`                             | Inline horizontal bar behind a number (relative width based on max)                                     |
-| `components/admin/dashboard-kpi-strip.tsx`                     | 4-card KPI row with sparklines, AnimatedNumber, trend arrows                                            |
-| `components/admin/dashboard-analytics-widgets.tsx`             | Client component island that fetches compact API and renders all dashboard widgets                      |
-| `components/admin/domain-rings.tsx`                            | Concentric SVG progress rings colored by domain                                                         |
-| `components/admin/mini-trend-chart.tsx`                        | Compact 200px area chart for monthly listening trend                                                    |
-| `components/admin/top-content-table.tsx`                       | Top 5 podcasts table with domain badges and proportion bars                                             |
-| `components/admin/domain-filter.tsx`                           | Multi-select dropdown for domain filtering                                                              |
-| `components/admin/activity-heatmap.tsx`                        | GitHub-style contribution heatmap (daily activity grid)                                                 |
-| `components/admin/completion-funnel.tsx`                       | Horizontal funnel showing episode-by-episode drop-off                                                   |
-| `components/admin/analytics-tabs.tsx`                          | Tab container orchestrating Overview/Content/Paths/Users tabs                                           |
-| `components/admin/analytics/overview-tab.tsx`                  | Overview tab: KPIs + donut + stacked area + heatmap                                                     |
-| `components/admin/analytics/content-tab.tsx`                   | Content tab: top podcasts + domain-year distribution + tags                                             |
-| `components/admin/analytics/paths-tab.tsx`                     | Paths tab: stats cards + funnel + paths table                                                           |
-| `components/admin/analytics/users-tab.tsx`                     | Users tab: stats + activity donut + top users table                                                     |
-| `__tests__/unit/lib/analytics-types.test.ts`                   | Type guard / validation tests for analytics interfaces                                                  |
-| `__tests__/unit/api/analytics-compact.test.ts`                 | Tests for compact mode API response                                                                     |
-| `__tests__/unit/api/analytics-tabs.test.ts`                    | Tests for tab-specific API responses (overview, content, paths, users)                                  |
-| `__tests__/unit/components/ui/sparkline.test.tsx`              | Sparkline rendering tests                                                                               |
-| `__tests__/unit/components/ui/proportion-bar.test.tsx`         | ProportionBar rendering tests                                                                           |
-| `__tests__/unit/components/admin/dashboard-kpi-strip.test.tsx` | KPI strip rendering + trend arrow tests                                                                 |
-| `__tests__/unit/components/admin/domain-rings.test.tsx`        | Domain rings rendering tests                                                                            |
-| `__tests__/unit/components/admin/activity-heatmap.test.tsx`    | Heatmap rendering tests                                                                                 |
-| `__tests__/unit/components/admin/completion-funnel.test.tsx`   | Funnel rendering tests                                                                                  |
-| `__tests__/unit/components/admin/analytics-tabs.test.tsx`      | Tab switching + data fetching tests                                                                     |
+| File                                                                   | Responsibility                                                                                          |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `lib/analytics-types.ts`                                               | Shared TypeScript interfaces for all analytics API responses (compact, overview, content, paths, users) |
+| `components/ui/sparkline.tsx`                                          | Reusable tiny area chart (60px height, gradient fill, theme-aware)                                      |
+| `components/ui/proportion-bar.tsx`                                     | Inline horizontal bar behind a number (relative width based on max)                                     |
+| `components/admin/dashboard-kpi-strip.tsx`                             | 4-card KPI row with sparklines, AnimatedNumber, trend arrows                                            |
+| `components/admin/dashboard-analytics-widgets.tsx`                     | Client component island that fetches compact API and renders all dashboard widgets                      |
+| `components/admin/domain-rings.tsx`                                    | Concentric SVG progress rings colored by domain                                                         |
+| `components/admin/mini-trend-chart.tsx`                                | Compact 200px area chart for monthly listening trend                                                    |
+| `components/admin/top-content-table.tsx`                               | Top 5 podcasts table with domain badges and proportion bars                                             |
+| `components/admin/domain-filter.tsx`                                   | Multi-select dropdown for domain filtering                                                              |
+| `components/admin/activity-heatmap.tsx`                                | GitHub-style contribution heatmap (daily activity grid)                                                 |
+| `components/admin/completion-funnel.tsx`                               | Horizontal funnel showing episode-by-episode drop-off                                                   |
+| `components/admin/analytics-tabs.tsx`                                  | Tab container orchestrating Overview/Content/Paths/Users tabs                                           |
+| `components/admin/analytics/overview-tab.tsx`                          | Overview tab: KPIs + donut + stacked area + heatmap                                                     |
+| `components/admin/analytics/content-tab.tsx`                           | Content tab: top podcasts + domain-year distribution + tags                                             |
+| `components/admin/analytics/paths-tab.tsx`                             | Paths tab: stats cards + funnel + paths table                                                           |
+| `components/admin/analytics/users-tab.tsx`                             | Users tab: stats + activity donut + top users table                                                     |
+| `__tests__/unit/lib/analytics-types.test.ts`                           | Type guard / validation tests for analytics interfaces                                                  |
+| `__tests__/unit/api/analytics-compact.test.ts`                         | Tests for compact mode API response                                                                     |
+| `__tests__/unit/api/analytics-tabs.test.ts`                            | Tests for tab-specific API responses (overview, content, paths, users)                                  |
+| `__tests__/unit/components/ui/sparkline.test.tsx`                      | Sparkline rendering tests                                                                               |
+| `__tests__/unit/components/ui/proportion-bar.test.tsx`                 | ProportionBar rendering tests                                                                           |
+| `__tests__/unit/components/admin/dashboard-kpi-strip.test.tsx`         | KPI strip rendering + trend arrow tests                                                                 |
+| `__tests__/unit/components/admin/domain-rings.test.tsx`                | Domain rings rendering tests                                                                            |
+| `__tests__/unit/components/admin/activity-heatmap.test.tsx`            | Heatmap rendering tests                                                                                 |
+| `__tests__/unit/components/admin/completion-funnel.test.tsx`           | Funnel rendering tests                                                                                  |
+| `__tests__/unit/components/admin/analytics-tabs.test.tsx`              | Tab switching + data fetching tests                                                                     |
+| `__tests__/unit/components/admin/dashboard-analytics-widgets.test.tsx` | Dashboard widget fetch, loading, error, and render tests                                                |
+| `__tests__/unit/components/admin/domain-filter.test.tsx`               | Domain filter multi-select tests                                                                        |
+| `__tests__/unit/components/admin/mini-trend-chart.test.tsx`            | Mini trend chart rendering tests                                                                        |
+| `__tests__/unit/components/admin/top-content-table.test.tsx`           | Top content table rendering and link tests                                                              |
+| `__tests__/unit/components/admin/analytics/overview-tab.test.tsx`      | Overview tab data fetch, charts, and state tests                                                        |
+| `__tests__/unit/components/admin/analytics/content-tab.test.tsx`       | Content tab charts and data tests                                                                       |
+| `__tests__/unit/components/admin/analytics/paths-tab.test.tsx`         | Paths tab stats, funnel, and table tests                                                                |
+| `__tests__/unit/components/admin/analytics/users-tab.test.tsx`         | Users tab stats, donut, and top users tests                                                             |
 
 ### Modified Files
 
@@ -182,13 +190,14 @@ it('uses text color as chart color', () => {
 Run: `npx vitest run __tests__/unit/lib/domain-colors.test.ts`
 Expected: FAIL — `chart` property missing
 
-- [ ] **Step 3: Add `chart` property to `DomainColor` interface and all domain entries**
+- [ ] **Step 3: Add `chart` property and fix existing test assertions**
 
 In `lib/domain-colors.ts`:
 
 - Add `chart: string` to the `DomainColor` interface
 - For each domain entry, set `chart` equal to the existing `text` value
 - Update fallback (unknown domain) similarly
+- **Important:** Update existing `toEqual()` assertions in the test file to use `toMatchObject()` or add the `chart` (and `glow` if missing) properties to expected objects. The existing tests may use exact matching that will break when new properties are added.
 
 Per spec Section 4.2:
 | Domain | chart value |
@@ -388,6 +397,17 @@ describe('GET /api/admin/analytics?tab=users', () => {
 
   it('activityBreakdown percentages sum to ~100', async () => {
     // Assert sum of percentage fields is approximately 100
+  });
+});
+```
+
+- [ ] **Step 4b: Write 365-day max date range test**
+
+```typescript
+describe('date range enforcement', () => {
+  it('truncates date range to max 365 days', async () => {
+    // ?tab=overview&from=2024-01-01&to=2026-03-16 (>365 days)
+    // Assert response only includes data for the most recent 365 days
   });
 });
 ```
@@ -1155,6 +1175,23 @@ describe('OverviewTab', () => {
   it('re-fetches when dateRange or domains change', async () => {
     // Rerender with different props, assert fetch called again
   })
+
+  it('shows error state with retry button on fetch failure', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
+    render(<OverviewTab dateRange={defaultRange} domains={[]} />)
+    await waitFor(() => {
+      expect(screen.getByText(/failed to load/i)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+    })
+  })
+
+  it('shows empty state when API returns zero data', async () => {
+    mockFetch({ ...mockOverviewData, domainDistribution: [], listeningTrends: [], dailyActivity: [] })
+    render(<OverviewTab dateRange={defaultRange} domains={[]} />)
+    await waitFor(() => {
+      expect(screen.getByText(/no data/i)).toBeInTheDocument()
+    })
+  })
 })
 ```
 
@@ -1241,6 +1278,8 @@ describe('ContentTab', () => {
   })
 })
 ```
+
+**Also include empty/error state tests** following the same pattern as OverviewTab (Task 13): test fetch failure shows error + retry, test empty data shows "No data" message.
 
 - [ ] **Step 2: Run test, verify fail**
 - [ ] **Step 3: Implement ContentTab**
@@ -1398,6 +1437,8 @@ describe('PathsTab', () => {
 })
 ```
 
+**Also include empty/error state tests** following the same pattern as OverviewTab (Task 13).
+
 - [ ] **Step 2: Run test, verify fail**
 - [ ] **Step 3: Implement PathsTab**
 
@@ -1480,6 +1521,8 @@ describe('UsersTab', () => {
   })
 })
 ```
+
+**Also include empty/error state tests** following the same pattern as OverviewTab (Task 13).
 
 - [ ] **Step 2: Run test, verify fail**
 - [ ] **Step 3: Implement UsersTab**
