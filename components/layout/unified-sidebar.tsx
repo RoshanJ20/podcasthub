@@ -23,7 +23,8 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Library, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Library, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarNavItem } from '@/components/layout/sidebar-nav-item';
@@ -97,6 +98,7 @@ function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean 
 export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedSidebarProps) {
   const pathname = usePathname();
   const prefersReducedMotion = useReducedMotion();
+  const { theme, setTheme } = useTheme();
 
   // Initialise from localStorage if available; default to expanded.
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -203,8 +205,23 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
 
       <Separator />
 
-      {/* ── Collapse toggle ──────────────────────────────────────────────── */}
-      <div className={cn('flex px-2 py-2', collapsed ? 'justify-center' : 'justify-end')}>
+      {/* ── Theme toggle + Collapse toggle ────────────────────────────── */}
+      <div
+        className={cn(
+          'flex items-center px-2 py-2',
+          collapsed ? 'flex-col gap-1' : 'justify-between'
+        )}
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Toggle theme"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="size-7"
+        >
+          <Sun className="size-3.5 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute size-3.5 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"
@@ -219,7 +236,7 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
   );
 
   const baseClassName =
-    'hidden md:flex md:flex-col border-r border-border bg-background overflow-hidden shrink-0';
+    'hidden md:flex md:flex-col border-r border-border bg-sidebar overflow-hidden shrink-0 sticky top-0 h-screen';
 
   // Use a plain aside when the user prefers reduced motion to avoid
   // any Motion overhead or janky zero-duration spring physics.
