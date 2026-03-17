@@ -206,8 +206,36 @@ export function BulletinViewer({
               ))}
             </div>
           ) : (
-            <div className="flex items-center justify-center p-8">
-              <div className="h-[600px] w-full max-w-md animate-pulse rounded bg-muted" />
+            /* Document skeleton — mimics a page with header, lines, and blocks */
+            <div className="mx-auto max-w-lg animate-pulse space-y-6 p-8">
+              {/* Title block */}
+              <div className="space-y-3">
+                <div className="h-6 w-3/4 rounded bg-border" />
+                <div className="h-4 w-1/2 rounded bg-border/70" />
+              </div>
+              {/* Paragraph lines */}
+              <div className="space-y-2.5">
+                <div className="h-3 w-full rounded bg-border/60" />
+                <div className="h-3 w-full rounded bg-border/60" />
+                <div className="h-3 w-5/6 rounded bg-border/60" />
+                <div className="h-3 w-full rounded bg-border/60" />
+                <div className="h-3 w-4/6 rounded bg-border/60" />
+              </div>
+              {/* Image/chart placeholder */}
+              <div className="h-40 w-full rounded-lg bg-border/40" />
+              {/* More lines */}
+              <div className="space-y-2.5">
+                <div className="h-3 w-full rounded bg-border/60" />
+                <div className="h-3 w-full rounded bg-border/60" />
+                <div className="h-3 w-3/4 rounded bg-border/60" />
+              </div>
+              {/* Table-like rows */}
+              <div className="space-y-2">
+                <div className="h-8 w-full rounded bg-border/40" />
+                <div className="h-8 w-full rounded bg-border/30" />
+                <div className="h-8 w-full rounded bg-border/40" />
+                <div className="h-8 w-full rounded bg-border/30" />
+              </div>
             </div>
           )}
         </Document>

@@ -21,7 +21,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { resolveStorageUrl } from '@/lib/storage-url';
@@ -41,8 +41,26 @@ import { BookmarkPanel } from './bookmark-panel';
 const BulletinViewer = dynamic(() => import('./bulletin-viewer').then((m) => m.BulletinViewer), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center">
-      <div className="h-[400px] w-full max-w-md animate-pulse rounded bg-muted" />
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border bg-muted/50 px-3 py-2">
+        <div className="h-5 w-32 animate-pulse rounded bg-muted" />
+      </div>
+      <div className="mx-auto max-w-lg flex-1 animate-pulse space-y-6 p-8">
+        <div className="space-y-3">
+          <div className="h-6 w-3/4 rounded bg-muted" />
+          <div className="h-4 w-1/2 rounded bg-muted" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-3 w-full rounded bg-muted" />
+          <div className="h-3 w-full rounded bg-muted" />
+          <div className="h-3 w-5/6 rounded bg-muted" />
+        </div>
+        <div className="h-40 w-full rounded-lg bg-muted" />
+        <div className="space-y-2">
+          <div className="h-3 w-full rounded bg-muted" />
+          <div className="h-3 w-3/4 rounded bg-muted" />
+        </div>
+      </div>
     </div>
   ),
 });
@@ -94,18 +112,38 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
 
   const hasAttachments = podcast.bulletinUrls.length > 0;
 
-  /** Slide-in panel state. */
+  /** Slide-in panel state.
+   * contentHidden: left content fades out before panel starts moving.
+   * isTransitionDone: panel has finished extending, compact content can load.
+   */
   const [activeAttachmentUrl, setActiveAttachmentUrl] = useState<string | null>(null);
+  const [contentHidden, setContentHidden] = useState(false);
+  const [isTransitionDone, setIsTransitionDone] = useState(false);
   const isAttachmentOpen = activeAttachmentUrl !== null;
 
-  /** Open an attachment in the PDF panel. */
+  /** Open an attachment: hide content first, then after a tick start the panel extension. */
   const openAttachment = (url: string) => {
-    setActiveAttachmentUrl(url);
+    setContentHidden(true);
+    setIsTransitionDone(false);
+    // Small delay so the content disappears before panel starts moving
+    setTimeout(() => setActiveAttachmentUrl(url), 50);
+    // Fallback: if onTransitionEnd doesn't fire (e.g. jsdom), complete after 400ms
+    setTimeout(() => {
+      setIsTransitionDone(true);
+      setContentHidden(false);
+    }, 400);
   };
 
-  /** Close the PDF panel. */
+  /** Close the PDF panel: collapse panel first, content loads after. */
   const closeAttachment = () => {
+    setContentHidden(true);
+    setIsTransitionDone(false);
     setActiveAttachmentUrl(null);
+    // Full content loads immediately on close (no need to wait)
+    setTimeout(() => {
+      setContentHidden(false);
+      setIsTransitionDone(true);
+    }, 350);
   };
 
   /** Load the podcast into the player store on mount. */
@@ -154,92 +192,91 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
     ? {}
     : { variants: variants.slideInFromLeft, transition: transitions.normal };
 
-  /** Shared left-column content (compact or full). */
-  const leftContent = (
-    <>
-      {/* Persistent audio element — survives hero/compact player swaps */}
-      <audio
-        ref={audioRef}
-        onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={onLoadedMetadata}
-        onEnded={() => usePlayerStore.getState().pause()}
-        preload="metadata"
-        className="hidden"
-      />
+  /** Persistent audio element — must live outside AnimatePresence. */
+  const audioElement = (
+    <audio
+      ref={audioRef}
+      onTimeUpdate={onTimeUpdate}
+      onLoadedMetadata={onLoadedMetadata}
+      onEnded={() => usePlayerStore.getState().pause()}
+      preload="metadata"
+      className="hidden"
+    />
+  );
 
-      {/* Hero card OR compact player */}
-      <AnimatePresence mode="wait" initial={false}>
-        {isAttachmentOpen ? (
-          <motion.div
-            key="compact"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={transitions.fast}
-          >
-            <CompactPlayer domainColor={domainColor} onSeek={seekTo} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="hero"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={transitions.fast}
-            className="flex overflow-hidden rounded-xl border border-border bg-card"
-          >
-            <div className="w-1.5 shrink-0" style={{ backgroundColor: domainColor.border }} />
-            <div className="flex flex-1 flex-col gap-6 p-5 lg:flex-row lg:items-start lg:p-6">
-              <div className="flex min-w-0 flex-1 items-start gap-5">
-                <div className="relative hidden size-32 shrink-0 overflow-hidden rounded-xl sm:block lg:size-40">
-                  <Image
-                    src={resolveStorageUrl(podcast.thumbnailUrl)}
-                    alt={podcast.title}
-                    fill
-                    className="object-cover"
-                    sizes="160px"
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
-                    {podcast.title}
-                  </h1>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                    {podcast.description}
-                  </p>
-                </div>
-              </div>
-              <div className="w-full lg:w-100 lg:shrink-0">
-                <AudioPlayer domainColor={domainColor} onSeek={seekTo} />
-              </div>
+  /** Mercury fade — blur-to-clear entrance, same as page load. */
+  const mercuryIn = {
+    initial: { opacity: 0, y: 8, filter: 'blur(4px)' },
+    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+    exit: { opacity: 0 },
+    transition: transitions.slow,
+  };
+
+  /** Full left column content (default state — no PDF open). */
+  const fullContent = (
+    <motion.div key="full" {...mercuryIn}>
+      <div className="flex overflow-hidden rounded-xl border border-border bg-card">
+        <div className="w-1.5 shrink-0" style={{ backgroundColor: domainColor.border }} />
+        <div className="flex flex-1 flex-col gap-6 p-5 lg:flex-row lg:items-start lg:p-6">
+          <div className="flex min-w-0 flex-1 items-start gap-5">
+            <div className="relative hidden size-32 shrink-0 overflow-hidden rounded-xl sm:block lg:size-40">
+              <Image
+                src={resolveStorageUrl(podcast.thumbnailUrl)}
+                alt={podcast.title}
+                fill
+                className="object-cover"
+                sizes="160px"
+              />
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Transcript */}
-      <Section className="mt-6" {...sectionProps}>
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <TranscriptViewer
-            segments={segments}
-            fullText={activeTranscript?.fullText}
-            onSeek={seekTo}
-            domainColor={domainColor}
-            compact={isAttachmentOpen}
-          />
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+                {podcast.title}
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                {podcast.description}
+              </p>
+            </div>
+          </div>
+          <div className="w-full lg:w-100 lg:shrink-0">
+            <AudioPlayer domainColor={domainColor} onSeek={seekTo} />
+          </div>
         </div>
-      </Section>
+      </div>
 
-      {/* Bookmarks */}
-      <Section className="mt-4" {...sectionProps}>
-        <BookmarkPanel
-          podcastId={podcast.id}
+      <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card">
+        <TranscriptViewer
+          segments={segments}
+          fullText={activeTranscript?.fullText}
           onSeek={seekTo}
           domainColor={domainColor}
-          compact={isAttachmentOpen}
         />
-      </Section>
-    </>
+      </div>
+
+      <div className="mt-4">
+        <BookmarkPanel podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} />
+      </div>
+    </motion.div>
+  );
+
+  /** Compact left column content (PDF panel open). */
+  const compactContent = (
+    <motion.div key="compact" {...mercuryIn}>
+      <CompactPlayer domainColor={domainColor} onSeek={seekTo} />
+
+      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
+        <TranscriptViewer
+          segments={segments}
+          fullText={activeTranscript?.fullText}
+          onSeek={seekTo}
+          domainColor={domainColor}
+          compact
+        />
+      </div>
+
+      <div className="mt-3">
+        <BookmarkPanel podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} compact />
+      </div>
+    </motion.div>
   );
 
   /** Attachment sidebar file list. */
@@ -334,8 +371,9 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   if (!hasAttachments) {
     return (
       <Wrapper className="mx-auto max-w-5xl px-4 py-8 lg:py-12" {...wrapperProps}>
+        {audioElement}
         {headerContent}
-        {leftContent}
+        {fullContent}
       </Wrapper>
     );
   }
@@ -346,13 +384,25 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
       {/* Back link + badges — above the flex row so sidebar aligns with hero card */}
       {!isAttachmentOpen && headerContent}
 
+      {audioElement}
+
       <div className="flex items-start gap-4">
-        {/* Left column — expands/compresses with CSS transition */}
+        {/* Left column — waits for panel transition, then swaps content */}
         <div
           className="min-w-0 pr-4 transition-[flex] duration-300 ease-out"
           style={{ flex: isAttachmentOpen ? '0 0 340px' : '1 1 0%' }}
+          onTransitionEnd={() => {
+            setIsTransitionDone(true);
+            setContentHidden(false);
+          }}
         >
-          {leftContent}
+          {contentHidden
+            ? null
+            : isAttachmentOpen
+              ? isTransitionDone
+                ? compactContent
+                : null
+              : fullContent}
         </div>
 
         {/* Right area — PDF panel when open, compact sidebar when closed */}
