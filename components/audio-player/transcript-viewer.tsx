@@ -58,7 +58,7 @@ export function TranscriptViewer({
   }
 
   if (segments.length === 0) {
-    return <p className="text-muted-foreground text-center py-8">No transcript available.</p>;
+    return null;
   }
 
   /** Compute active segment styles using domain color. */
