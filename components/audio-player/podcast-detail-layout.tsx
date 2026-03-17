@@ -18,12 +18,12 @@
  */
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'motion/react';
 import { useTheme } from 'next-themes';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft, FileText, Plus } from 'lucide-react';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import { usePlayerStore } from '@/stores/player-store';
 import { useHlsPlayer } from '@/hooks/use-hls-player';
@@ -107,7 +107,7 @@ interface SidebarBookmark {
   note: string | null;
 }
 
-/** Slim bookmark list for the 180px sidebar — just timestamps and short notes. */
+/** Slim bookmark list for the 180px sidebar with inline add. */
 function SidebarBookmarks({
   podcastId,
   onSeek,
@@ -118,8 +118,12 @@ function SidebarBookmarks({
   domainColor: ReturnType<typeof getDomainColor>;
 }) {
   const [bookmarks, setBookmarks] = useState<SidebarBookmark[]>([]);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newNote, setNewNote] = useState('');
+  const currentTime = usePlayerStore((s) => s.currentTime);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const fetchBookmarks = useCallback(() => {
     fetch(`/api/bookmarks?podcastId=${podcastId}`)
       .then((r) => (r.ok ? r.json() : { data: [] }))
       .then((d) => {
@@ -130,15 +134,99 @@ function SidebarBookmarks({
       .catch(() => {});
   }, [podcastId]);
 
+  useEffect(() => {
+    fetchBookmarks();
+  }, [fetchBookmarks]);
+
+  useEffect(() => {
+    if (isAdding && inputRef.current) inputRef.current.focus();
+  }, [isAdding]);
+
+  /** Add bookmark at current time with optional note. */
+  const handleAdd = async () => {
+    const ts = Math.floor(currentTime);
+    try {
+      const res = await fetch('/api/bookmarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          podcastId,
+          timestampSeconds: ts,
+          note: newNote.trim() || undefined,
+        }),
+      });
+      if (res.ok) {
+        setIsAdding(false);
+        setNewNote('');
+        fetchBookmarks();
+      }
+    } catch {
+      /* non-critical */
+    }
+  };
+
   return (
     <div className="p-3">
-      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Bookmarks
-      </h3>
-      {bookmarks.length === 0 ? (
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Bookmarks
+        </h3>
+        <button
+          onClick={() => setIsAdding(!isAdding)}
+          aria-label="Add bookmark"
+          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* Inline add form */}
+      {isAdding && (
+        <div className="mb-2 space-y-1.5">
+          <div
+            className="rounded bg-muted/60 px-1.5 py-1 text-xs font-mono tabular-nums"
+            style={{ color: domainColor.border }}
+          >
+            {formatTime(Math.floor(currentTime))}
+          </div>
+          <input
+            ref={inputRef}
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAdd();
+              if (e.key === 'Escape') {
+                setIsAdding(false);
+                setNewNote('');
+              }
+            }}
+            placeholder="Note (optional)..."
+            className="w-full rounded border border-border bg-background px-1.5 py-1 text-xs outline-none focus:ring-1 focus:ring-ring"
+          />
+          <div className="flex gap-1">
+            <button
+              onClick={handleAdd}
+              className="flex-1 rounded bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Save
+            </button>
+            <button
+              onClick={() => {
+                setIsAdding(false);
+                setNewNote('');
+              }}
+              className="rounded px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {bookmarks.length === 0 && !isAdding ? (
         <p className="text-xs text-muted-foreground">No bookmarks yet</p>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {bookmarks.map((bm) => (
             <button
               key={bm.id}
