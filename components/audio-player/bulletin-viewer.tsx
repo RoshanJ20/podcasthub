@@ -32,6 +32,12 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.vers
 /** Estimated height for each PDF page before measurement. */
 const ESTIMATED_PAGE_HEIGHT = 800;
 
+/** Represents a selectable attachment in the toolbar dropdown. */
+interface AttachmentOption {
+  url: string;
+  name: string;
+}
+
 interface BulletinViewerProps {
   /** Single PDF URL (raw storage key — resolved internally). */
   url: string;
@@ -39,6 +45,10 @@ interface BulletinViewerProps {
   filename?: string;
   /** Called when the user clicks the close button or presses Escape. */
   onClose: () => void;
+  /** List of all attachments for the dropdown selector. */
+  attachments?: AttachmentOption[];
+  /** Called when the user selects a different attachment from the dropdown. */
+  onSelectAttachment?: (url: string) => void;
 }
 
 /**
@@ -52,7 +62,13 @@ interface BulletinViewerProps {
  * @param props.onClose - Callback fired on close button click or Escape key.
  * @returns The BulletinViewer React element.
  */
-export function BulletinViewer({ url, filename, onClose }: BulletinViewerProps) {
+export function BulletinViewer({
+  url,
+  filename,
+  onClose,
+  attachments,
+  onSelectAttachment,
+}: BulletinViewerProps) {
   const [numPages, setNumPages] = useState(0);
   const [containerWidth, setContainerWidth] = useState<number>(600);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -113,7 +129,23 @@ export function BulletinViewer({ url, filename, onClose }: BulletinViewerProps) 
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-border bg-muted/50 px-3 py-2">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="truncate text-sm font-medium">{filename ?? 'PDF'}</span>
+          {/* File selector dropdown or static filename */}
+          {attachments && attachments.length > 1 && onSelectAttachment ? (
+            <select
+              aria-label="Select attachment"
+              value={url}
+              onChange={(e) => onSelectAttachment(e.target.value)}
+              className="max-w-[200px] truncate rounded-md border bg-background px-2 py-1 text-sm font-medium"
+            >
+              {attachments.map((att) => (
+                <option key={att.url} value={att.url}>
+                  {att.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="truncate text-sm font-medium">{filename ?? 'PDF'}</span>
+          )}
           {numPages > 0 && (
             <span className="shrink-0 text-xs text-muted-foreground">
               Page {currentVisiblePage} / {numPages}

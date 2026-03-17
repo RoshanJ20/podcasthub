@@ -138,15 +138,14 @@ describe('PodcastDetailLayout', () => {
     });
   });
 
-  it('highlights the active file in the sidebar', async () => {
+  it('shows file selector dropdown in toolbar when PDF is open', async () => {
     const { container } = render(<PodcastDetailLayout podcast={mockPodcast} />);
     const user = userEvent.setup();
     const fileButton = container.querySelector('[data-testid="attachment-file-0"]')!;
     await user.click(fileButton);
     await waitFor(() => {
-      // Re-query after render since sidebar may have moved in the DOM
-      const updatedButton = container.querySelector('[data-testid="attachment-file-0"]')!;
-      expect(updatedButton.getAttribute('data-active')).toBe('true');
+      const select = container.querySelector('select[aria-label="Select attachment"]');
+      expect(select).not.toBeNull();
     });
   });
 
@@ -165,24 +164,20 @@ describe('PodcastDetailLayout', () => {
     });
   });
 
-  it('switches files when clicking a different attachment', async () => {
+  it('switches files via toolbar dropdown', async () => {
     const { container } = render(<PodcastDetailLayout podcast={mockPodcast} />);
     const user = userEvent.setup();
     const file0 = container.querySelector('[data-testid="attachment-file-0"]')!;
     await user.click(file0);
     await waitFor(() => {
-      // Re-query after render since sidebar may have moved in the DOM
-      const updatedFile0 = container.querySelector('[data-testid="attachment-file-0"]')!;
-      expect(updatedFile0.getAttribute('data-active')).toBe('true');
+      const select = container.querySelector('select[aria-label="Select attachment"]');
+      expect(select).not.toBeNull();
     });
-    // Re-query file1 in the new DOM structure
-    const file1 = container.querySelector('[data-testid="attachment-file-1"]')!;
-    await user.click(file1);
+    // Switch to second file via dropdown
+    const select = container.querySelector('select[aria-label="Select attachment"]')!;
+    await user.selectOptions(select, mockPodcast.bulletinUrls[1]);
     await waitFor(() => {
-      const updatedFile1 = container.querySelector('[data-testid="attachment-file-1"]')!;
-      const updatedFile0 = container.querySelector('[data-testid="attachment-file-0"]')!;
-      expect(updatedFile1.getAttribute('data-active')).toBe('true');
-      expect(updatedFile0.getAttribute('data-active')).toBe('false');
+      expect((select as HTMLSelectElement).value).toBe(mockPodcast.bulletinUrls[1]);
     });
   });
 

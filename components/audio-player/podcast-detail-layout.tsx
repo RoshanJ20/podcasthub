@@ -189,13 +189,13 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
       )}
 
       {/* Hero card OR compact player */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         {isAttachmentOpen ? (
           <motion.div
             key="compact"
-            initial={reducedMotion ? undefined : { opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reducedMotion ? undefined : { opacity: 0, y: -10 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={transitions.fast}
           >
             <CompactPlayer domainColor={domainColor} />
@@ -203,9 +203,9 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
         ) : (
           <motion.div
             key="hero"
-            initial={reducedMotion ? undefined : { opacity: 0 }}
+            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={reducedMotion ? undefined : { opacity: 0 }}
+            exit={{ opacity: 0 }}
             transition={transitions.fast}
           >
             <Section
@@ -301,9 +301,25 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
     </div>
   );
 
+  /** Build attachment options for the toolbar dropdown. */
+  const attachmentOptions = useMemo(
+    () =>
+      podcast.bulletinUrls.map((url, index) => ({
+        url,
+        name: extractAttachmentName(url, index),
+      })),
+    [podcast.bulletinUrls]
+  );
+
   /** PDF viewer panel (right side when open). */
   const pdfPanel = activeAttachmentUrl ? (
-    <BulletinViewer url={activeAttachmentUrl} filename={activeFilename} onClose={closeAttachment} />
+    <BulletinViewer
+      url={activeAttachmentUrl}
+      filename={activeFilename}
+      onClose={closeAttachment}
+      attachments={attachmentOptions}
+      onSelectAttachment={openAttachment}
+    />
   ) : null;
 
   /** No attachments — render full-width layout without sidebar. */
@@ -327,28 +343,16 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
           {leftContent}
         </div>
 
-        {/* Right area — always has sidebar; PDF panel appears alongside it */}
-        <div
-          className="flex shrink-0 gap-0 transition-[flex] duration-300 ease-out"
-          style={{ flex: isAttachmentOpen ? '1 1 0%' : '0 0 180px' }}
-        >
-          {/* PDF panel — only when open */}
-          {isAttachmentOpen && (
-            <div className="flex-1 overflow-hidden rounded-l-xl border border-r-0 border-border bg-card">
-              {pdfPanel}
-            </div>
-          )}
-
-          {/* Sidebar — always visible */}
-          <div
-            className="w-[180px] shrink-0 overflow-hidden rounded-xl border border-border bg-card"
-            style={
-              isAttachmentOpen ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0 } : undefined
-            }
-          >
+        {/* Right area — PDF panel when open, compact sidebar when closed */}
+        {isAttachmentOpen ? (
+          <div className="flex-1 overflow-hidden rounded-xl border border-border bg-card transition-[flex] duration-300 ease-out">
+            {pdfPanel}
+          </div>
+        ) : (
+          <div className="w-[180px] shrink-0 self-start overflow-hidden rounded-xl border border-border bg-card">
             {sidebarContent}
           </div>
-        </div>
+        )}
       </div>
     </Wrapper>
   );
