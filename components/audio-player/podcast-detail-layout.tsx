@@ -219,13 +219,15 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
 
       {/* Transcript */}
       <Section className="mt-6" {...sectionProps}>
-        <TranscriptViewer
-          segments={segments}
-          fullText={activeTranscript?.fullText}
-          onSeek={seekTo}
-          domainColor={domainColor}
-          compact={isAttachmentOpen}
-        />
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          <TranscriptViewer
+            segments={segments}
+            fullText={activeTranscript?.fullText}
+            onSeek={seekTo}
+            domainColor={domainColor}
+            compact={isAttachmentOpen}
+          />
+        </div>
       </Section>
 
       {/* Bookmarks */}
@@ -344,7 +346,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
       {/* Back link + badges — above the flex row so sidebar aligns with hero card */}
       {!isAttachmentOpen && headerContent}
 
-      <div className="flex items-stretch gap-4">
+      <div className="flex items-start gap-4">
         {/* Left column — expands/compresses with CSS transition */}
         <div
           className="min-w-0 pr-4 transition-[flex] duration-300 ease-out"
@@ -359,7 +361,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
             {pdfPanel}
           </div>
         ) : (
-          <div className="w-[180px] shrink-0 rounded-xl border border-border bg-card">
+          <div className="sticky top-8 w-[180px] shrink-0 rounded-xl border border-border bg-card">
             {sidebarContent}
           </div>
         )}
