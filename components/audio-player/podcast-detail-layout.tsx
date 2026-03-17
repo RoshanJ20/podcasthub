@@ -31,12 +31,21 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { variants, transitions, sectionStagger } from '@/lib/animation';
 import { getDomainColor } from '@/lib/domain-colors';
 import { extractAttachmentName } from '@/lib/attachment-utils';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { AudioPlayer } from './audio-player';
 import { CompactPlayer } from './compact-player';
+import dynamic from 'next/dynamic';
 import { TranscriptViewer } from './transcript-viewer';
-import { BulletinViewer } from './bulletin-viewer';
 import { BookmarkPanel } from './bookmark-panel';
+
+/** Dynamically import BulletinViewer to avoid SSR issues with react-pdf (DOMMatrix). */
+const BulletinViewer = dynamic(() => import('./bulletin-viewer').then((m) => m.BulletinViewer), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center">
+      <div className="h-[400px] w-full max-w-md animate-pulse rounded bg-muted" />
+    </div>
+  ),
+});
 import type { TranscriptSegment } from '@/hooks/use-transcript-sync';
 
 interface Transcript {
@@ -87,18 +96,15 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
 
   /** Slide-in panel state. */
   const [activeAttachmentUrl, setActiveAttachmentUrl] = useState<string | null>(null);
-  const [isAnimationComplete, setIsAnimationComplete] = useState(false);
   const isAttachmentOpen = activeAttachmentUrl !== null;
 
   /** Open an attachment in the PDF panel. */
   const openAttachment = (url: string) => {
-    setIsAnimationComplete(false);
     setActiveAttachmentUrl(url);
   };
 
   /** Close the PDF panel. */
   const closeAttachment = () => {
-    setIsAnimationComplete(false);
     setActiveAttachmentUrl(null);
   };
 
@@ -151,34 +157,36 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   /** Shared left-column content (compact or full). */
   const leftContent = (
     <>
-      {/* Back link + badges */}
-      <Section {...sectionProps}>
-        <Link
-          href="/bulletins"
-          className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Back to library
-        </Link>
-
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span
-            className="inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold"
-            style={{ backgroundColor: badgeBg, color: badgeText }}
+      {/* Back link + badges — hidden when panel is open to save space */}
+      {!isAttachmentOpen && (
+        <Section {...sectionProps}>
+          <Link
+            href="/bulletins"
+            className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
-            {podcast.domain}
-          </span>
-          <span className="text-xs text-muted-foreground">{podcast.year}</span>
-          {podcast.tags.map((tag) => (
+            <ArrowLeft className="size-4" />
+            Back to library
+          </Link>
+
+          <div className="mb-3 flex flex-wrap items-center gap-2">
             <span
-              key={tag}
-              className="inline-flex rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+              className="inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold"
+              style={{ backgroundColor: badgeBg, color: badgeText }}
             >
-              {tag}
+              {podcast.domain}
             </span>
-          ))}
-        </div>
-      </Section>
+            <span className="text-xs text-muted-foreground">{podcast.year}</span>
+            {podcast.tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </Section>
+      )}
 
       {/* Hero card OR compact player */}
       <AnimatePresence mode="wait">
@@ -259,8 +267,8 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
 
   /** Attachment sidebar file list. */
   const sidebarContent = (
-    <div data-testid="attachment-sidebar" className="space-y-2 p-3">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <div data-testid="attachment-sidebar" className="space-y-1.5 p-3">
+      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         Attachments
       </h3>
       {podcast.bulletinUrls.map((url, index) => {
@@ -272,12 +280,15 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
             data-active={isActive ? 'true' : 'false'}
             title={url.split('/').pop() ?? `Attachment ${index + 1}`}
             onClick={() => openAttachment(url)}
-            className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted"
+            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
+              isActive ? 'font-medium' : 'hover:bg-muted'
+            }`}
             style={
               isActive
                 ? {
-                    backgroundColor: isDark ? `${domainColor.darkBg}40` : domainColor.bg,
-                    borderLeft: `2px solid ${domainColor.border}`,
+                    backgroundColor: isDark ? domainColor.darkBg : domainColor.bg,
+                    color: isDark ? domainColor.darkText : domainColor.text,
+                    borderLeft: `3px solid ${domainColor.border}`,
                   }
                 : undefined
             }
@@ -304,60 +315,40 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
     );
   }
 
-  /** Phase 2: resizable mode — panel fully open, animation done. */
-  if (isAttachmentOpen && isAnimationComplete) {
-    return (
-      <Wrapper className="mx-auto max-w-7xl px-4 py-8 lg:py-12" {...wrapperProps}>
-        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-120px)]">
-          <ResizablePanel defaultSize={30} minSize={20}>
-            <div className="h-full overflow-y-auto pr-4">{leftContent}</div>
-          </ResizablePanel>
-          <ResizableHandle withHandle />
-          <ResizablePanel defaultSize={70} minSize={40}>
-            <div className="flex h-full flex-col">
-              {pdfPanel}
-              <div className="border-t border-border">{sidebarContent}</div>
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      </Wrapper>
-    );
-  }
-
-  /** Phase 1: default or animating — motion/react controls widths. */
+  /** Two-column layout: main content + attachment sidebar/PDF panel. */
   return (
-    <Wrapper className="mx-auto max-w-7xl px-4 py-8 lg:py-12" {...wrapperProps}>
+    <Wrapper className="mx-auto px-4 py-8 lg:py-12" {...wrapperProps}>
       <div className="flex min-h-[calc(100vh-120px)] gap-4">
-        {/* Left column */}
-        <motion.div
-          className="min-w-0 overflow-y-auto"
-          animate={{ flex: isAttachmentOpen ? '0 0 30%' : '1 1 0%' }}
-          transition={reducedMotion ? { duration: 0 } : transitions.panelSlide}
-          onAnimationComplete={() => {
-            if (isAttachmentOpen) setIsAnimationComplete(true);
-          }}
+        {/* Left column — expands/compresses with CSS transition */}
+        <div
+          className="min-w-0 overflow-y-auto pr-4 transition-[flex] duration-300 ease-out"
+          style={{ flex: isAttachmentOpen ? '0 0 340px' : '1 1 0%' }}
         >
           {leftContent}
-        </motion.div>
+        </div>
 
-        {/* Right column: sidebar or PDF viewer */}
-        <motion.div
-          className="shrink-0 overflow-hidden rounded-xl border border-border bg-card"
-          animate={{
-            width: isAttachmentOpen ? '70%' : 140,
-            flex: isAttachmentOpen ? '0 0 70%' : '0 0 140px',
-          }}
-          transition={reducedMotion ? { duration: 0 } : transitions.panelSlide}
+        {/* Right area — always has sidebar; PDF panel appears alongside it */}
+        <div
+          className="flex shrink-0 gap-0 transition-[flex] duration-300 ease-out"
+          style={{ flex: isAttachmentOpen ? '1 1 0%' : '0 0 180px' }}
         >
-          {isAttachmentOpen ? (
-            <div className="flex h-full flex-col">
+          {/* PDF panel — only when open */}
+          {isAttachmentOpen && (
+            <div className="flex-1 overflow-hidden rounded-l-xl border border-r-0 border-border bg-card">
               {pdfPanel}
-              <div className="border-t border-border">{sidebarContent}</div>
             </div>
-          ) : (
-            sidebarContent
           )}
-        </motion.div>
+
+          {/* Sidebar — always visible */}
+          <div
+            className="w-[180px] shrink-0 overflow-hidden rounded-xl border border-border bg-card"
+            style={
+              isAttachmentOpen ? { borderTopLeftRadius: 0, borderBottomLeftRadius: 0 } : undefined
+            }
+          >
+            {sidebarContent}
+          </div>
+        </div>
       </div>
     </Wrapper>
   );
