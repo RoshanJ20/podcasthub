@@ -1,42 +1,81 @@
 /**
- * PDF attachment viewer component using react-pdf.
+ * Virtualized PDF viewer for the slide-in attachment panel.
  *
- * Renders PDF documents inline with a toolbar (page nav, download, selector)
- * always visible above a scrollable PDF container.
+ * Renders all pages of a PDF in a scrollable container using
+ * @tanstack/react-virtual to virtualize rendering (only visible
+ * pages + 1-page buffer are in the DOM). Includes a toolbar with
+ * filename, page indicator, download, and close button.
+ *
+ * Dependencies:
+ * - react-pdf for PDF rendering (Document + Page components)
+ * - @tanstack/react-virtual for scroll virtualization
+ * - motion/react for mercury fade entrance animation
+ * - lib/animation for variant/transition tokens
+ * - lib/storage-url for resolving storage keys to URLs
  */
 'use client';
+
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { variants, getTransition } from '@/lib/animation';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-interface AttachmentViewerProps {
-  urls: string[];
+/** Estimated height for each PDF page before measurement. */
+const ESTIMATED_PAGE_HEIGHT = 800;
+
+interface BulletinViewerProps {
+  /** Single PDF URL (raw storage key — resolved internally). */
+  url: string;
+  /** Display name for the toolbar. */
+  filename?: string;
+  /** Called when the user clicks the close button or presses Escape. */
+  onClose: () => void;
 }
 
-export function AttachmentViewer({ urls }: AttachmentViewerProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
+/**
+ * Virtualized PDF viewer with toolbar.
+ *
+ * Renders all pages in a scrollable container, virtualizing to only
+ * mount visible pages + a 1-page buffer above/below.
+ *
+ * @param props.url - Single PDF URL (storage key resolved internally).
+ * @param props.filename - Optional display name shown in toolbar.
+ * @param props.onClose - Callback fired on close button click or Escape key.
+ * @returns The BulletinViewer React element.
+ */
+export function BulletinViewer({ url, filename, onClose }: BulletinViewerProps) {
   const [numPages, setNumPages] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined);
+  const [containerWidth, setContainerWidth] = useState<number>(600);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
 
-  const activeUrl = urls[activeIndex] || '';
+  const resolvedUrl = resolveStorageUrl(url);
+  const Wrapper = reducedMotion ? 'div' : motion.div;
+  const wrapperProps = reducedMotion
+    ? {}
+    : {
+        initial: 'hidden' as const,
+        animate: 'visible' as const,
+        variants: variants.mercuryFade,
+        transition: getTransition('slow'),
+      };
 
+  /** Store numPages when react-pdf finishes loading the document. */
   const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
-    setCurrentPage(1);
   }, []);
 
+  /* Track container width via ResizeObserver for responsive page sizing. */
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -49,84 +88,96 @@ export function AttachmentViewer({ urls }: AttachmentViewerProps) {
     return () => observer.disconnect();
   }, []);
 
-  if (urls.length === 0) {
-    return <p className="text-muted-foreground text-center py-8">No attachments available.</p>;
-  }
+  /* Close viewer when user presses the Escape key. */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
-  const Wrapper = reducedMotion ? 'div' : motion.div;
-  const wrapperProps = reducedMotion
-    ? {}
-    : {
-        initial: 'hidden' as const,
-        animate: 'visible' as const,
-        variants: variants.mercuryFade,
-        transition: getTransition('slow'),
-      };
+  // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer returns non-memoizable functions by design; safe here as virtualizer is only used within this component
+  const virtualizer = useVirtualizer({
+    count: numPages,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => ESTIMATED_PAGE_HEIGHT,
+    overscan: 1,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+  const currentVisiblePage = virtualItems.length > 0 ? virtualItems[0].index + 1 : 0;
 
   return (
-    <Wrapper className="space-y-3" ref={containerRef} {...wrapperProps}>
-      {/* Toolbar — always visible */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/50 p-2">
-        <div className="flex items-center gap-2">
-          {/* Attachment selector */}
-          {urls.length > 1 && (
-            <select
-              aria-label="Select attachment"
-              value={activeIndex}
-              onChange={(e) => {
-                setActiveIndex(Number(e.target.value));
-                setCurrentPage(1);
-                setNumPages(0);
-              }}
-              className="rounded-md border bg-background px-2 py-1 text-sm"
-            >
-              {urls.map((_, i) => (
-                <option key={i} value={i}>
-                  Attachment {i + 1}
-                </option>
-              ))}
-            </select>
+    <Wrapper ref={containerRef} className="flex h-full flex-col" {...wrapperProps}>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between border-b border-border bg-muted/50 px-3 py-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="truncate text-sm font-medium">{filename ?? 'PDF'}</span>
+          {numPages > 0 && (
+            <span className="shrink-0 text-xs text-muted-foreground">
+              Page {currentVisiblePage} / {numPages}
+            </span>
           )}
-
-          {/* Page navigation */}
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage <= 1}
-            onClick={() => setCurrentPage((p) => p - 1)}
-            aria-label="Previous page"
+        </div>
+        <div className="flex items-center gap-1">
+          <a
+            href={resolvedUrl}
+            download
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm hover:bg-muted"
+            aria-label="Download PDF"
           >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="text-sm whitespace-nowrap">
-            {currentPage} / {numPages}
-          </span>
+            <Download className="h-4 w-4" />
+          </a>
           <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage >= numPages}
-            onClick={() => setCurrentPage((p) => p + 1)}
-            aria-label="Next page"
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            aria-label="Close PDF viewer"
+            className="h-8 w-8"
           >
-            <ChevronRight className="h-4 w-4" />
+            <X className="h-4 w-4" />
           </Button>
         </div>
-
-        {/* Download */}
-        <a
-          href={resolveStorageUrl(activeUrl)}
-          download
-          className="inline-flex items-center gap-1.5 rounded-md border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
-          aria-label="Download PDF"
-        >
-          <Download className="h-4 w-4" /> Download
-        </a>
       </div>
 
-      {/* PDF in scrollable container */}
-      <div className="overflow-auto rounded-lg border" style={{ minHeight: '80vh' }}>
-        <Document file={resolveStorageUrl(activeUrl)} onLoadSuccess={onDocumentLoadSuccess}>
-          <Page pageNumber={currentPage} width={containerWidth ? containerWidth - 2 : undefined} />
+      {/* Scrollable PDF container */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto bg-muted/30">
+        <Document file={resolvedUrl} onLoadSuccess={onDocumentLoadSuccess}>
+          {numPages > 0 ? (
+            <div
+              style={{
+                height: virtualizer.getTotalSize(),
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {virtualItems.map((virtualItem) => (
+                <div
+                  key={virtualItem.key}
+                  data-index={virtualItem.index}
+                  ref={virtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  <Page
+                    pageNumber={virtualItem.index + 1}
+                    width={containerWidth - 32}
+                    className="mx-auto"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center p-8">
+              <div className="h-[600px] w-full max-w-md animate-pulse rounded bg-muted" />
+            </div>
+          )}
         </Document>
       </div>
     </Wrapper>

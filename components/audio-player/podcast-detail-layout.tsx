@@ -31,7 +31,7 @@ import { getDomainColor } from '@/lib/domain-colors';
 import { AnimatedTabs } from '@/components/ui/animated-tabs';
 import { AudioPlayer } from './audio-player';
 import { TranscriptViewer } from './transcript-viewer';
-import { AttachmentViewer } from './bulletin-viewer';
+import { BulletinViewer } from './bulletin-viewer';
 import { BookmarkPanel } from './bookmark-panel';
 import type { TranscriptSegment } from '@/hooks/use-transcript-sync';
 
@@ -123,7 +123,14 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
       items.push({
         value: 'attachments',
         label: 'Attachments',
-        content: <AttachmentViewer urls={podcast.bulletinUrls} />,
+        content: (
+          <BulletinViewer
+            url={podcast.bulletinUrls[0]}
+            onClose={() => {
+              /* Close handled by parent slide-in panel in future refactor */
+            }}
+          />
+        ),
       });
     }
 
