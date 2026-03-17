@@ -51,7 +51,7 @@ export function PodcastCard({
     // WORKAROUND: Next.js App Router typed routes don't support dynamic segments — safe to cast
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <Link href={`/podcast/${id}` as any} className="group block" data-testid="podcast-card-link">
-      <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md active:scale-[0.98]">
+      <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md">
         {/* Domain-colored left strip — expands on hover to reveal play icon */}
         <div
           className="relative flex w-1.5 shrink-0 items-center justify-center transition-all duration-300 ease-out group-hover:w-9"
@@ -66,12 +66,12 @@ export function PodcastCard({
 
         {/* Card content */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="relative aspect-video w-full overflow-hidden">
+          <div className="relative aspect-square w-full overflow-hidden">
             <Image
               src={resolveStorageUrl(thumbnailUrl)}
               alt={title}
               fill
-              className="object-cover transition-transform group-hover:scale-105"
+              className="object-cover"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           </div>
