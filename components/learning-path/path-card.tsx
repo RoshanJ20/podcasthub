@@ -57,35 +57,38 @@ export function PathCard({
           />
         </div>
 
-        {/* Card content */}
-        <div className="flex-1 p-4">
-          <div className="mb-2 flex items-start justify-between gap-3">
-            <p className="text-sm font-medium leading-snug">{title}</p>
-            {domain && (
-              <span
-                className="inline-flex shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium"
-                style={{ backgroundColor: badgeBg, color: badgeText }}
-              >
-                {domain}
-              </span>
-            )}
+        {/* Card content — fixed height via flex layout */}
+        <div className="flex flex-1 flex-col justify-between p-3">
+          <div>
+            <div className="mb-1 flex items-start justify-between gap-3">
+              <p className="line-clamp-1 text-sm font-medium leading-snug">{title}</p>
+              {domain && (
+                <span
+                  className="inline-flex shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium"
+                  style={{ backgroundColor: badgeBg, color: badgeText }}
+                >
+                  {domain}
+                </span>
+              )}
+            </div>
+            <p className="line-clamp-1 text-xs text-muted-foreground">{description || '\u00A0'}</p>
           </div>
 
-          {description && <p className="mb-4 text-xs text-muted-foreground">{description}</p>}
-
-          <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            <span>{episodeCount} episodes</span>
-            <span>{progress}% complete</span>
-          </div>
-          <div className="h-1.5 w-full rounded-full bg-border/40">
-            <div
-              className="h-1.5 rounded-full transition-all"
-              style={{ width: `${progress}%`, backgroundColor: color.border }}
-              role="progressbar"
-              aria-valuenow={progress}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            />
+          <div className="mt-2">
+            <div className="mb-1 flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              <span>{episodeCount} episodes</span>
+              <span>{progress}% complete</span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-border/40">
+              <div
+                className="h-1.5 rounded-full transition-all"
+                style={{ width: `${progress}%`, backgroundColor: color.border }}
+                role="progressbar"
+                aria-valuenow={progress}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              />
+            </div>
           </div>
         </div>
       </div>

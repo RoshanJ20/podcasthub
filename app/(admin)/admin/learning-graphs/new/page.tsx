@@ -1,155 +1,69 @@
 /**
- * Create new learning series page.
+ * Admin page for creating a new learning series.
  *
- * Renders a form for creating a new learning graph with title,
- * description, domain, and path type (linear or graph).
+ * Renders the LearningSeriesWizard in a layout matching the upload podcast page:
+ * breadcrumb navigation, back button that respects wizard step, max-w-3xl centered.
  */
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { LEARNING_SERIES_DOMAINS } from '@/lib/schemas/common';
-import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+  LearningSeriesWizard,
+  type LearningSeriesWizardHandle,
+} from '@/components/admin/learning-series-wizard';
+import { Button } from '@/components/ui/button';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 export default function NewLearningPathPage() {
   const router = useRouter();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [domain, setDomain] = useState('');
-  const [pathType, setPathType] = useState<'linear' | 'graph'>('linear');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const wizardRef = useRef<LearningSeriesWizardHandle>(null);
+  const [wizardStep, setWizardStep] = useState(0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !domain) {
-      toast.error('Title and domain are required');
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch('/api/learning-graphs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() || undefined,
-          domain,
-          pathType,
-        }),
-      });
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error(body.message || 'Failed to create learning series');
-      }
-
-      const { data } = await response.json();
-      toast.success('Learning series created');
-      router.push(`/admin/learning-graphs/${data.id}`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create learning series');
-    } finally {
-      setIsSubmitting(false);
+  const handleBack = () => {
+    if (wizardStep > 0) {
+      wizardRef.current?.goBack();
+    } else {
+      router.back();
     }
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Create New Learning Series</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Define the structure and metadata for a new learning journey.
-        </p>
+    <div className="max-w-3xl mx-auto space-y-6">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href="/admin" />}>Dashboard</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Upload Learning Series</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={handleBack} aria-label="Go back">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <h1 className="text-xl font-semibold tracking-tight">Upload New Learning Series</h1>
       </div>
-      <Card className="rounded-xl border border-border bg-card">
-        <CardHeader className="border-b border-border px-6 py-4">
-          <CardTitle className="text-sm font-semibold">Learning Series Details</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Introduction to Audit Methodology"
-                required
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe what learners will gain from this path"
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Domain</Label>
-              <Select
-                value={domain}
-                onValueChange={(value) => {
-                  if (value) setDomain(value);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a domain" />
-                </SelectTrigger>
-                <SelectContent>
-                  {LEARNING_SERIES_DOMAINS.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Path Type</Label>
-              <Select value={pathType} onValueChange={(v) => setPathType(v as 'linear' | 'graph')}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="linear">Linear (step-by-step sequence)</SelectItem>
-                  <SelectItem value="graph">Graph (connected nodes)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                'Create Learning Series'
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <LearningSeriesWizard
+        ref={wizardRef}
+        onSuccess={() => router.push('/admin')}
+        onStepChange={setWizardStep}
+      />
     </div>
   );
 }

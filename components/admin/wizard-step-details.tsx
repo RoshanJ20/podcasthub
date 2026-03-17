@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ThumbnailCropDialog } from '@/components/admin/thumbnail-crop-dialog';
 import { PODCAST_DOMAINS } from '@/lib/schemas/common';
 
 /**
@@ -69,6 +70,8 @@ export function WizardStepDetails({
   } = useFormContext();
 
   const [tagInput, setTagInput] = useState('');
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   /**
@@ -110,82 +113,85 @@ export function WizardStepDetails({
       event.target.value = '';
       return;
     }
-    onThumbnailChange(file);
+    setRawImageSrc(URL.createObjectURL(file));
+    setCropOpen(true);
+    event.target.value = '';
   };
 
   return (
     <div className="space-y-4">
-      {/* Thumbnail Image — banner at top */}
-      <div className="space-y-1.5">
-        <Label htmlFor="thumbnail">
-          Thumbnail Image
-          {mode === 'create' && <span className="text-destructive"> *</span>}
-        </Label>
-        <input
-          ref={thumbnailInputRef}
-          id="thumbnail"
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleThumbnailChange}
-        />
-        <button
-          type="button"
-          onClick={() => thumbnailInputRef.current?.click()}
-          className={cn(
-            'relative w-full h-28 rounded-xl border-2 bg-muted/20 hover:border-primary/50 hover:bg-muted/40 transition-colors cursor-pointer overflow-hidden',
-            thumbnailPreview ? 'border-border' : 'border-dashed border-border'
-          )}
-        >
-          {thumbnailPreview ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              src={thumbnailPreview}
-              alt="Thumbnail preview"
-              className="w-full h-full object-cover"
+      {/* Thumbnail + Title + Description — side by side */}
+      <div className="flex gap-4">
+        {/* 1:1 Thumbnail */}
+        <div className="shrink-0">
+          <Label htmlFor="thumbnail" className="mb-1.5 block">
+            Thumbnail{mode === 'create' && <span className="text-destructive"> *</span>}
+          </Label>
+          <input
+            ref={thumbnailInputRef}
+            id="thumbnail"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleThumbnailChange}
+          />
+          <button
+            type="button"
+            onClick={() => thumbnailInputRef.current?.click()}
+            className={cn(
+              'relative w-32 h-32 rounded-xl border-2 bg-muted/20 hover:border-primary/50 hover:bg-muted/40 transition-colors cursor-pointer overflow-hidden',
+              thumbnailPreview ? 'border-border' : 'border-dashed border-border'
+            )}
+          >
+            {thumbnailPreview ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={thumbnailPreview}
+                alt="Thumbnail preview"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-1 h-full">
+                <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">Upload</span>
+                <span className="text-[10px] text-muted-foreground/60">1:1 · up to 5 MB</span>
+              </div>
+            )}
+            {thumbnailPreview && (
+              <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-white text-xs font-medium">Replace</span>
+              </div>
+            )}
+          </button>
+        </div>
+
+        {/* Title + Description stacked */}
+        <div className="flex-1 min-w-0 space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="title">
+              Title<span className="text-destructive"> *</span>
+            </Label>
+            <Input id="title" {...register('title')} placeholder="Podcast title" />
+            {errors.title && (
+              <p className="text-sm text-destructive">{errors.title.message as string}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="description">
+              Description<span className="text-destructive"> *</span>
+            </Label>
+            <Textarea
+              id="description"
+              {...register('description')}
+              placeholder="Podcast description"
+              rows={2}
             />
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-1.5 h-full">
-              <ImagePlus className="h-6 w-6 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground">Upload Thumbnail</span>
-              <span className="text-xs text-muted-foreground/60">
-                16:9 · JPG or PNG · up to 5 MB
-              </span>
-            </div>
-          )}
-          {thumbnailPreview && (
-            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-              <span className="text-white text-sm font-medium">Click to replace</span>
-            </div>
-          )}
-        </button>
-      </div>
-
-      {/* Title */}
-      <div className="space-y-1.5">
-        <Label htmlFor="title">
-          Title<span className="text-destructive"> *</span>
-        </Label>
-        <Input id="title" {...register('title')} placeholder="Podcast title" />
-        {errors.title && (
-          <p className="text-sm text-destructive">{errors.title.message as string}</p>
-        )}
-      </div>
-
-      {/* Description */}
-      <div className="space-y-1.5">
-        <Label htmlFor="description">
-          Description<span className="text-destructive"> *</span>
-        </Label>
-        <Textarea
-          id="description"
-          {...register('description')}
-          placeholder="Podcast description"
-          rows={2}
-        />
-        {errors.description && (
-          <p className="text-sm text-destructive">{errors.description.message as string}</p>
-        )}
+            {errors.description && (
+              <p className="text-sm text-destructive">{errors.description.message as string}</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Domain + Year — two columns */}
@@ -251,6 +257,23 @@ export function WizardStepDetails({
           </div>
         )}
       </div>
+
+      {/* Crop dialog — opens after file selection */}
+      <ThumbnailCropDialog
+        imageSrc={rawImageSrc}
+        open={cropOpen}
+        onCrop={(croppedFile) => {
+          setCropOpen(false);
+          if (rawImageSrc) URL.revokeObjectURL(rawImageSrc);
+          setRawImageSrc(null);
+          onThumbnailChange(croppedFile);
+        }}
+        onCancel={() => {
+          setCropOpen(false);
+          if (rawImageSrc) URL.revokeObjectURL(rawImageSrc);
+          setRawImageSrc(null);
+        }}
+      />
     </div>
   );
 }

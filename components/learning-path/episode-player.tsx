@@ -1,9 +1,8 @@
 /**
  * Self-contained audio player for a single learning path episode.
  *
- * Renders play/pause, seek, volume, time display, "Mark as Complete"
- * button, and optional transcript. Uses domain colors for the play
- * button and slider accent.
+ * Compact layout: square thumbnail on the left, player controls on the right.
+ * Transcript shown below in a fixed-height scrollable area.
  *
  * Dependencies:
  * - lib/domain-colors for DomainColor type
@@ -16,7 +15,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, Volume2, VolumeX, CheckCircle2, Download } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatTime } from '@/lib/format-time';
 import type { DomainColor } from '@/lib/domain-colors';
@@ -113,20 +112,6 @@ export function EpisodePlayer({
 
   return (
     <div className="space-y-3" data-testid={`episode-player-${episodeId}`}>
-      {/* Thumbnail */}
-      {resolvedThumbnail && (
-        <div className="overflow-hidden rounded-lg">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={resolvedThumbnail}
-            alt={`Thumbnail for ${title}`}
-            className="h-40 w-full rounded-lg object-cover"
-          />
-        </div>
-      )}
-
-      {description && <p className="text-sm text-muted-foreground">{description}</p>}
-
       <audio
         ref={audioRef}
         src={resolvedUrl}
@@ -138,112 +123,97 @@ export function EpisodePlayer({
         onEnded={() => setIsPlaying(false)}
       />
 
-      {/* Controls row */}
-      <div className="flex items-center gap-3">
-        {/* Domain-colored play button */}
-        <button
-          onClick={togglePlay}
-          aria-label={isPlaying ? 'Pause' : 'Play'}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-105 active:scale-95"
-          style={{
-            backgroundColor: domainColor?.border ?? 'var(--primary)',
-            color: 'white',
-          }}
-        >
-          {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
-        </button>
-
-        {/* Seek slider — domain-colored */}
-        <div
-          className="flex-1 space-y-1"
-          style={{ '--primary': domainColor?.border } as React.CSSProperties}
-        >
-          <Slider
-            aria-label="Seek"
-            min={0}
-            max={duration || 100}
-            value={[currentTime]}
-            onValueChange={(value) => seekTo(Array.isArray(value) ? value[0] : value)}
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
-
-        {/* Volume */}
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8"
-            onClick={() => changeVolume(volume > 0 ? 0 : 1)}
-            aria-label={volume === 0 ? 'Unmute' : 'Mute'}
-          >
-            {volume === 0 ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
-          </Button>
-          <div style={{ '--primary': domainColor?.border } as React.CSSProperties}>
-            <Slider
-              aria-label="Volume"
-              min={0}
-              max={1}
-              step={0.01}
-              value={[volume]}
-              onValueChange={(value) => changeVolume(Array.isArray(value) ? value[0] : value)}
-              className="w-20"
+      {/* Top row: thumbnail + controls */}
+      <div className="flex gap-3">
+        {/* Square thumbnail */}
+        {resolvedThumbnail && (
+          <div className="relative shrink-0 size-20 overflow-hidden rounded-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={resolvedThumbnail}
+              alt={`Thumbnail for ${title}`}
+              className="size-full object-cover"
             />
           </div>
+        )}
+
+        {/* Controls + description */}
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5">
+          {description && (
+            <p className="line-clamp-2 text-xs text-muted-foreground">{description}</p>
+          )}
+
+          {/* Player controls */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={togglePlay}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-105"
+              style={{
+                backgroundColor: domainColor?.border ?? 'var(--primary)',
+                color: 'white',
+              }}
+            >
+              {isPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
+            </button>
+
+            <div
+              className="flex-1 space-y-0.5"
+              style={{ '--primary': domainColor?.border } as React.CSSProperties}
+            >
+              <Slider
+                aria-label="Seek"
+                min={0}
+                max={duration || 100}
+                value={[currentTime]}
+                onValueChange={(value) => seekTo(Array.isArray(value) ? value[0] : value)}
+              />
+              <div className="flex justify-between text-[10px] text-muted-foreground">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
+
+            {/* Volume — compact */}
+            <button
+              className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => changeVolume(volume > 0 ? 0 : 1)}
+              aria-label={volume === 0 ? 'Unmute' : 'Mute'}
+            >
+              {volume === 0 ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
+            </button>
+          </div>
+
+          {/* Mark complete — inline */}
+          {isCompleted ? (
+            <div
+              className="flex items-center gap-1.5 text-xs font-medium"
+              style={{ color: domainColor?.border }}
+            >
+              <CheckCircle2 className="size-3.5" />
+              Completed
+            </div>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleMarkComplete}
+              disabled={marking}
+              style={{ backgroundColor: domainColor?.border, color: 'white' }}
+              className="h-7 w-fit text-xs hover:opacity-90"
+            >
+              <CheckCircle2 className="mr-1 size-3.5" />
+              {marking ? 'Marking...' : 'Mark as Complete'}
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Mark complete */}
-      <div>
-        {isCompleted ? (
-          <div
-            className="flex items-center gap-2 text-sm font-medium"
-            style={{ color: domainColor?.border }}
-          >
-            <CheckCircle2 className="size-4" />
-            Completed
-          </div>
-        ) : (
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleMarkComplete}
-            disabled={marking}
-            style={{ backgroundColor: domainColor?.border, color: 'white' }}
-            className="hover:opacity-90"
-          >
-            <CheckCircle2 className="mr-1 size-4" />
-            {marking ? 'Marking...' : 'Mark as Complete'}
-          </Button>
-        )}
-      </div>
-
-      {/* Transcript */}
+      {/* Transcript — compact scrollable */}
       {transcriptText && (
-        <div className="mt-3 border-t border-border pt-3">
-          <div className="mb-2 flex items-center justify-between">
-            <h4 className="text-sm font-medium">Transcript</h4>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                const blob = new Blob([transcriptText], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${title}-transcript.txt`;
-                a.click();
-                URL.revokeObjectURL(url);
-              }}
-            >
-              <Download className="mr-1 size-3.5" />
-              Download
-            </Button>
-          </div>
-          <div className="max-h-60 overflow-y-auto whitespace-pre-wrap rounded-lg bg-muted/30 p-3 text-sm text-muted-foreground">
+        <div>
+          <p className="mb-1.5 text-xs font-medium text-muted-foreground">Transcript</p>
+          <div className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded-lg bg-muted/30 p-3 font-mono text-xs text-muted-foreground">
             {transcriptText}
           </div>
         </div>

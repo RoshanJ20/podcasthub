@@ -23,17 +23,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  GripVertical,
-  Plus,
-  Trash2,
-  Upload,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, GripVertical, Plus, Trash2, Upload } from 'lucide-react';
 import { scheduleAutoSave } from '@/stores/graph-editor-store';
 import { AutoSaveStatus } from '@/components/learning-path/auto-save-status';
+import { ThumbnailCropDialog } from '@/components/admin/thumbnail-crop-dialog';
 
 interface LinearEditorProps {
   graphId: string;
@@ -60,7 +53,8 @@ function SortableEpisode({
   const thumbnailUpload = useFileUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
-  const transcriptInputRef = useRef<HTMLInputElement>(null);
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
 
   const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,20 +65,22 @@ function SortableEpisode({
     }
   };
 
-  const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const key = await thumbnailUpload.upload(file, 'image');
+    setRawImageSrc(URL.createObjectURL(file));
+    setCropOpen(true);
+    e.target.value = '';
+  };
+
+  const handleCroppedThumbnail = async (croppedFile: File) => {
+    setCropOpen(false);
+    if (rawImageSrc) URL.revokeObjectURL(rawImageSrc);
+    setRawImageSrc(null);
+    const key = await thumbnailUpload.upload(croppedFile, 'image');
     if (key) {
       onUpdate({ thumbnailUrl: key });
     }
-  };
-
-  const handleTranscriptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    onUpdate({ transcript: text });
   };
 
   return (
@@ -160,7 +156,7 @@ function SortableEpisode({
               type="file"
               accept="image/*"
               className="hidden"
-              onChange={handleThumbnailUpload}
+              onChange={handleThumbnailSelect}
             />
             <Button
               type="button"
@@ -185,6 +181,16 @@ function SortableEpisode({
                 Thumbnail uploaded: {node.thumbnailUrl.split('/').pop()}
               </p>
             )}
+            <ThumbnailCropDialog
+              imageSrc={rawImageSrc}
+              open={cropOpen}
+              onCrop={handleCroppedThumbnail}
+              onCancel={() => {
+                setCropOpen(false);
+                if (rawImageSrc) URL.revokeObjectURL(rawImageSrc);
+                setRawImageSrc(null);
+              }}
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor={`ep-desc-${node.id}`} className="text-xs">
@@ -199,27 +205,19 @@ function SortableEpisode({
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">Transcript</Label>
-            <input
-              ref={transcriptInputRef}
-              type="file"
-              accept=".txt,.srt,.vtt,.md"
-              className="hidden"
-              onChange={handleTranscriptUpload}
+            <Label htmlFor={`ep-transcript-${node.id}`} className="text-xs">
+              Transcript
+            </Label>
+            <Textarea
+              id={`ep-transcript-${node.id}`}
+              rows={3}
+              placeholder="Paste transcript..."
+              value={node.transcript ?? ''}
+              onChange={(e) => onUpdate({ transcript: e.target.value })}
+              className="resize-none font-mono text-xs h-24 overflow-y-auto"
             />
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => transcriptInputRef.current?.click()}
-            >
-              <FileText className="h-4 w-4 mr-2" />
-              {node.transcript ? 'Replace Transcript' : 'Upload Transcript'}
-            </Button>
             {node.transcript && (
-              <p className="text-xs text-green-600">
-                Transcript loaded ({node.transcript.length} chars)
-              </p>
+              <p className="text-xs text-muted-foreground">{node.transcript.length} chars</p>
             )}
           </div>
         </div>
@@ -232,6 +230,25 @@ export function LinearEditor({ graphId: _graphId }: LinearEditorProps) {
   const { nodes, isDirty, addNode, removeNode, updateNode } = useGraphEditorStore();
   const store = useGraphEditorStore;
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const expandedIndexRef = useRef<number>(-1);
+
+  /* Keep expandedId in sync after auto-save reconciles temp→real IDs */
+  useEffect(() => {
+    if (expandedIndexRef.current >= 0 && expandedIndexRef.current < nodes.length) {
+      const currentNodeId = nodes[expandedIndexRef.current].id;
+      if (currentNodeId !== expandedId) {
+        setExpandedId(currentNodeId);
+      }
+    }
+  }, [nodes, expandedId]);
+
+  const setExpanded = useCallback(
+    (id: string | null) => {
+      setExpandedId(id);
+      expandedIndexRef.current = id ? store.getState().nodes.findIndex((n) => n.id === id) : -1;
+    },
+    [store]
+  );
 
   useUnsavedChangesWarning(isDirty);
 
@@ -270,13 +287,13 @@ export function LinearEditor({ graphId: _graphId }: LinearEditorProps) {
       positionX: 0,
       positionY: 0,
     });
-    setExpandedId(id);
+    setExpanded(id);
   };
 
   return (
     <div className="max-w-2xl mx-auto p-4">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="font-semibold">Linear Path</h3>
+        <h3 className="font-semibold">Episodes</h3>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleAddEpisode}>
             <Plus className="h-4 w-4 mr-1" /> Add Episode
@@ -293,10 +310,10 @@ export function LinearEditor({ graphId: _graphId }: LinearEditorProps) {
               node={node}
               index={index}
               isExpanded={expandedId === node.id}
-              onToggle={() => setExpandedId(expandedId === node.id ? null : node.id)}
+              onToggle={() => setExpanded(expandedId === node.id ? null : node.id)}
               onRemove={() => {
                 removeNode(node.id);
-                if (expandedId === node.id) setExpandedId(null);
+                if (expandedId === node.id) setExpanded(null);
               }}
               onUpdate={(updates) => updateNode(node.id, updates)}
             />

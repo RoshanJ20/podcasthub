@@ -1,14 +1,13 @@
 /**
  * Podcast card component for the public library grid.
  *
- * Displays a podcast's thumbnail, domain badge, year, title, and
- * truncated description. A domain-colored left strip expands on hover
- * to reveal a play icon — mirroring the home page card animation language
- * but using a play icon to signal audio content.
+ * Horizontal layout: square thumbnail on the left, metadata on the right.
+ * A domain-colored left strip slides over on hover to reveal a chevron,
+ * matching the home page card interaction.
  *
  * Dependencies:
  * - next/link, next/image for navigation and optimised images
- * - lucide-react for the Play icon
+ * - lucide-react for the ChevronRight icon
  * - next-themes for dark/light mode color selection
  * - lib/domain-colors for per-domain color tokens
  * - lib/storage-url for resolving MinIO/Azure Blob URLs
@@ -17,7 +16,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Play } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import { getDomainColor } from '@/lib/domain-colors';
@@ -52,42 +51,42 @@ export function PodcastCard({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <Link href={`/podcast/${id}` as any} className="group block" data-testid="podcast-card-link">
       <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md">
-        {/* Domain-colored left strip — expands on hover to reveal play icon */}
+        {/* Domain-colored left strip — expands on hover to reveal arrow */}
         <div
           className="relative flex w-1.5 shrink-0 items-center justify-center transition-all duration-300 ease-out group-hover:w-9"
           style={{ backgroundColor: color.border }}
         >
-          <Play
+          <ChevronRight
             className="absolute text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-            size={16}
+            size={18}
             strokeWidth={2.5}
           />
         </div>
 
-        {/* Card content */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="relative aspect-square w-full overflow-hidden">
-            <Image
-              src={resolveStorageUrl(thumbnailUrl)}
-              alt={title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
+        {/* Square thumbnail */}
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden sm:h-28 sm:w-28">
+          <Image
+            src={resolveStorageUrl(thumbnailUrl)}
+            alt={title}
+            fill
+            className="object-cover"
+            sizes="112px"
+          />
+        </div>
+
+        {/* Text content */}
+        <div className="flex min-w-0 flex-1 flex-col justify-center p-3">
+          <div className="mb-1.5 flex items-center gap-2">
+            <span
+              className="inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium"
+              style={{ backgroundColor: badgeBg, color: badgeText }}
+            >
+              {domain}
+            </span>
+            <span className="text-[11px] text-muted-foreground">{year}</span>
           </div>
-          <div className="flex flex-1 flex-col p-4">
-            <div className="mb-2 flex items-center gap-2">
-              <span
-                className="inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium"
-                style={{ backgroundColor: badgeBg, color: badgeText }}
-              >
-                {domain}
-              </span>
-              <span className="text-[11px] text-muted-foreground">{year}</span>
-            </div>
-            <p className="line-clamp-1 text-sm font-medium leading-snug">{title}</p>
-            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{description}</p>
-          </div>
+          <p className="line-clamp-1 text-sm font-medium leading-snug">{title}</p>
+          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{description}</p>
         </div>
       </div>
     </Link>

@@ -1,12 +1,11 @@
 /**
  * WizardStepReview — Read-only review component for the podcast upload wizard (Step 3).
  *
- * Displays all form data entered in Steps 1 (Details) and 2 (Content) in a structured,
- * card-based layout so the user can verify everything before submitting.
+ * Displays all form data in a single compact card before final submission.
+ * Layout: thumbnail + title header strip, 2-column field grid, files pill row.
  *
  * Key responsibilities:
- * - Renders three review cards: Details, Content, and Thumbnail
- * - Displays file metadata (filenames, character counts) rather than raw content
+ * - Renders a single summary card with all podcast metadata and content info
  * - Shows "Not provided" / "None" placeholders for missing optional fields
  *
  * @dependencies shadcn Card, Badge components; next/image for thumbnail preview
@@ -14,9 +13,8 @@
 'use client';
 
 import Image from 'next/image';
-
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 /**
  * Props for the WizardStepReview component.
@@ -28,7 +26,7 @@ export interface WizardStepReviewProps {
   title: string;
   /** Podcast description (may be multi-line) */
   description: string;
-  /** Domain category (e.g., "Auditing", "LEAP", "Tax") */
+  /** Domain category */
   domain: string;
   /** Publication year */
   year: number;
@@ -55,29 +53,11 @@ export interface WizardStepReviewProps {
 }
 
 /**
- * Renders a label-value row used within review cards.
- *
- * @param label - The field label text.
- * @param children - The value content to display.
- * @returns A horizontal label-value pair element.
- */
-function ReviewRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1 sm:flex-row sm:gap-4">
-      <div className="min-w-[160px] text-sm font-medium text-muted-foreground">{label}</div>
-      <div className="text-sm">{children}</div>
-    </div>
-  );
-}
-
-/**
  * Read-only review component that displays all podcast form data
- * entered across wizard Steps 1 and 2.
- *
- * Organized into three cards: Details, Content, and Thumbnail.
+ * in a single compact card before final submission.
  *
  * @param props - All form field values to display.
- * @returns The review step UI with three summary cards.
+ * @returns The review step UI.
  */
 export function WizardStepReview({
   title,
@@ -92,92 +72,112 @@ export function WizardStepReview({
   shortTranscript,
   longTranscript,
 }: WizardStepReviewProps) {
-  return (
-    <div className="space-y-4">
-      {/* Card 1: Details + Thumbnail */}
-      <Card>
-        <CardContent className="pt-5">
-          <div className="flex gap-4">
-            {/* Thumbnail */}
-            {thumbnailUrl && (
-              <div className="relative shrink-0 w-28 h-20 rounded-lg overflow-hidden border">
-                <Image
-                  src={thumbnailUrl}
-                  alt="Thumbnail preview"
-                  fill
-                  className="object-cover"
-                  sizes="112px"
-                />
-              </div>
-            )}
+  const transcriptSummary = [
+    shortTranscript.length > 0 ? `Short: ${shortTranscript.length} chars` : null,
+    longTranscript.length > 0 ? `Long: ${longTranscript.length} chars` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
-            {/* Details */}
-            <div className="flex-1 space-y-2.5 min-w-0">
-              <ReviewRow label="Title">{title}</ReviewRow>
-              <ReviewRow label="Description">
-                <span className="whitespace-pre-wrap">{description}</span>
-              </ReviewRow>
-              <ReviewRow label="Domain">
-                <Badge variant="secondary">{domain}</Badge>
-              </ReviewRow>
-              <ReviewRow label="Year">{String(year)}</ReviewRow>
-              <ReviewRow label="Tags">
-                {tags.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {tags.map((tag) => (
-                      <Badge key={tag} variant="outline">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground">None</span>
-                )}
-              </ReviewRow>
+  return (
+    <Card>
+      <CardContent className="pt-5 space-y-4">
+        {/* Header strip: thumbnail + title + domain + year */}
+        <div className="flex gap-3 items-center pb-4 border-b border-border">
+          {thumbnailUrl ? (
+            <div className="relative shrink-0 w-14 h-10 rounded-md overflow-hidden border">
+              <Image
+                src={thumbnailUrl}
+                alt="Thumbnail"
+                fill
+                className="object-cover"
+                sizes="56px"
+              />
+            </div>
+          ) : (
+            <div className="shrink-0 w-14 h-10 rounded-md bg-muted border" />
+          )}
+          <div className="min-w-0">
+            <p className="text-sm font-semibold truncate">{title}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge variant="secondary" className="text-xs">
+                {domain}
+              </Badge>
+              <span className="text-xs text-muted-foreground">{year}</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Card 2: Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Content</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ReviewRow label="Brief Summary">
-            {audioShortFileName ?? <span className="text-muted-foreground">Not provided</span>}
-          </ReviewRow>
-          <ReviewRow label="Detailed Overview">
-            {audioLongFileName ?? <span className="text-muted-foreground">Not provided</span>}
-          </ReviewRow>
-          <ReviewRow label="Attachments">
-            {bulletinFileNames.length > 0 ? (
-              <ul className="list-inside list-disc">
-                {bulletinFileNames.map((name) => (
-                  <li key={name}>{name}</li>
+        {/* 2-column field grid */}
+        <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+          <ReviewField label="Description">
+            <span className="line-clamp-2">{description || <Muted>—</Muted>}</span>
+          </ReviewField>
+
+          <ReviewField label="Tags">
+            {tags.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {tags.map((tag) => (
+                  <Badge key={tag} variant="outline" className="text-xs font-normal">
+                    {tag}
+                  </Badge>
                 ))}
-              </ul>
+              </div>
             ) : (
-              <span className="text-muted-foreground">None</span>
+              <Muted>None</Muted>
             )}
-          </ReviewRow>
-          <ReviewRow label="Brief Summary Transcript">
-            {shortTranscript.length > 0 ? (
-              <span>{shortTranscript.length} characters</span>
-            ) : (
-              <span className="text-muted-foreground">Not provided</span>
-            )}
-          </ReviewRow>
-          <ReviewRow label="Detailed Overview Transcript">
-            {longTranscript.length > 0 ? (
-              <span>{longTranscript.length} characters</span>
-            ) : (
-              <span className="text-muted-foreground">Not provided</span>
-            )}
-          </ReviewRow>
-        </CardContent>
-      </Card>
+          </ReviewField>
+
+          {transcriptSummary && (
+            <ReviewField label="Transcripts">
+              <span>{transcriptSummary}</span>
+            </ReviewField>
+          )}
+        </div>
+
+        {/* Files pill row */}
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <FilePill label="Audio (short)" value={audioShortFileName} />
+          <FilePill label="Audio (long)" value={audioLongFileName} />
+          <FilePill
+            label="Attachments"
+            value={
+              bulletinFileNames.length > 0
+                ? `${bulletinFileNames.length} file${bulletinFileNames.length > 1 ? 's' : ''}`
+                : null
+            }
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Renders a labelled field in the 2-col grid. */
+function ReviewField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-0.5">
+      <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
+      <div className="text-sm">{children}</div>
     </div>
   );
+}
+
+/** Renders a single file summary pill in the bottom row. */
+function FilePill({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="bg-muted/40 rounded-lg px-3 py-2.5 text-center">
+      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+      {value ? (
+        <p className="text-xs font-medium truncate">{value}</p>
+      ) : (
+        <p className="text-xs text-muted-foreground italic">Not provided</p>
+      )}
+    </div>
+  );
+}
+
+/** Inline muted placeholder text. */
+function Muted({ children }: { children: React.ReactNode }) {
+  return <span className="text-muted-foreground">{children}</span>;
 }

@@ -64,19 +64,22 @@ export function PathListClient({ paths }: PathListClientProps) {
 
   return (
     <>
-      <div className="mb-6 flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
+      {/* Header: title left, search right — matches bulletins page */}
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-semibold tracking-tight">Learning Series</h1>
+        <div className="relative w-full sm:w-auto sm:min-w-55">
           <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search learning series..."
+            placeholder="Search..."
             className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
           />
         </div>
       </div>
-      <StaggeredGrid className="grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+
+      <StaggeredGrid className="grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filteredPaths.map((path) => (
           <StaggeredGridItem key={path.id}>
             <PathCard
@@ -90,10 +93,15 @@ export function PathListClient({ paths }: PathListClientProps) {
           </StaggeredGridItem>
         ))}
       </StaggeredGrid>
+
       {filteredPaths.length === 0 && searchQuery.trim() && (
         <p className="text-muted-foreground text-center py-8 text-sm">
           No series matching &ldquo;{searchQuery.trim()}&rdquo;
         </p>
+      )}
+
+      {paths.length === 0 && !searchQuery.trim() && (
+        <p className="text-muted-foreground text-center py-8">No learning series available yet.</p>
       )}
     </>
   );

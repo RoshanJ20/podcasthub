@@ -29,6 +29,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '20mb',
+    },
+    middlewareClientMaxBodySize: '20mb',
+  },
   images: {
     dangerouslyAllowSVG: true,
     localPatterns: [

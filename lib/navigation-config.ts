@@ -51,7 +51,7 @@ export const personalLinks: NavLink[] = [
 export const adminLinks: NavLink[] = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/upload', label: 'Upload Technical Content', icon: Headphones },
-  { href: '/admin/learning-graphs', label: 'Upload Learning Series', icon: Route },
+  { href: '/admin/learning-graphs/new', label: 'Upload Learning Series', icon: Route },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
 ];

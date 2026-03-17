@@ -133,7 +133,9 @@ export function WizardStepContent({
               )}
             >
               <Upload className="h-5 w-5 text-muted-foreground" />
-              <span className="text-xs font-medium">Audio (short)</span>
+              <span className="text-xs font-medium">
+                Audio (short) <span className="text-destructive">*</span>
+              </span>
               {audioShortFileName ? (
                 <span className="text-xs text-primary px-2 truncate max-w-full text-center leading-tight">
                   {audioShortFileName}
@@ -172,7 +174,9 @@ export function WizardStepContent({
               )}
             >
               <Upload className="h-5 w-5 text-muted-foreground" />
-              <span className="text-xs font-medium">Audio (long)</span>
+              <span className="text-xs font-medium">
+                Audio (long) <span className="text-destructive">*</span>
+              </span>
               {audioLongFileName ? (
                 <span className="text-xs text-primary px-2 truncate max-w-full text-center leading-tight">
                   {audioLongFileName}

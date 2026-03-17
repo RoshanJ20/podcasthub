@@ -144,6 +144,8 @@ export const PodcastUploadWizard = forwardRef<PodcastUploadWizardHandle, Podcast
     const form = useForm<FormValues>({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       resolver: zodResolver(formSchema) as any,
+      mode: 'onTouched',
+      reValidateMode: 'onChange',
       defaultValues: {
         title: initialData?.title ?? '',
         description: initialData?.description ?? '',
@@ -182,7 +184,7 @@ export const PodcastUploadWizard = forwardRef<PodcastUploadWizardHandle, Podcast
      * Validates the current step and advances to the next step if valid.
      *
      * Step 0: Triggers form validation on metadata fields + checks thumbnail (create mode).
-     * Step 1: No required fields — advances immediately.
+     * Step 1: Requires at least one audio file (short or long).
      */
     const handleNext = useCallback(async () => {
       if (currentStep === 0) {
@@ -201,10 +203,31 @@ export const PodcastUploadWizard = forwardRef<PodcastUploadWizardHandle, Podcast
         return;
       }
 
+      if (currentStep === 1) {
+        /* Require at least one audio file — new or previously uploaded */
+        const hasAudio = audioShortFile || audioLongFile || audioShortUrl || audioLongUrl;
+        if (!hasAudio) {
+          toast.error('At least one audio file is required');
+          return;
+        }
+        goToStep(2);
+        return;
+      }
+
       if (currentStep < TOTAL_STEPS - 1) {
         goToStep(currentStep + 1);
       }
-    }, [currentStep, form, mode, thumbnailFile, goToStep]);
+    }, [
+      currentStep,
+      form,
+      mode,
+      thumbnailFile,
+      audioShortFile,
+      audioLongFile,
+      audioShortUrl,
+      audioLongUrl,
+      goToStep,
+    ]);
 
     /**
      * Handles the final submission: uploads files, saves podcast via API,
@@ -422,7 +445,11 @@ export const PodcastUploadWizard = forwardRef<PodcastUploadWizardHandle, Podcast
 
         {/* Navigation controls */}
         <p className="text-sm text-muted-foreground italic mt-4">
-          All fields marked with * are mandatory
+          {currentStep === 1
+            ? '* At least one audio file is required'
+            : currentStep === 0
+              ? 'All fields marked with * are mandatory'
+              : null}
         </p>
 
         <div className="flex justify-between mt-3">
