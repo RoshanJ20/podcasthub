@@ -384,7 +384,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
     <motion.div key="full" {...mercuryIn}>
       <div className="flex overflow-hidden rounded-xl border border-border bg-card">
         <div className="w-1.5 shrink-0" style={{ backgroundColor: domainColor.border }} />
-        <div className="flex flex-1 flex-col gap-6 p-5 lg:flex-row lg:items-start lg:p-6">
+        <div className="flex flex-1 flex-col gap-6 p-5 lg:flex-row lg:items-center lg:p-6">
           <div className="flex min-w-0 flex-1 items-start gap-5">
             <div className="relative hidden size-32 shrink-0 overflow-hidden rounded-xl sm:block lg:size-40">
               <Image
