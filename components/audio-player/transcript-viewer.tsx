@@ -29,6 +29,8 @@ interface TranscriptViewerProps {
   onSeek?: (time: number) => void;
   /** Domain color for active segment accent. */
   domainColor?: DomainColor;
+  /** When true, show only ~5 segments around the active segment. */
+  compact?: boolean;
 }
 
 export function TranscriptViewer({
@@ -36,6 +38,7 @@ export function TranscriptViewer({
   fullText,
   onSeek,
   domainColor,
+  compact,
 }: TranscriptViewerProps) {
   const { activeIndex, containerRef } = useTranscriptSync(segments);
   const reducedMotion = useReducedMotion();
@@ -70,10 +73,22 @@ export function TranscriptViewer({
     };
   };
 
+  /** Number of segments to show before and after the active segment in compact mode. */
+  const COMPACT_WINDOW = 2;
+  const visibleSegments = compact
+    ? segments
+        .map((seg, i) => ({ seg, i }))
+        .filter(({ i }) => Math.abs(i - activeIndex) <= COMPACT_WINDOW)
+    : segments.map((seg, i) => ({ seg, i }));
+
+  const containerHeight = compact
+    ? 'max-h-60 overflow-y-auto'
+    : 'h-[calc(100vh-300px)] min-h-100 overflow-y-auto';
+
   return (
-    <div ref={containerRef} className="h-[calc(100vh-300px)] min-h-100 overflow-y-auto">
+    <div ref={containerRef} className={containerHeight}>
       <div className="space-y-1 p-4">
-        {segments.map((segment, index) => {
+        {visibleSegments.map(({ seg: segment, i: index }) => {
           const isActive = index === activeIndex;
           const SegmentEl = reducedMotion ? 'div' : motion.div;
           const motionProps = reducedMotion

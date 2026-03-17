@@ -102,4 +102,59 @@ describe('TranscriptViewer', () => {
     const segments = container.querySelectorAll('[data-segment]');
     expect(segments.length).toBe(3);
   });
+
+  // --- Compact mode tests ---
+
+  it('shows only segments around active in compact mode', () => {
+    const manySegments = Array.from({ length: 20 }, (_, i) => ({
+      start: i * 10,
+      end: (i + 1) * 10,
+      text: `Segment ${i}`,
+    }));
+    usePlayerStore.setState({ currentTime: 75 }); // Active index = 7
+    const { container } = render(<TranscriptViewer segments={manySegments} compact />);
+    const segments = container.querySelectorAll('[data-segment]');
+    expect(segments.length).toBeLessThanOrEqual(5);
+    expect(segments.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('includes the active segment in compact mode', () => {
+    const manySegments = Array.from({ length: 20 }, (_, i) => ({
+      start: i * 10,
+      end: (i + 1) * 10,
+      text: `Segment ${i}`,
+    }));
+    usePlayerStore.setState({ currentTime: 75 });
+    const { container } = render(<TranscriptViewer segments={manySegments} compact />);
+    const active = container.querySelector('[data-active="true"]');
+    expect(active).not.toBeNull();
+  });
+
+  it('still calls onSeek in compact mode', async () => {
+    const onSeek = vi.fn();
+    const manySegments = Array.from({ length: 20 }, (_, i) => ({
+      start: i * 10,
+      end: (i + 1) * 10,
+      text: `Segment ${i}`,
+    }));
+    usePlayerStore.setState({ currentTime: 75 });
+    const { container } = render(
+      <TranscriptViewer segments={manySegments} onSeek={onSeek} compact />
+    );
+    const user = userEvent.setup();
+    const segments = container.querySelectorAll('[data-segment]');
+    await user.click(segments[0]);
+    expect(onSeek).toHaveBeenCalled();
+  });
+
+  it('renders all segments when compact is false', () => {
+    const manySegments = Array.from({ length: 20 }, (_, i) => ({
+      start: i * 10,
+      end: (i + 1) * 10,
+      text: `Segment ${i}`,
+    }));
+    const { container } = render(<TranscriptViewer segments={manySegments} />);
+    const segments = container.querySelectorAll('[data-segment]');
+    expect(segments.length).toBe(20);
+  });
 });
