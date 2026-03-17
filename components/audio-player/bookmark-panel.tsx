@@ -20,7 +20,7 @@ import { variants, transitions, staggerContainer } from '@/lib/animation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookmarkPlus, Pencil, Trash2, Clock, Check, X } from 'lucide-react';
+import { BookmarkPlus, Pencil, Trash2, Clock, Check, X, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatTime } from '@/lib/format-time';
 import type { DomainColor } from '@/lib/domain-colors';
@@ -38,11 +38,19 @@ interface BookmarkPanelProps {
   onSeek?: (time: number) => void;
   /** Domain color for accent theming. */
   domainColor?: DomainColor;
+  /** When true, renders a collapsed header with bookmark count badge, expandable on click. */
+  compact?: boolean;
 }
 
-export function BookmarkPanel({ podcastId, onSeek, domainColor }: BookmarkPanelProps) {
+export function BookmarkPanel({
+  podcastId,
+  onSeek,
+  domainColor,
+  compact = false,
+}: BookmarkPanelProps) {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [addingNote, setAddingNote] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -157,6 +165,24 @@ export function BookmarkPanel({ podcastId, onSeek, domainColor }: BookmarkPanelP
     return <div className="p-4 text-sm text-muted-foreground">Loading bookmarks...</div>;
   }
 
+  /* Compact collapsed view: header with bookmark count badge, expandable on click. */
+  if (compact && !isExpanded) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-3">
+        <button
+          onClick={() => setIsExpanded(true)}
+          aria-label="Toggle bookmarks"
+          className="flex w-full items-center justify-between text-sm"
+        >
+          <span className="font-medium">Bookmarks</span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums">
+            {bookmarks.length}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
   /** Use animated or plain elements depending on reduced-motion preference. */
   const ListEl = reducedMotion ? 'ul' : motion.ul;
   const ItemEl = reducedMotion ? 'li' : motion.li;
@@ -178,6 +204,18 @@ export function BookmarkPanel({ podcastId, onSeek, domainColor }: BookmarkPanelP
 
   return (
     <div className="space-y-4 p-4">
+      {/* Compact expanded header: collapse button to return to collapsed state */}
+      {compact && isExpanded && (
+        <button
+          onClick={() => setIsExpanded(false)}
+          aria-label="Toggle bookmarks"
+          className="flex w-full items-center justify-between text-sm"
+        >
+          <span className="font-medium">Bookmarks</span>
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+        </button>
+      )}
+
       {/* Add bookmark controls */}
       <div className="flex items-center gap-2">
         <Button size="sm" variant="outline" onClick={handleAdd} aria-label="Add bookmark">
