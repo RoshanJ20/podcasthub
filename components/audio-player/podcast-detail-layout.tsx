@@ -344,7 +344,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
       {/* Back link + badges — above the flex row so sidebar aligns with hero card */}
       {!isAttachmentOpen && headerContent}
 
-      <div className="flex items-start gap-4">
+      <div className="flex items-stretch gap-4">
         {/* Left column — expands/compresses with CSS transition */}
         <div
           className="min-w-0 pr-4 transition-[flex] duration-300 ease-out"
@@ -355,11 +355,11 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
 
         {/* Right area — PDF panel when open, compact sidebar when closed */}
         {isAttachmentOpen ? (
-          <div className="min-h-[calc(100vh-120px)] flex-1 overflow-hidden rounded-xl border border-border bg-card transition-[flex] duration-300 ease-out">
+          <div className="h-[calc(100vh-120px)] sticky top-4 flex-1 overflow-hidden rounded-xl border border-border bg-card transition-[flex] duration-300 ease-out">
             {pdfPanel}
           </div>
         ) : (
-          <div className="w-[180px] shrink-0 overflow-hidden rounded-xl border border-border bg-card">
+          <div className="w-[180px] shrink-0 rounded-xl border border-border bg-card">
             {sidebarContent}
           </div>
         )}
