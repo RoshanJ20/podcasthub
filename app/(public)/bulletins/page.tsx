@@ -27,6 +27,7 @@ interface LibraryPageProps {
     domain?: string;
     sort?: string;
     page?: string;
+    q?: string;
   }>;
 }
 
@@ -35,10 +36,20 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   const domain = params.domain;
   const sort = params.sort ?? 'newest';
   const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1);
+  const searchQuery = params.q?.trim() ?? '';
 
   const where = {
     isArchived: false,
     ...(domain && (DOMAINS as readonly string[]).includes(domain) ? { domain } : {}),
+    ...(searchQuery
+      ? {
+          OR: [
+            { title: { contains: searchQuery, mode: 'insensitive' as const } },
+            { description: { contains: searchQuery, mode: 'insensitive' as const } },
+            { tags: { hasSome: [searchQuery] } },
+          ],
+        }
+      : {}),
   };
 
   const orderBy = (() => {
