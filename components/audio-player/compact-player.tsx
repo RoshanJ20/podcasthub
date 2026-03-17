@@ -60,8 +60,10 @@ export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
     currentTime,
     duration,
     playbackRate,
+    audioType,
     togglePlay,
     setPlaybackRate,
+    toggleAudioType,
   } = usePlayerStore();
   const seekTo = onSeek ?? (() => {});
   const reducedMotion = useReducedMotion();
@@ -128,8 +130,8 @@ export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
         </div>
       </div>
 
-      {/* Speed toggle — cycles through SPEED_OPTIONS on each click */}
-      <div className="flex justify-end">
+      {/* Speed + audio type row */}
+      <div className="flex items-center justify-between">
         <Button
           variant="ghost"
           size="sm"
@@ -139,6 +141,19 @@ export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
         >
           {playbackRate}x
         </Button>
+        {currentPodcast?.audioLongUrl && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleAudioType}
+            aria-label={
+              audioType === 'short' ? 'Brief Summary version' : 'Detailed Overview version'
+            }
+            className="h-7 text-[11px]"
+          >
+            {audioType === 'short' ? 'Brief' : 'Detailed'}
+          </Button>
+        )}
       </div>
     </div>
   );
