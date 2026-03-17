@@ -31,6 +31,8 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 interface AnalyticsData {
   totalPodcasts: number;
   totalPaths: number;
+  totalListens: number;
+  uniqueListeners: number;
   listensByDomain: { domain: string; count: number }[];
   monthlyTrends: { month: string; count: number }[];
   topTopics: { topic: string; count: number }[];
@@ -89,7 +91,27 @@ export function AnalyticsCharts() {
       <DateRangePicker onDateChange={fetchAnalytics} />
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <Card className="rounded-xl border border-border bg-card">
+          <CardContent className="p-5">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Total Listens
+            </p>
+            <p className="text-2xl font-semibold tracking-tight mt-1">
+              <AnimatedNumber value={data.totalListens} />
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl border border-border bg-card">
+          <CardContent className="p-5">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Unique Listeners
+            </p>
+            <p className="text-2xl font-semibold tracking-tight mt-1">
+              <AnimatedNumber value={data.uniqueListeners} />
+            </p>
+          </CardContent>
+        </Card>
         <Card className="rounded-xl border border-border bg-card">
           <CardContent className="p-5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">

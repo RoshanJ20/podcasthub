@@ -32,6 +32,7 @@ import { variants, transitions, sectionStagger } from '@/lib/animation';
 import { getDomainColor } from '@/lib/domain-colors';
 import { extractAttachmentName } from '@/lib/attachment-utils';
 import { formatTime } from '@/lib/format-time';
+import { useListenTracker } from '@/hooks/use-listen-tracker';
 import { AudioPlayer } from './audio-player';
 import { CompactPlayer } from './compact-player';
 import dynamic from 'next/dynamic';
@@ -267,6 +268,9 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   const badgeText = isDark ? domainColor.darkText : domainColor.text;
 
   const hasAttachments = podcast.bulletinUrls.length > 0;
+
+  /** Track listen events for analytics. */
+  useListenTracker(podcast.id);
 
   /** Slide-in panel state.
    * contentHidden: left content fades out before panel starts moving.

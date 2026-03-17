@@ -104,26 +104,37 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const dateFilter = buildDateFilter(url.searchParams.get('from'), url.searchParams.get('to'));
     const activityDateFilter = { activityType: 'listen' as const, ...dateFilter };
 
-    const [totalPodcasts, totalPaths, listenActivities, monthlyActivities, topTopics] =
-      await Promise.all([
-        prisma.podcast.count({ where: { isArchived: false, ...dateFilter } }),
-        prisma.learningGraph.count({ where: { isPublished: true, ...dateFilter } }),
-        prisma.userActivity.findMany({
-          where: activityDateFilter,
-          select: { podcast: { select: { domain: true } } },
-        }),
-        prisma.userActivity.findMany({
-          where: activityDateFilter,
-          select: { createdAt: true },
-        }),
-        prisma.userActivity.groupBy({
-          by: ['podcastId'],
-          where: { ...activityDateFilter, podcastId: { not: null } },
-          _count: { id: true },
-          orderBy: { _count: { id: 'desc' } },
-          take: 10,
-        }),
-      ]);
+    const [
+      totalPodcasts,
+      totalPaths,
+      totalListens,
+      uniqueListeners,
+      listenActivities,
+      monthlyActivities,
+      topTopics,
+    ] = await Promise.all([
+      prisma.podcast.count({ where: { isArchived: false, ...dateFilter } }),
+      prisma.learningGraph.count({ where: { isPublished: true, ...dateFilter } }),
+      prisma.userActivity.count({ where: activityDateFilter }),
+      prisma.userActivity
+        .groupBy({ by: ['userId'], where: activityDateFilter })
+        .then((groups) => groups.length),
+      prisma.userActivity.findMany({
+        where: activityDateFilter,
+        select: { podcast: { select: { domain: true } } },
+      }),
+      prisma.userActivity.findMany({
+        where: activityDateFilter,
+        select: { createdAt: true },
+      }),
+      prisma.userActivity.groupBy({
+        by: ['podcastId'],
+        where: { ...activityDateFilter, podcastId: { not: null } },
+        _count: { id: true },
+        orderBy: { _count: { id: 'desc' } },
+        take: 10,
+      }),
+    ]);
 
     const [listensByDomain, monthlyTrends, topTopicsFormatted] = await Promise.all([
       Promise.resolve(aggregateDomainCounts(listenActivities)),
@@ -134,6 +145,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({
       totalPodcasts,
       totalPaths,
+      totalListens,
+      uniqueListeners,
       listensByDomain,
       monthlyTrends,
       topTopics: topTopicsFormatted,
