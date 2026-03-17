@@ -399,7 +399,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
               <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
                 {podcast.title}
               </h1>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+              <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
                 {podcast.description}
               </p>
             </div>
