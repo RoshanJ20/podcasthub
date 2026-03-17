@@ -94,7 +94,7 @@ describe('TranscriptViewer', () => {
 
   it('shows empty state when no segments', () => {
     const { container } = render(<TranscriptViewer segments={[]} />);
-    expect(container.textContent).toContain('No transcript available.');
+    expect(container.innerHTML).toBe('');
   });
 
   it('renders correct number of segments', () => {
