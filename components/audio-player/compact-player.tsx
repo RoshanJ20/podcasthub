@@ -23,7 +23,6 @@
 
 import { motion, AnimatePresence } from 'motion/react';
 import { usePlayerStore } from '@/stores/player-store';
-import { useHlsPlayer } from '@/hooks/use-hls-player';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { transitions } from '@/lib/animation';
 import { Slider } from '@/components/ui/slider';
@@ -42,6 +41,8 @@ const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
  */
 interface CompactPlayerProps {
   domainColor?: DomainColor;
+  /** Seek function from the parent layout's audio element. */
+  onSeek?: (time: number) => void;
 }
 
 /**
@@ -52,7 +53,7 @@ interface CompactPlayerProps {
  * @param props - Component props containing optional domain color.
  * @returns The compact player React element.
  */
-export function CompactPlayer({ domainColor }: CompactPlayerProps) {
+export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
   const {
     currentPodcast,
     isPlaying,
@@ -62,7 +63,7 @@ export function CompactPlayer({ domainColor }: CompactPlayerProps) {
     togglePlay,
     setPlaybackRate,
   } = usePlayerStore();
-  const { seekTo } = useHlsPlayer();
+  const seekTo = onSeek ?? (() => {});
   const reducedMotion = useReducedMotion();
 
   /** Advance to the next speed option in a circular manner. */

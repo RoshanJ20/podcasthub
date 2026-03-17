@@ -84,7 +84,7 @@ interface PodcastDetailLayoutProps {
  * @param props.relatedPodcasts - Optional list of related podcasts (reserved for future use).
  */
 export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
-  const { seekTo } = useHlsPlayer();
+  const { audioRef, onTimeUpdate, onLoadedMetadata, seekTo } = useHlsPlayer();
   const reducedMotion = useReducedMotion();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -157,6 +157,16 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   /** Shared left-column content (compact or full). */
   const leftContent = (
     <>
+      {/* Persistent audio element — survives hero/compact player swaps */}
+      <audio
+        ref={audioRef}
+        onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={onLoadedMetadata}
+        onEnded={() => usePlayerStore.getState().pause()}
+        preload="metadata"
+        className="hidden"
+      />
+
       {/* Hero card OR compact player */}
       <AnimatePresence mode="wait" initial={false}>
         {isAttachmentOpen ? (
@@ -167,7 +177,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
             exit={{ opacity: 0 }}
             transition={transitions.fast}
           >
-            <CompactPlayer domainColor={domainColor} />
+            <CompactPlayer domainColor={domainColor} onSeek={seekTo} />
           </motion.div>
         ) : (
           <motion.div
@@ -200,7 +210,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
                 </div>
               </div>
               <div className="w-full lg:w-100 lg:shrink-0">
-                <AudioPlayer domainColor={domainColor} />
+                <AudioPlayer domainColor={domainColor} onSeek={seekTo} />
               </div>
             </div>
           </motion.div>

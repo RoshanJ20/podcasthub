@@ -17,7 +17,6 @@ import { useEffect, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { usePlayerStore } from '@/stores/player-store';
-import { useHlsPlayer } from '@/hooks/use-hls-player';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { transitions } from '@/lib/animation';
 import { Button } from '@/components/ui/button';
@@ -42,9 +41,11 @@ const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 interface AudioPlayerProps {
   /** Domain color for accent theming. */
   domainColor?: DomainColor;
+  /** Seek function from the parent layout's audio element. */
+  onSeek?: (time: number) => void;
 }
 
-export function AudioPlayer({ domainColor }: AudioPlayerProps) {
+export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
   const {
     currentPodcast,
     isPlaying,
@@ -61,7 +62,7 @@ export function AudioPlayer({ domainColor }: AudioPlayerProps) {
     toggleAudioType,
   } = usePlayerStore();
 
-  const { audioRef, onTimeUpdate, onLoadedMetadata, seekTo } = useHlsPlayer();
+  const seekTo = onSeek ?? (() => {});
 
   const reducedMotion = useReducedMotion();
   const [bookmarkBounce, setBookmarkBounce] = useState(false);
@@ -99,15 +100,6 @@ export function AudioPlayer({ domainColor }: AudioPlayerProps) {
 
   return (
     <div data-testid="audio-player" className="w-full space-y-2">
-      {/* Hidden audio element */}
-      <audio
-        ref={audioRef}
-        onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={onLoadedMetadata}
-        onEnded={() => usePlayerStore.getState().pause()}
-        preload="metadata"
-      />
-
       {/* Progress bar — domain-colored */}
       <div className="space-y-1">
         <div style={{ '--primary': domainColor?.border } as React.CSSProperties}>
