@@ -34,6 +34,10 @@ export function useHlsPlayer() {
     const audio = audioRef.current;
     if (!audio || !audioUrl) return;
 
+    // Reset playback state when audio source changes (e.g. switching Brief/Detailed)
+    usePlayerStore.getState().pause();
+    usePlayerStore.getState().setCurrentTime(0);
+
     if (audioUrl.endsWith('.m3u8') && Hls.isSupported()) {
       const hls = new Hls();
       hls.loadSource(audioUrl);
