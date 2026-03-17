@@ -154,6 +154,17 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
     }, 350);
   };
 
+  /** Prefetch PDF attachments into browser cache so they open instantly. */
+  useEffect(() => {
+    if (!hasAttachments) return;
+    podcast.bulletinUrls.forEach((url) => {
+      const resolved = resolveStorageUrl(url);
+      fetch(resolved, { priority: 'low' } as RequestInit).catch(() => {
+        /* Non-critical — PDF will load on demand if prefetch fails */
+      });
+    });
+  }, [hasAttachments, podcast.bulletinUrls]);
+
   /** Load the podcast into the player store on mount. */
   useEffect(() => {
     usePlayerStore.getState().loadPodcast({
