@@ -207,37 +207,33 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={transitions.fast}
+            className="flex overflow-hidden rounded-xl border border-border bg-card"
           >
-            <Section
-              className="flex overflow-hidden rounded-xl border border-border bg-card"
-              {...sectionProps}
-            >
-              <div className="w-1.5 shrink-0" style={{ backgroundColor: domainColor.border }} />
-              <div className="flex flex-1 flex-col gap-6 p-5 lg:flex-row lg:items-start lg:p-6">
-                <div className="flex min-w-0 flex-1 items-start gap-5">
-                  <div className="relative hidden size-32 shrink-0 overflow-hidden rounded-xl sm:block lg:size-40">
-                    <Image
-                      src={resolveStorageUrl(podcast.thumbnailUrl)}
-                      alt={podcast.title}
-                      fill
-                      className="object-cover"
-                      sizes="160px"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
-                      {podcast.title}
-                    </h1>
-                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                      {podcast.description}
-                    </p>
-                  </div>
+            <div className="w-1.5 shrink-0" style={{ backgroundColor: domainColor.border }} />
+            <div className="flex flex-1 flex-col gap-6 p-5 lg:flex-row lg:items-start lg:p-6">
+              <div className="flex min-w-0 flex-1 items-start gap-5">
+                <div className="relative hidden size-32 shrink-0 overflow-hidden rounded-xl sm:block lg:size-40">
+                  <Image
+                    src={resolveStorageUrl(podcast.thumbnailUrl)}
+                    alt={podcast.title}
+                    fill
+                    className="object-cover"
+                    sizes="160px"
+                  />
                 </div>
-                <div className="w-full lg:w-100 lg:shrink-0">
-                  <AudioPlayer domainColor={domainColor} />
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+                    {podcast.title}
+                  </h1>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                    {podcast.description}
+                  </p>
                 </div>
               </div>
-            </Section>
+              <div className="w-full lg:w-100 lg:shrink-0">
+                <AudioPlayer domainColor={domainColor} />
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -334,10 +330,10 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   /** Two-column layout: main content + attachment sidebar/PDF panel. */
   return (
     <Wrapper className="mx-auto px-4 py-8 lg:py-12" {...wrapperProps}>
-      <div className="flex min-h-[calc(100vh-120px)] gap-4">
+      <div className="flex items-start gap-4">
         {/* Left column — expands/compresses with CSS transition */}
         <div
-          className="min-w-0 overflow-y-auto pr-4 transition-[flex] duration-300 ease-out"
+          className="min-w-0 pr-4 transition-[flex] duration-300 ease-out"
           style={{ flex: isAttachmentOpen ? '0 0 340px' : '1 1 0%' }}
         >
           {leftContent}
@@ -345,11 +341,11 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
 
         {/* Right area — PDF panel when open, compact sidebar when closed */}
         {isAttachmentOpen ? (
-          <div className="flex-1 overflow-hidden rounded-xl border border-border bg-card transition-[flex] duration-300 ease-out">
+          <div className="min-h-[calc(100vh-120px)] flex-1 overflow-hidden rounded-xl border border-border bg-card transition-[flex] duration-300 ease-out">
             {pdfPanel}
           </div>
         ) : (
-          <div className="w-[180px] shrink-0 self-start overflow-hidden rounded-xl border border-border bg-card">
+          <div className="sticky top-8 w-[180px] shrink-0 overflow-hidden rounded-xl border border-border bg-card">
             {sidebarContent}
           </div>
         )}
