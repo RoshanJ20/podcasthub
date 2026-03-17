@@ -3,7 +3,7 @@
  *
  * Verifies:
  * - The app logo and name "PodcastHub" are rendered
- * - Main nav links (Home) and Library section (Technical Content, Learning Paths) render
+ * - Main nav links (Home) and Library section (Technical Content, Learning Series) render
  * - The Admin section renders when isAdmin={true}
  * - The Admin section does NOT render when isAdmin is false or undefined
  */
@@ -23,6 +23,7 @@ vi.mock('@/stores/player-store', () => ({
 }));
 
 vi.mock('next/image', () => ({
+  // eslint-disable-next-line @next/next/no-img-element
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }));
 
@@ -72,7 +73,7 @@ describe('UnifiedSidebar', () => {
       expect(anchor).not.toBeNull();
     });
 
-    it('renders a Learning Paths link', () => {
+    it('renders a Learning Series link', () => {
       const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} />);
       const anchor = container.querySelector('a[href="/learning-path"]');
       expect(anchor).not.toBeNull();
@@ -83,7 +84,7 @@ describe('UnifiedSidebar', () => {
       const text = container.textContent ?? '';
       expect(text).toContain('Library');
       expect(text).toContain('Technical Content');
-      expect(text).toContain('Learning Paths');
+      expect(text).toContain('Learning Series');
     });
   });
 

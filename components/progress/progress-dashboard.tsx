@@ -114,7 +114,7 @@ export function ProgressDashboard() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-muted-foreground text-center">
-                No learning paths in progress. Start exploring!
+                No learning series in progress. Start exploring!
               </p>
             </CardContent>
           </Card>

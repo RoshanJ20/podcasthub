@@ -86,7 +86,6 @@ export function WizardStepReview({
   year,
   tags,
   thumbnailUrl,
-  thumbnailFileName,
   audioShortFileName,
   audioLongFileName,
   bulletinFileNames,
@@ -94,34 +93,49 @@ export function WizardStepReview({
   longTranscript,
 }: WizardStepReviewProps) {
   return (
-    <div className="space-y-6">
-      {/* Card 1: Details */}
+    <div className="space-y-4">
+      {/* Card 1: Details + Thumbnail */}
       <Card>
-        <CardHeader>
-          <CardTitle>Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ReviewRow label="Title">{title}</ReviewRow>
-          <ReviewRow label="Description">
-            <span className="whitespace-pre-wrap">{description}</span>
-          </ReviewRow>
-          <ReviewRow label="Domain">
-            <Badge variant="secondary">{domain}</Badge>
-          </ReviewRow>
-          <ReviewRow label="Year">{String(year)}</ReviewRow>
-          <ReviewRow label="Tags">
-            {tags.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {tags.map((tag) => (
-                  <Badge key={tag} variant="outline">
-                    {tag}
-                  </Badge>
-                ))}
+        <CardContent className="pt-5">
+          <div className="flex gap-4">
+            {/* Thumbnail */}
+            {thumbnailUrl && (
+              <div className="relative shrink-0 w-28 h-20 rounded-lg overflow-hidden border">
+                <Image
+                  src={thumbnailUrl}
+                  alt="Thumbnail preview"
+                  fill
+                  className="object-cover"
+                  sizes="112px"
+                />
               </div>
-            ) : (
-              <span className="text-muted-foreground">None</span>
             )}
-          </ReviewRow>
+
+            {/* Details */}
+            <div className="flex-1 space-y-2.5 min-w-0">
+              <ReviewRow label="Title">{title}</ReviewRow>
+              <ReviewRow label="Description">
+                <span className="whitespace-pre-wrap">{description}</span>
+              </ReviewRow>
+              <ReviewRow label="Domain">
+                <Badge variant="secondary">{domain}</Badge>
+              </ReviewRow>
+              <ReviewRow label="Year">{String(year)}</ReviewRow>
+              <ReviewRow label="Tags">
+                {tags.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {tags.map((tag) => (
+                      <Badge key={tag} variant="outline">
+                        {tag}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">None</span>
+                )}
+              </ReviewRow>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -162,33 +176,6 @@ export function WizardStepReview({
               <span className="text-muted-foreground">Not provided</span>
             )}
           </ReviewRow>
-        </CardContent>
-      </Card>
-
-      {/* Card 3: Thumbnail */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Thumbnail</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {thumbnailUrl ? (
-            <div className="space-y-2">
-              <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-lg border">
-                <Image
-                  src={thumbnailUrl}
-                  alt="Thumbnail preview"
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 384px) 100vw, 384px"
-                />
-              </div>
-              {thumbnailFileName && (
-                <p className="text-sm text-muted-foreground">{thumbnailFileName}</p>
-              )}
-            </div>
-          ) : (
-            <span className="text-muted-foreground">Not provided</span>
-          )}
         </CardContent>
       </Card>
     </div>

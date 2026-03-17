@@ -11,6 +11,14 @@ import userEvent from '@testing-library/user-event';
 import { TranscriptViewer } from '@/components/audio-player/transcript-viewer';
 import { usePlayerStore } from '@/stores/player-store';
 
+/** Mock IntersectionObserver for motion/react whileInView support in jsdom. */
+class MockIntersectionObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
+
 const mockSegments = [
   { start: 0, end: 10, text: 'Welcome to the audit methodology podcast.' },
   { start: 10, end: 25, text: 'Today we discuss the new framework.' },

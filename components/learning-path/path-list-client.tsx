@@ -9,6 +9,7 @@
  */
 import { useEffect, useState } from 'react';
 import { PathCard } from './path-card';
+import { StaggeredGrid, StaggeredGridItem } from '@/components/ui/staggered-grid';
 
 interface LearningPath {
   id: string;
@@ -48,18 +49,19 @@ export function PathListClient({ paths }: PathListClientProps) {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <StaggeredGrid className="grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {paths.map((path) => (
-        <PathCard
-          key={path.id}
-          id={path.id}
-          title={path.title}
-          description={path.description}
-          domain={path.domain}
-          episodeCount={path.episodeCount}
-          completedCount={progressMap[path.id] ?? 0}
-        />
+        <StaggeredGridItem key={path.id}>
+          <PathCard
+            id={path.id}
+            title={path.title}
+            description={path.description}
+            domain={path.domain}
+            episodeCount={path.episodeCount}
+            completedCount={progressMap[path.id] ?? 0}
+          />
+        </StaggeredGridItem>
       ))}
-    </div>
+    </StaggeredGrid>
   );
 }

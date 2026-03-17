@@ -129,13 +129,6 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
         {!collapsed && (
           <div className="flex min-w-0 flex-1 items-center justify-between">
             <span className="text-sm font-semibold tracking-tight">PodcastHub</span>
-            {/* ⌘K badge */}
-            <kbd
-              aria-label="Open command palette with Command K"
-              className="inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-            >
-              ⌘K
-            </kbd>
           </div>
         )}
       </div>

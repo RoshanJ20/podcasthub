@@ -69,7 +69,7 @@ describe('LearningGraphsTable', () => {
   it('renders empty state with correct colSpan when no graphs', () => {
     render(<LearningGraphsTable graphs={[]} />);
 
-    const emptyCell = screen.getByText(/No learning paths yet/);
+    const emptyCell = screen.getByText(/No learning series yet/);
     expect(emptyCell).toBeDefined();
     /* colSpan should be 5 (Title, Domain, Type, Episodes, Actions) */
     expect(emptyCell.getAttribute('colspan')).toBe('5');

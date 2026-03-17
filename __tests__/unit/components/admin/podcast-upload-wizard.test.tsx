@@ -106,7 +106,7 @@ async function fillAndAdvanceTo(
     if (step === 0) {
       /* Wait for step 1 (Content) to render */
       await waitFor(() => {
-        expect(screen.getByText('Brief Summary')).toBeInTheDocument();
+        expect(screen.getByText('Files')).toBeInTheDocument();
       });
     } else if (step === 1) {
       /* Wait for step 2 (Review) to render */
@@ -168,8 +168,9 @@ describe('PodcastUploadWizard', () => {
     await fillAndAdvanceTo(user, 1);
 
     /* Should now be on step 2 — Content step labels visible */
-    expect(screen.getByText('Brief Summary')).toBeInTheDocument();
-    expect(screen.getByText('Detailed Overview')).toBeInTheDocument();
+    expect(screen.getByText('Files')).toBeInTheDocument();
+    expect(screen.getByText('Audio (short)')).toBeInTheDocument();
+    expect(screen.getByText('Audio (long)')).toBeInTheDocument();
     expect(screen.getByText('Attachments')).toBeInTheDocument();
   });
 

@@ -9,8 +9,8 @@
  * - Shows transcript character count
  * - Shows thumbnail preview image
  */
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, cleanup } from '@testing-library/react';
 import {
   WizardStepReview,
   type WizardStepReviewProps,
@@ -66,6 +66,10 @@ function getReviewRowValue(container: HTMLElement, labelText: string): HTMLEleme
   }
   return null;
 }
+
+afterEach(() => {
+  cleanup();
+});
 
 describe('WizardStepReview', () => {
   it('displays title, description, domain, and year correctly', () => {
@@ -190,8 +194,8 @@ describe('WizardStepReview', () => {
     expect(image).toHaveAttribute('src', 'https://storage.example.com/thumb.jpg');
   });
 
-  it('shows "Not provided" when thumbnail is missing', () => {
-    const { container } = render(
+  it('does not show thumbnail image when thumbnailUrl is null', () => {
+    render(
       <WizardStepReview
         {...buildProps({
           thumbnailUrl: null,
@@ -200,17 +204,8 @@ describe('WizardStepReview', () => {
       />
     );
 
-    /* Find the Thumbnail card by its card-title data-slot */
-    const cardTitles = container.querySelectorAll('[data-slot="card-title"]');
-    let thumbnailCard: HTMLElement | null = null;
-    for (const titleEl of cardTitles) {
-      if (titleEl.textContent === 'Thumbnail') {
-        thumbnailCard = titleEl.closest('[data-slot="card"]') as HTMLElement | null;
-        break;
-      }
-    }
-    expect(thumbnailCard).not.toBeNull();
-    expect(thumbnailCard?.textContent).toContain('Not provided');
+    /* No thumbnail image should be rendered when URL is null */
+    expect(screen.queryByRole('img', { name: /thumbnail preview/i })).not.toBeInTheDocument();
   });
 
   it('shows bulletin attachment filenames', () => {

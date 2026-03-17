@@ -15,7 +15,7 @@
  */
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -58,6 +58,16 @@ export interface PodcastUploadWizardProps {
   initialData?: PodcastFormData;
   /** Callback invoked after a successful create or update. */
   onSuccess?: () => void;
+  /** Callback invoked whenever the active step changes. */
+  onStepChange?: (step: number) => void;
+}
+
+/** Imperative handle exposed via ref for external step control. */
+export interface PodcastUploadWizardHandle {
+  /** Navigate to the previous step, or no-op if already on step 0. */
+  goBack: () => void;
+  /** The current zero-indexed step number. */
+  currentStep: number;
 }
 
 /** Total number of steps in the wizard flow. */
@@ -71,354 +81,374 @@ const TOTAL_STEPS = 3;
  * Step 2 (Review): Read-only review of all entered data with Submit button.
  *
  * @param props - Component props (see PodcastUploadWizardProps).
+ * @param ref - Optional ref exposing goBack() and currentStep for parent control.
  * @returns The wizard UI with step indicator, current step content, and navigation controls.
  */
-export function PodcastUploadWizard({
-  mode = 'create',
-  initialData,
-  onSuccess,
-}: PodcastUploadWizardProps) {
-  /* ---------- Step navigation state ---------- */
-  const [currentStep, setCurrentStep] = useState(0);
+export const PodcastUploadWizard = forwardRef<PodcastUploadWizardHandle, PodcastUploadWizardProps>(
+  function PodcastUploadWizard({ mode = 'create', initialData, onSuccess, onStepChange }, ref) {
+    /* ---------- Step navigation state ---------- */
+    const [currentStep, setCurrentStep] = useState(0);
 
-  /* ---------- File state ---------- */
-  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
-    initialData?.thumbnailUrl ?? null
-  );
-  const [audioShortFile, setAudioShortFile] = useState<File | null>(null);
-  const [audioLongFile, setAudioLongFile] = useState<File | null>(null);
-  const [bulletinFiles, setBulletinFiles] = useState<File[]>([]);
-  const [shortTranscript, setShortTranscript] = useState('');
-  const [longTranscript, setLongTranscript] = useState('');
-  const [tags, setTags] = useState<string[]>(initialData?.tags ?? []);
+    const goToStep = useCallback(
+      (step: number) => {
+        setCurrentStep(step);
+        onStepChange?.(step);
+      },
+      [onStepChange]
+    );
 
-  /* ---------- Upload hooks ---------- */
-  const thumbnailUpload = useFileUpload();
-  const audioShortUpload = useFileUpload();
-  const audioLongUpload = useFileUpload();
-  const bulletinUpload = useFileUpload();
+    useImperativeHandle(
+      ref,
+      () => ({
+        goBack: () => goToStep(Math.max(0, currentStep - 1)),
+        currentStep,
+      }),
+      [currentStep, goToStep]
+    );
 
-  const isUploading =
-    thumbnailUpload.isUploading ||
-    audioShortUpload.isUploading ||
-    audioLongUpload.isUploading ||
-    bulletinUpload.isUploading;
+    /* ---------- File state ---------- */
+    const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
+      initialData?.thumbnailUrl ?? null
+    );
+    const [audioShortFile, setAudioShortFile] = useState<File | null>(null);
+    const [audioLongFile, setAudioLongFile] = useState<File | null>(null);
+    const [bulletinFiles, setBulletinFiles] = useState<File[]>([]);
+    const [shortTranscript, setShortTranscript] = useState('');
+    const [longTranscript, setLongTranscript] = useState('');
+    const [tags, setTags] = useState<string[]>(initialData?.tags ?? []);
 
-  /** Aggregated upload progress across all active uploads. */
-  const uploadProgress = Math.max(
-    thumbnailUpload.progress,
-    audioShortUpload.progress,
-    audioLongUpload.progress,
-    bulletinUpload.progress
-  );
+    /* ---------- Upload hooks ---------- */
+    const thumbnailUpload = useFileUpload();
+    const audioShortUpload = useFileUpload();
+    const audioLongUpload = useFileUpload();
+    const bulletinUpload = useFileUpload();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+    const isUploading =
+      thumbnailUpload.isUploading ||
+      audioShortUpload.isUploading ||
+      audioLongUpload.isUploading ||
+      bulletinUpload.isUploading;
 
-  /* ---------- React Hook Form ---------- */
-  const form = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(formSchema) as any,
-    defaultValues: {
-      title: initialData?.title ?? '',
-      description: initialData?.description ?? '',
-      domain: initialData?.domain ?? '',
-      year: initialData?.year ?? new Date().getFullYear(),
-    },
-  });
+    /** Aggregated upload progress across all active uploads. */
+    const uploadProgress = Math.max(
+      thumbnailUpload.progress,
+      audioShortUpload.progress,
+      audioLongUpload.progress,
+      bulletinUpload.progress
+    );
 
-  /* ---------- File state for review display ---------- */
-  const audioShortUrl = initialData?.audioShortUrl ?? null;
-  const audioLongUrl = initialData?.audioLongUrl ?? null;
-  const bulletinUrls = initialData?.bulletinUrls ?? [];
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  /* ---------- Handlers ---------- */
+    /* ---------- React Hook Form ---------- */
+    const form = useForm<FormValues>({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      resolver: zodResolver(formSchema) as any,
+      defaultValues: {
+        title: initialData?.title ?? '',
+        description: initialData?.description ?? '',
+        domain: initialData?.domain ?? '',
+        year: initialData?.year ?? new Date().getFullYear(),
+      },
+    });
 
-  /**
-   * Handles thumbnail file selection, updates file state and preview URL.
-   *
-   * @param file - The selected thumbnail image file.
-   */
-  const handleThumbnailChange = useCallback((file: File) => {
-    setThumbnailFile(file);
-    setThumbnailPreview(URL.createObjectURL(file));
-  }, []);
+    /* ---------- File state for review display ---------- */
+    const audioShortUrl = initialData?.audioShortUrl ?? null;
+    const audioLongUrl = initialData?.audioLongUrl ?? null;
+    const bulletinUrls = initialData?.bulletinUrls ?? [];
 
-  /**
-   * Handles tag list changes from WizardStepDetails.
-   *
-   * @param newTags - The updated array of tag strings.
-   */
-  const handleTagsChange = useCallback((newTags: string[]) => {
-    setTags(newTags);
-  }, []);
+    /* ---------- Handlers ---------- */
 
-  /**
-   * Validates the current step and advances to the next step if valid.
-   *
-   * Step 0: Triggers form validation on metadata fields + checks thumbnail (create mode).
-   * Step 1: No required fields — advances immediately.
-   */
-  const handleNext = useCallback(async () => {
-    if (currentStep === 0) {
-      /* Validate metadata fields via react-hook-form trigger */
-      const isValid = await form.trigger(['title', 'description', 'domain', 'year']);
+    /**
+     * Handles thumbnail file selection, updates file state and preview URL.
+     *
+     * @param file - The selected thumbnail image file.
+     */
+    const handleThumbnailChange = useCallback((file: File) => {
+      setThumbnailFile(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+    }, []);
 
-      if (!isValid) return;
+    /**
+     * Handles tag list changes from WizardStepDetails.
+     *
+     * @param newTags - The updated array of tag strings.
+     */
+    const handleTagsChange = useCallback((newTags: string[]) => {
+      setTags(newTags);
+    }, []);
 
-      /* Validate thumbnail in create mode */
-      if (mode === 'create' && !thumbnailFile) {
-        toast.error('Thumbnail image is required');
+    /**
+     * Validates the current step and advances to the next step if valid.
+     *
+     * Step 0: Triggers form validation on metadata fields + checks thumbnail (create mode).
+     * Step 1: No required fields — advances immediately.
+     */
+    const handleNext = useCallback(async () => {
+      if (currentStep === 0) {
+        /* Validate metadata fields via react-hook-form trigger */
+        const isValid = await form.trigger(['title', 'description', 'domain', 'year']);
+
+        if (!isValid) return;
+
+        /* Validate thumbnail in create mode */
+        if (mode === 'create' && !thumbnailFile) {
+          toast.error('Thumbnail image is required');
+          return;
+        }
+
+        goToStep(1);
         return;
       }
 
-      setCurrentStep(1);
-      return;
-    }
-
-    if (currentStep < TOTAL_STEPS - 1) {
-      setCurrentStep((s) => s + 1);
-    }
-  }, [currentStep, form, mode, thumbnailFile]);
-
-  /**
-   * Handles the final submission: uploads files, saves podcast via API,
-   * and saves transcripts.
-   *
-   * Mirrors the submission flow from podcast-upload-form.tsx onSubmit handler.
-   */
-  const handleFinalSubmit = useCallback(async () => {
-    setIsSubmitting(true);
-
-    try {
-      const data = form.getValues();
-
-      /* Validate thumbnail in create mode */
-      if (mode === 'create' && !thumbnailFile) {
-        toast.error('Thumbnail image is required');
-        setIsSubmitting(false);
-        return;
+      if (currentStep < TOTAL_STEPS - 1) {
+        goToStep(currentStep + 1);
       }
+    }, [currentStep, form, mode, thumbnailFile, goToStep]);
 
-      /* Upload files */
-      let uploadedThumbnailUrl = initialData?.thumbnailUrl ?? '';
-      let uploadedAudioShortUrl = initialData?.audioShortUrl ?? '';
-      let uploadedAudioLongUrl = initialData?.audioLongUrl ?? null;
-      let uploadedBulletinUrls = initialData?.bulletinUrls ?? [];
+    /**
+     * Handles the final submission: uploads files, saves podcast via API,
+     * and saves transcripts.
+     *
+     * Mirrors the submission flow from podcast-upload-form.tsx onSubmit handler.
+     */
+    const handleFinalSubmit = useCallback(async () => {
+      setIsSubmitting(true);
 
-      if (thumbnailFile) {
-        const key = await thumbnailUpload.upload(thumbnailFile, 'image');
-        if (!key) {
-          toast.error('Failed to upload thumbnail');
+      try {
+        const data = form.getValues();
+
+        /* Validate thumbnail in create mode */
+        if (mode === 'create' && !thumbnailFile) {
+          toast.error('Thumbnail image is required');
           setIsSubmitting(false);
           return;
         }
-        uploadedThumbnailUrl = key;
-      }
 
-      if (audioShortFile) {
-        const key = await audioShortUpload.upload(audioShortFile, 'audio');
-        if (!key) {
-          toast.error('Failed to upload short audio');
-          setIsSubmitting(false);
-          return;
-        }
-        uploadedAudioShortUrl = key;
-      }
+        /* Upload files */
+        let uploadedThumbnailUrl = initialData?.thumbnailUrl ?? '';
+        let uploadedAudioShortUrl = initialData?.audioShortUrl ?? '';
+        let uploadedAudioLongUrl = initialData?.audioLongUrl ?? null;
+        let uploadedBulletinUrls = initialData?.bulletinUrls ?? [];
 
-      if (audioLongFile) {
-        const key = await audioLongUpload.upload(audioLongFile, 'audio');
-        if (!key) {
-          toast.error('Failed to upload long audio');
-          setIsSubmitting(false);
-          return;
-        }
-        uploadedAudioLongUrl = key;
-      }
-
-      if (bulletinFiles.length > 0) {
-        const uploadedKeys: string[] = [];
-        for (const file of bulletinFiles) {
-          const key = await bulletinUpload.upload(file, 'pdf');
+        if (thumbnailFile) {
+          const key = await thumbnailUpload.upload(thumbnailFile, 'image');
           if (!key) {
-            toast.error(`Failed to upload attachment: ${file.name}`);
+            toast.error('Failed to upload thumbnail');
             setIsSubmitting(false);
             return;
           }
-          uploadedKeys.push(key);
+          uploadedThumbnailUrl = key;
         }
-        uploadedBulletinUrls = uploadedKeys;
-      }
 
-      /* Submit to API */
-      const payload = {
-        ...data,
-        tags,
-        thumbnailUrl: uploadedThumbnailUrl,
-        audioShortUrl: uploadedAudioShortUrl,
-        audioLongUrl: uploadedAudioLongUrl,
-        bulletinUrls: uploadedBulletinUrls,
-      };
-
-      const url = mode === 'edit' ? `/api/podcasts/${initialData?.id}` : '/api/podcasts';
-      const method = mode === 'edit' ? 'PUT' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        throw new Error((body as { message?: string }).message || 'Failed to save podcast');
-      }
-
-      const savedPodcast = await response.json();
-      const podcastId =
-        (savedPodcast as { data?: { id?: string }; id?: string }).data?.id ??
-        (savedPodcast as { id?: string }).id ??
-        initialData?.id;
-
-      /* Save transcripts if provided */
-      if (podcastId) {
-        if (shortTranscript.trim()) {
-          await fetch(`/api/podcasts/${podcastId}/transcript`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              fullText: shortTranscript.trim(),
-              segments: [],
-              transcriptType: 'short',
-            }),
-          });
+        if (audioShortFile) {
+          const key = await audioShortUpload.upload(audioShortFile, 'audio');
+          if (!key) {
+            toast.error('Failed to upload short audio');
+            setIsSubmitting(false);
+            return;
+          }
+          uploadedAudioShortUrl = key;
         }
-        if (longTranscript.trim()) {
-          await fetch(`/api/podcasts/${podcastId}/transcript`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              fullText: longTranscript.trim(),
-              segments: [],
-              transcriptType: 'long',
-            }),
-          });
+
+        if (audioLongFile) {
+          const key = await audioLongUpload.upload(audioLongFile, 'audio');
+          if (!key) {
+            toast.error('Failed to upload long audio');
+            setIsSubmitting(false);
+            return;
+          }
+          uploadedAudioLongUrl = key;
         }
+
+        if (bulletinFiles.length > 0) {
+          const uploadedKeys: string[] = [];
+          for (const file of bulletinFiles) {
+            const key = await bulletinUpload.upload(file, 'pdf');
+            if (!key) {
+              toast.error(`Failed to upload attachment: ${file.name}`);
+              setIsSubmitting(false);
+              return;
+            }
+            uploadedKeys.push(key);
+          }
+          uploadedBulletinUrls = uploadedKeys;
+        }
+
+        /* Submit to API */
+        const payload = {
+          ...data,
+          tags,
+          thumbnailUrl: uploadedThumbnailUrl,
+          audioShortUrl: uploadedAudioShortUrl,
+          audioLongUrl: uploadedAudioLongUrl,
+          bulletinUrls: uploadedBulletinUrls,
+        };
+
+        const url = mode === 'edit' ? `/api/podcasts/${initialData?.id}` : '/api/podcasts';
+        const method = mode === 'edit' ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          throw new Error((body as { message?: string }).message || 'Failed to save podcast');
+        }
+
+        const savedPodcast = await response.json();
+        const podcastId =
+          (savedPodcast as { data?: { id?: string }; id?: string }).data?.id ??
+          (savedPodcast as { id?: string }).id ??
+          initialData?.id;
+
+        /* Save transcripts if provided */
+        if (podcastId) {
+          if (shortTranscript.trim()) {
+            await fetch(`/api/podcasts/${podcastId}/transcript`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                fullText: shortTranscript.trim(),
+                segments: [],
+                transcriptType: 'short',
+              }),
+            });
+          }
+          if (longTranscript.trim()) {
+            await fetch(`/api/podcasts/${podcastId}/transcript`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                fullText: longTranscript.trim(),
+                segments: [],
+                transcriptType: 'long',
+              }),
+            });
+          }
+        }
+
+        toast.success(
+          mode === 'create' ? 'Podcast created successfully' : 'Podcast updated successfully'
+        );
+        onSuccess?.();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'An error occurred';
+        toast.error(message);
+      } finally {
+        setIsSubmitting(false);
       }
+    }, [
+      form,
+      mode,
+      thumbnailFile,
+      audioShortFile,
+      audioLongFile,
+      bulletinFiles,
+      tags,
+      shortTranscript,
+      longTranscript,
+      initialData,
+      thumbnailUpload,
+      audioShortUpload,
+      audioLongUpload,
+      bulletinUpload,
+      onSuccess,
+    ]);
 
-      toast.success(
-        mode === 'create' ? 'Podcast created successfully' : 'Podcast updated successfully'
-      );
-      onSuccess?.();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'An error occurred';
-      toast.error(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    form,
-    mode,
-    thumbnailFile,
-    audioShortFile,
-    audioLongFile,
-    bulletinFiles,
-    tags,
-    shortTranscript,
-    longTranscript,
-    initialData,
-    thumbnailUpload,
-    audioShortUpload,
-    audioLongUpload,
-    bulletinUpload,
-    onSuccess,
-  ]);
+    return (
+      <div className="w-full py-6">
+        <WizardStepIndicator currentStep={currentStep} onStepClick={goToStep} />
 
-  return (
-    <div className="container max-w-3xl py-6">
-      <WizardStepIndicator currentStep={currentStep} />
-
-      {/* Step 0: Details (wrapped in FormProvider for useFormContext) */}
-      {currentStep === 0 && (
-        <FormProvider {...form}>
-          <WizardStepDetails
-            mode={mode}
-            thumbnailPreview={thumbnailPreview}
-            onThumbnailChange={handleThumbnailChange}
-            tags={tags}
-            onTagsChange={handleTagsChange}
-          />
-        </FormProvider>
-      )}
-
-      {/* Step 1: Content */}
-      {currentStep === 1 && (
-        <WizardStepContent
-          audioShortUrl={audioShortUrl}
-          audioShortFileName={audioShortFile?.name ?? null}
-          onAudioShortChange={(file) => setAudioShortFile(file)}
-          audioLongUrl={audioLongUrl}
-          audioLongFileName={audioLongFile?.name ?? null}
-          onAudioLongChange={(file) => setAudioLongFile(file)}
-          bulletinUrls={bulletinUrls}
-          bulletinFileNames={bulletinFiles.map((f) => f.name)}
-          onBulletinsChange={(files) => setBulletinFiles(Array.from(files))}
-          shortTranscript={shortTranscript}
-          onShortTranscriptChange={setShortTranscript}
-          longTranscript={longTranscript}
-          onLongTranscriptChange={setLongTranscript}
-          isUploading={isUploading}
-          uploadProgress={uploadProgress}
-        />
-      )}
-
-      {/* Step 2: Review */}
-      {currentStep === 2 && (
-        <WizardStepReview
-          title={form.getValues('title')}
-          description={form.getValues('description')}
-          domain={form.getValues('domain')}
-          year={form.getValues('year')}
-          tags={tags}
-          thumbnailUrl={thumbnailPreview}
-          thumbnailFileName={thumbnailFile?.name ?? null}
-          audioShortUrl={audioShortUrl}
-          audioShortFileName={audioShortFile?.name ?? null}
-          audioLongUrl={audioLongUrl}
-          audioLongFileName={audioLongFile?.name ?? null}
-          bulletinFileNames={bulletinFiles.map((f) => f.name)}
-          shortTranscript={shortTranscript}
-          longTranscript={longTranscript}
-        />
-      )}
-
-      {/* Navigation controls */}
-      <div className="flex justify-between mt-6">
-        {currentStep > 0 && (
-          <Button variant="outline" onClick={() => setCurrentStep((s) => s - 1)}>
-            Back
-          </Button>
+        {/* Step 0: Details (wrapped in FormProvider for useFormContext) */}
+        {currentStep === 0 && (
+          <FormProvider {...form}>
+            <WizardStepDetails
+              mode={mode}
+              thumbnailPreview={thumbnailPreview}
+              onThumbnailChange={handleThumbnailChange}
+              tags={tags}
+              onTagsChange={handleTagsChange}
+            />
+          </FormProvider>
         )}
-        <div className="ml-auto flex gap-2">
-          {currentStep < TOTAL_STEPS - 1 && <Button onClick={handleNext}>Next</Button>}
-          {currentStep === TOTAL_STEPS - 1 && (
-            <Button onClick={handleFinalSubmit} disabled={isSubmitting || isUploading}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                'Submit'
-              )}
+
+        {/* Step 1: Content */}
+        {currentStep === 1 && (
+          <WizardStepContent
+            audioShortUrl={audioShortUrl}
+            audioShortFileName={audioShortFile?.name ?? null}
+            onAudioShortChange={(file) => setAudioShortFile(file)}
+            audioLongUrl={audioLongUrl}
+            audioLongFileName={audioLongFile?.name ?? null}
+            onAudioLongChange={(file) => setAudioLongFile(file)}
+            bulletinUrls={bulletinUrls}
+            bulletinFileNames={bulletinFiles.map((f) => f.name)}
+            onBulletinsChange={(files) => setBulletinFiles((prev) => [...prev, ...files])}
+            onBulletinRemove={(index) =>
+              setBulletinFiles((prev) => prev.filter((_, i) => i !== index))
+            }
+            shortTranscript={shortTranscript}
+            onShortTranscriptChange={setShortTranscript}
+            longTranscript={longTranscript}
+            onLongTranscriptChange={setLongTranscript}
+            isUploading={isUploading}
+            uploadProgress={uploadProgress}
+          />
+        )}
+
+        {/* Step 2: Review */}
+        {currentStep === 2 && (
+          <WizardStepReview
+            title={form.getValues('title')}
+            description={form.getValues('description')}
+            domain={form.getValues('domain')}
+            year={form.getValues('year')}
+            tags={tags}
+            thumbnailUrl={thumbnailPreview}
+            thumbnailFileName={thumbnailFile?.name ?? null}
+            audioShortUrl={audioShortUrl}
+            audioShortFileName={audioShortFile?.name ?? null}
+            audioLongUrl={audioLongUrl}
+            audioLongFileName={audioLongFile?.name ?? null}
+            bulletinFileNames={bulletinFiles.map((f) => f.name)}
+            shortTranscript={shortTranscript}
+            longTranscript={longTranscript}
+          />
+        )}
+
+        {/* Navigation controls */}
+        <p className="text-sm text-muted-foreground italic mt-4">
+          All fields marked with * are mandatory
+        </p>
+
+        <div className="flex justify-between mt-3">
+          {currentStep > 0 && (
+            <Button variant="outline" onClick={() => goToStep(currentStep - 1)}>
+              Back
             </Button>
           )}
+          <div className="ml-auto flex gap-2">
+            {currentStep < TOTAL_STEPS - 1 && <Button onClick={handleNext}>Next</Button>}
+            {currentStep === TOTAL_STEPS - 1 && (
+              <Button onClick={handleFinalSubmit} disabled={isSubmitting || isUploading}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit'
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-
-      <p className="text-sm text-muted-foreground italic mt-4">
-        All fields marked with * are mandatory
-      </p>
-    </div>
-  );
-}
+    );
+  }
+);
+PodcastUploadWizard.displayName = 'PodcastUploadWizard';

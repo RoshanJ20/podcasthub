@@ -1,5 +1,5 @@
 /**
- * Create new learning path page.
+ * Create new learning series page.
  *
  * Renders a form for creating a new learning graph with title,
  * description, domain, and path type (linear or graph).
@@ -54,14 +54,14 @@ export default function NewLearningPathPage() {
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error(body.message || 'Failed to create learning path');
+        throw new Error(body.message || 'Failed to create learning series');
       }
 
       const { data } = await response.json();
-      toast.success('Learning path created');
+      toast.success('Learning series created');
       router.push(`/admin/learning-graphs/${data.id}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create learning path');
+      toast.error(err instanceof Error ? err.message : 'Failed to create learning series');
     } finally {
       setIsSubmitting(false);
     }
@@ -70,14 +70,14 @@ export default function NewLearningPathPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Create New Learning Path</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Create New Learning Series</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Define the structure and metadata for a new learning journey.
         </p>
       </div>
       <Card className="rounded-xl border border-border bg-card">
         <CardHeader className="border-b border-border px-6 py-4">
-          <CardTitle className="text-sm font-semibold">Learning Path Details</CardTitle>
+          <CardTitle className="text-sm font-semibold">Learning Series Details</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -144,7 +144,7 @@ export default function NewLearningPathPage() {
                   Creating...
                 </>
               ) : (
-                'Create Learning Path'
+                'Create Learning Series'
               )}
             </Button>
           </form>

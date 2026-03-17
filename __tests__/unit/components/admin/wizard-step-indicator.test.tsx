@@ -7,7 +7,7 @@
  * - Completed steps show a check icon instead of a number
  * - Future steps show muted styling
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 
 import { WizardStepIndicator } from '@/components/admin/wizard-step-indicator';
@@ -24,7 +24,7 @@ function getStepLabels(container: HTMLElement): Element[] {
 
 describe('WizardStepIndicator', () => {
   it('renders all three step labels: Details, Content, Review', () => {
-    const { container } = render(<WizardStepIndicator currentStep={0} />);
+    const { container } = render(<WizardStepIndicator currentStep={0} onStepClick={vi.fn()} />);
 
     const labels = getStepLabels(container);
     expect(labels).toHaveLength(3);
@@ -34,7 +34,7 @@ describe('WizardStepIndicator', () => {
   });
 
   it('applies active styling to the current step (currentStep=0)', () => {
-    const { container } = render(<WizardStepIndicator currentStep={0} />);
+    const { container } = render(<WizardStepIndicator currentStep={0} onStepClick={vi.fn()} />);
 
     const labels = getStepLabels(container);
 
@@ -50,7 +50,7 @@ describe('WizardStepIndicator', () => {
   });
 
   it('shows check icon for completed step and active styling on step 2 (currentStep=1)', () => {
-    const { container } = render(<WizardStepIndicator currentStep={1} />);
+    const { container } = render(<WizardStepIndicator currentStep={1} onStepClick={vi.fn()} />);
 
     /* Step 1 (Details) is completed — should show check icon, not the number 1 */
     const checkIcons = container.querySelectorAll('svg');
@@ -72,7 +72,7 @@ describe('WizardStepIndicator', () => {
   });
 
   it('shows check icons for steps 1 and 2, active styling on step 3 (currentStep=2)', () => {
-    const { container } = render(<WizardStepIndicator currentStep={2} />);
+    const { container } = render(<WizardStepIndicator currentStep={2} onStepClick={vi.fn()} />);
 
     /* Steps 1 and 2 are completed — should show 2 check icons */
     const checkIcons = container.querySelectorAll('svg');

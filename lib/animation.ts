@@ -42,6 +42,16 @@ export const variants = {
     hidden: { opacity: 0, x: 20 },
     visible: { opacity: 1, x: 0 },
   },
+  /** Slide in from left with larger offset — for page sections. */
+  slideInFromLeft: {
+    hidden: { opacity: 0, x: -30 },
+    visible: { opacity: 1, x: 0 },
+  },
+  /** Mercury fog/diffusion — content starts blurred and resolves into clarity. */
+  mercuryFade: {
+    hidden: { opacity: 0, y: 8, filter: 'blur(4px)' },
+    visible: { opacity: 1, y: 0, filter: 'blur(0px)' },
+  },
 } as const;
 
 /**
@@ -54,6 +64,22 @@ export const staggerContainer = {
   visible: {
     transition: {
       staggerChildren: 0.04,
+    },
+  },
+} as const;
+
+/**
+ * Section-level stagger for larger content blocks (metadata, player, tabs).
+ *
+ * Slower than grid stagger (80ms vs 40ms) with a 100ms initial delay,
+ * giving each section room to breathe as it enters.
+ */
+export const sectionStagger = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
     },
   },
 } as const;

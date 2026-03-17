@@ -2,25 +2,29 @@
  * WizardStepContent — Content upload form for the podcast upload wizard (Step 2).
  *
  * Renders file upload fields for audio files, attachments, and transcripts.
- * Uses hidden file inputs with button triggers following the existing upload pattern.
+ * Uses hidden file inputs with square box drop-zone triggers for audio/attachments,
+ * and Textarea inputs for transcript copy-paste.
  *
  * Key responsibilities:
- * - Audio file upload for Brief Summary and Detailed Overview
+ * - Audio file upload for Audio (short) and Audio (long)
  * - Multiple file upload for attachments (bulletins)
- * - Transcript file upload (.txt, .srt, .vtt, .md) read as text strings
+ * - Transcript text entry via copy-paste Textarea for both transcript types
  * - Upload progress display during active uploads
  * - Filename display after successful uploads
  *
- * @dependencies shadcn Label, Input, Button components; lucide-react icons
+ * @dependencies shadcn Label, Input, Textarea components; lucide-react icons
  */
 'use client';
 
 import { useRef } from 'react';
-import { Upload, FileText, Paperclip } from 'lucide-react';
+import { Upload, Paperclip, X, FileText } from 'lucide-react';
+import { toast } from 'sonner';
 
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { MAX_FILE_SIZES } from '@/lib/upload';
 
 /**
  * Props for the WizardStepContent component.
@@ -50,7 +54,8 @@ export interface WizardStepContentProps {
   onAudioLongChange: (file: File) => void;
   bulletinUrls: string[];
   bulletinFileNames: string[];
-  onBulletinsChange: (files: FileList) => void;
+  onBulletinsChange: (files: File[]) => void;
+  onBulletinRemove: (index: number) => void;
   shortTranscript: string;
   onShortTranscriptChange: (text: string) => void;
   longTranscript: string;
@@ -79,6 +84,7 @@ export function WizardStepContent({
   bulletinUrls: _bulletinUrls,
   bulletinFileNames,
   onBulletinsChange,
+  onBulletinRemove,
   shortTranscript,
   onShortTranscriptChange,
   longTranscript,
@@ -89,194 +95,186 @@ export function WizardStepContent({
   const audioShortRef = useRef<HTMLInputElement>(null);
   const audioLongRef = useRef<HTMLInputElement>(null);
   const bulletinsRef = useRef<HTMLInputElement>(null);
-  const shortTranscriptRef = useRef<HTMLInputElement>(null);
-  const longTranscriptRef = useRef<HTMLInputElement>(null);
-
-  /**
-   * Reads a transcript file as text and passes the content to the callback.
-   *
-   * @param file - The transcript file to read.
-   * @param onChange - Callback to receive the text content.
-   */
-  async function handleTranscriptFile(file: File, onChange: (text: string) => void): Promise<void> {
-    const text = await file.text();
-    onChange(text);
-  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Upload progress indicator */}
       {isUploading && <ProgressBar progress={uploadProgress} />}
 
-      {/* Brief Summary Audio */}
-      <div className="space-y-2">
-        <Label htmlFor="audioShort">Brief Summary</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            ref={audioShortRef}
-            id="audioShort"
-            type="file"
-            accept="audio/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
+      {/* Audio + Attachments — three equal columns */}
+      <div className="space-y-1.5">
+        <Label>Files</Label>
+        <div className="grid grid-cols-3 gap-3">
+          {/* Audio (short) */}
+          <div>
+            <Input
+              ref={audioShortRef}
+              id="audioShort"
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > MAX_FILE_SIZES.audio) {
+                  toast.error('Audio file exceeds the 500 MB limit');
+                  e.target.value = '';
+                  return;
+                }
                 onAudioShortChange(file);
-              }
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => audioShortRef.current?.click()}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            Choose File
-          </Button>
-          {audioShortFileName && (
-            <span className="text-sm text-muted-foreground">{audioShortFileName}</span>
-          )}
-        </div>
-      </div>
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => audioShortRef.current?.click()}
+              className={cn(
+                'w-full h-28 flex flex-col items-center justify-center gap-2 rounded-xl border-2 bg-muted/20 hover:border-primary/50 hover:bg-muted/40 transition-colors cursor-pointer',
+                audioShortFileName ? 'border-border' : 'border-dashed border-border'
+              )}
+            >
+              <Upload className="h-5 w-5 text-muted-foreground" />
+              <span className="text-xs font-medium">Audio (short)</span>
+              {audioShortFileName ? (
+                <span className="text-xs text-primary px-2 truncate max-w-full text-center leading-tight">
+                  {audioShortFileName}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground/60">Up to 500 MB</span>
+              )}
+            </button>
+          </div>
 
-      {/* Detailed Overview Audio */}
-      <div className="space-y-2">
-        <Label htmlFor="audioLong">Detailed Overview</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            ref={audioLongRef}
-            id="audioLong"
-            type="file"
-            accept="audio/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
+          {/* Audio (long) */}
+          <div>
+            <Input
+              ref={audioLongRef}
+              id="audioLong"
+              type="file"
+              accept="audio/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > MAX_FILE_SIZES.audio) {
+                  toast.error('Audio file exceeds the 500 MB limit');
+                  e.target.value = '';
+                  return;
+                }
                 onAudioLongChange(file);
-              }
-            }}
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => audioLongRef.current?.click()}
+              className={cn(
+                'w-full h-28 flex flex-col items-center justify-center gap-2 rounded-xl border-2 bg-muted/20 hover:border-primary/50 hover:bg-muted/40 transition-colors cursor-pointer',
+                audioLongFileName ? 'border-border' : 'border-dashed border-border'
+              )}
+            >
+              <Upload className="h-5 w-5 text-muted-foreground" />
+              <span className="text-xs font-medium">Audio (long)</span>
+              {audioLongFileName ? (
+                <span className="text-xs text-primary px-2 truncate max-w-full text-center leading-tight">
+                  {audioLongFileName}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground/60">Up to 500 MB</span>
+              )}
+            </button>
+          </div>
+
+          {/* Attachments */}
+          <div>
+            <Input
+              ref={bulletinsRef}
+              id="bulletins"
+              type="file"
+              multiple
+              accept=".pdf"
+              className="hidden"
+              onChange={(e) => {
+                if (!e.target.files || e.target.files.length === 0) return;
+                /* Snapshot to array before resetting — FileList is a live reference */
+                const snapshot = Array.from(e.target.files);
+                e.target.value = '';
+                const oversized = snapshot.filter((f) => f.size > MAX_FILE_SIZES.pdf);
+                if (oversized.length > 0) {
+                  toast.error(`${oversized.map((f) => f.name).join(', ')} exceeds the 50 MB limit`);
+                  return;
+                }
+                onBulletinsChange(snapshot);
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => bulletinsRef.current?.click()}
+              className={cn(
+                'w-full h-28 flex flex-col items-center justify-center gap-2 rounded-xl border-2 bg-muted/20 hover:border-primary/50 hover:bg-muted/40 transition-colors cursor-pointer',
+                bulletinFileNames.length > 0 ? 'border-border' : 'border-dashed border-border'
+              )}
+            >
+              <Paperclip className="h-5 w-5 text-muted-foreground" />
+              <span className="text-xs font-medium">Attachments</span>
+              <span className="text-xs text-muted-foreground/60">PDF · up to 50 MB</span>
+            </button>
+
+            {/* Attached file chips */}
+            {bulletinFileNames.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {bulletinFileNames.map((name, index) => (
+                  <div
+                    key={`${name}-${index}`}
+                    className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/30 px-2.5 py-1.5 text-xs"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span className="max-w-40 truncate">{name}</span>
+                    <button
+                      type="button"
+                      onClick={() => onBulletinRemove(index)}
+                      className="ml-0.5 rounded-sm text-muted-foreground hover:text-destructive transition-colors"
+                      aria-label={`Remove ${name}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Transcripts — side by side */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Brief Summary Transcript */}
+        <div className="space-y-1.5">
+          <Label htmlFor="shortTranscript">Brief Summary Transcript (Short)</Label>
+          <Textarea
+            id="shortTranscript"
+            value={shortTranscript}
+            onChange={(e) => onShortTranscriptChange(e.target.value)}
+            placeholder="Paste brief summary transcript..."
+            className="resize-none font-mono text-xs h-32 overflow-y-auto"
           />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => audioLongRef.current?.click()}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            Choose File
-          </Button>
-          {audioLongFileName && (
-            <span className="text-sm text-muted-foreground">{audioLongFileName}</span>
+          {shortTranscript && (
+            <p className="text-xs text-muted-foreground">{shortTranscript.length} chars</p>
           )}
         </div>
-      </div>
 
-      {/* Attachments */}
-      <div className="space-y-2">
-        <Label htmlFor="bulletins">Attachments</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            ref={bulletinsRef}
-            id="bulletins"
-            type="file"
-            multiple
-            accept=".pdf,.doc,.docx"
-            className="hidden"
-            onChange={(e) => {
-              if (e.target.files && e.target.files.length > 0) {
-                onBulletinsChange(e.target.files);
-              }
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => bulletinsRef.current?.click()}
-          >
-            <Paperclip className="mr-2 h-4 w-4" />
-            Choose Files
-          </Button>
-        </div>
-        {bulletinFileNames.length > 0 && (
-          <ul className="space-y-1">
-            {bulletinFileNames.map((name) => (
-              <li key={name} className="text-sm text-muted-foreground flex items-center gap-1">
-                <FileText className="h-3 w-3" />
-                {name}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      {/* Brief Summary Transcript */}
-      <div className="space-y-2">
-        <Label htmlFor="shortTranscript">Brief Summary Transcript</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            ref={shortTranscriptRef}
-            id="shortTranscript"
-            type="file"
-            accept=".txt,.srt,.vtt,.md"
-            className="hidden"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                await handleTranscriptFile(file, onShortTranscriptChange);
-              }
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => shortTranscriptRef.current?.click()}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Choose File
-          </Button>
-        </div>
-        {shortTranscript && (
-          <p className="text-xs text-muted-foreground">
-            Loaded: {shortTranscript.length} characters
-          </p>
-        )}
-      </div>
-
-      {/* Detailed Overview Transcript */}
-      <div className="space-y-2">
-        <Label htmlFor="longTranscript">Detailed Overview Transcript</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            ref={longTranscriptRef}
+        {/* Detailed Overview Transcript */}
+        <div className="space-y-1.5">
+          <Label htmlFor="longTranscript">Detailed Overview Transcript (Long)</Label>
+          <Textarea
             id="longTranscript"
-            type="file"
-            accept=".txt,.srt,.vtt,.md"
-            className="hidden"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                await handleTranscriptFile(file, onLongTranscriptChange);
-              }
-            }}
+            value={longTranscript}
+            onChange={(e) => onLongTranscriptChange(e.target.value)}
+            placeholder="Paste detailed overview transcript..."
+            className="resize-none font-mono text-xs h-32 overflow-y-auto"
           />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => longTranscriptRef.current?.click()}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Choose File
-          </Button>
+          {longTranscript && (
+            <p className="text-xs text-muted-foreground">{longTranscript.length} chars</p>
+          )}
         </div>
-        {longTranscript && (
-          <p className="text-xs text-muted-foreground">
-            Loaded: {longTranscript.length} characters
-          </p>
-        )}
       </div>
     </div>
   );

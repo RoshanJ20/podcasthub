@@ -3,7 +3,7 @@
 /**
  * Admin learning graphs data table with delete actions.
  *
- * All learning paths are auto-published, so no publish/draft toggle is needed.
+ * All learning series are auto-published, so no publish/draft toggle is needed.
  */
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -53,9 +53,9 @@ export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
     try {
       const res = await fetch(`/api/learning-graphs/${deleteId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete');
-      toast.success('Learning path deleted');
+      toast.success('Learning series deleted');
     } catch {
-      toast.error('Failed to delete learning path');
+      toast.error('Failed to delete learning series');
     } finally {
       setDeleteId(null);
       setIsDeleting(false);
@@ -135,7 +135,7 @@ export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
             {graphs.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  No learning paths yet. Click &quot;New Path&quot; to create one.
+                  No learning series yet. Click &quot;New Path&quot; to create one.
                 </TableCell>
               </TableRow>
             )}
@@ -147,10 +147,10 @@ export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
       <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Learning Path</DialogTitle>
+            <DialogTitle>Delete Learning Series</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this learning path? This action cannot be undone. All
-              episodes and edges will be permanently deleted.
+              Are you sure you want to delete this learning series? This action cannot be undone.
+              All episodes and edges will be permanently deleted.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

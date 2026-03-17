@@ -14,9 +14,12 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { X } from 'lucide-react';
+import { X, ImagePlus } from 'lucide-react';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { MAX_FILE_SIZES } from '@/lib/upload';
 
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -66,6 +69,7 @@ export function WizardStepDetails({
   } = useFormContext();
 
   const [tagInput, setTagInput] = useState('');
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   /**
    * Handles the Enter key press in the tag input field.
@@ -100,15 +104,65 @@ export function WizardStepDetails({
    */
   const handleThumbnailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      onThumbnailChange(file);
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZES.image) {
+      toast.error('Thumbnail exceeds the 5 MB limit');
+      event.target.value = '';
+      return;
     }
+    onThumbnailChange(file);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Thumbnail Image — banner at top */}
+      <div className="space-y-1.5">
+        <Label htmlFor="thumbnail">
+          Thumbnail Image
+          {mode === 'create' && <span className="text-destructive"> *</span>}
+        </Label>
+        <input
+          ref={thumbnailInputRef}
+          id="thumbnail"
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleThumbnailChange}
+        />
+        <button
+          type="button"
+          onClick={() => thumbnailInputRef.current?.click()}
+          className={cn(
+            'relative w-full h-28 rounded-xl border-2 bg-muted/20 hover:border-primary/50 hover:bg-muted/40 transition-colors cursor-pointer overflow-hidden',
+            thumbnailPreview ? 'border-border' : 'border-dashed border-border'
+          )}
+        >
+          {thumbnailPreview ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={thumbnailPreview}
+              alt="Thumbnail preview"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-1.5 h-full">
+              <ImagePlus className="h-6 w-6 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">Upload Thumbnail</span>
+              <span className="text-xs text-muted-foreground/60">
+                16:9 · JPG or PNG · up to 5 MB
+              </span>
+            </div>
+          )}
+          {thumbnailPreview && (
+            <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span className="text-white text-sm font-medium">Click to replace</span>
+            </div>
+          )}
+        </button>
+      </div>
+
       {/* Title */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="title">
           Title<span className="text-destructive"> *</span>
         </Label>
@@ -119,7 +173,7 @@ export function WizardStepDetails({
       </div>
 
       {/* Description */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="description">
           Description<span className="text-destructive"> *</span>
         </Label>
@@ -127,50 +181,52 @@ export function WizardStepDetails({
           id="description"
           {...register('description')}
           placeholder="Podcast description"
-          rows={4}
+          rows={2}
         />
         {errors.description && (
           <p className="text-sm text-destructive">{errors.description.message as string}</p>
         )}
       </div>
 
-      {/* Domain */}
-      <div className="space-y-2">
-        <Label htmlFor="domain">
-          Domain<span className="text-destructive"> *</span>
-        </Label>
-        <select
-          id="domain"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          defaultValue=""
-          {...register('domain')}
-          onChange={(e) => setValue('domain', e.target.value)}
-        >
-          <option value="" disabled>
-            Select a domain
-          </option>
-          {PODCAST_DOMAINS.map((domain) => (
-            <option key={domain} value={domain}>
-              {domain}
+      {/* Domain + Year — two columns */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="col-span-2 space-y-1.5">
+          <Label htmlFor="domain">
+            Domain<span className="text-destructive"> *</span>
+          </Label>
+          <select
+            id="domain"
+            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            defaultValue=""
+            {...register('domain')}
+            onChange={(e) => setValue('domain', e.target.value)}
+          >
+            <option value="" disabled>
+              Select a domain
             </option>
-          ))}
-        </select>
-        {errors.domain && (
-          <p className="text-sm text-destructive">{errors.domain.message as string}</p>
-        )}
-      </div>
-
-      {/* Year */}
-      <div className="space-y-2">
-        <Label htmlFor="year">
-          Year<span className="text-destructive"> *</span>
-        </Label>
-        <Input id="year" type="number" {...register('year')} />
-        {errors.year && <p className="text-sm text-destructive">{errors.year.message as string}</p>}
+            {PODCAST_DOMAINS.map((domain) => (
+              <option key={domain} value={domain}>
+                {domain}
+              </option>
+            ))}
+          </select>
+          {errors.domain && (
+            <p className="text-sm text-destructive">{errors.domain.message as string}</p>
+          )}
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="year">
+            Year<span className="text-destructive"> *</span>
+          </Label>
+          <Input id="year" type="number" {...register('year')} className="h-9" />
+          {errors.year && (
+            <p className="text-sm text-destructive">{errors.year.message as string}</p>
+          )}
+        </div>
       </div>
 
       {/* Tags */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <Label htmlFor="tags">Tags</Label>
         <Input
           id="tags"
@@ -180,7 +236,7 @@ export function WizardStepDetails({
           placeholder="Type a tag and press Enter"
         />
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="flex flex-wrap gap-1.5 mt-1">
             {tags.map((tag) => (
               <Badge
                 key={tag}
@@ -192,25 +248,6 @@ export function WizardStepDetails({
                 <X className="ml-1 h-3 w-3" />
               </Badge>
             ))}
-          </div>
-        )}
-      </div>
-
-      {/* Thumbnail Image */}
-      <div className="space-y-2">
-        <Label htmlFor="thumbnail">
-          Thumbnail Image
-          {mode === 'create' && <span className="text-destructive"> *</span>}
-        </Label>
-        <Input id="thumbnail" type="file" accept="image/*" onChange={handleThumbnailChange} />
-        {thumbnailPreview && (
-          <div className="mt-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={thumbnailPreview}
-              alt="Thumbnail preview"
-              className="h-24 w-24 rounded-md object-cover"
-            />
           </div>
         )}
       </div>

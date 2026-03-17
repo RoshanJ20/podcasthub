@@ -49,8 +49,8 @@ export function LibraryFilters() {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <Select value={currentDomain} onValueChange={(val) => updateParams('domain', val ?? 'all')}>
-        <SelectTrigger aria-label="Filter by domain">
-          <SelectValue placeholder="All Domains" />
+        <SelectTrigger className="w-44" aria-label="Filter by domain">
+          <SelectValue>{currentDomain === 'all' ? 'All Domains' : currentDomain}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Domains</SelectItem>
@@ -63,8 +63,10 @@ export function LibraryFilters() {
       </Select>
 
       <Select value={currentSort} onValueChange={(val) => updateParams('sort', val ?? 'newest')}>
-        <SelectTrigger aria-label="Sort podcasts">
-          <SelectValue placeholder="Newest" />
+        <SelectTrigger className="w-36" aria-label="Sort podcasts">
+          <SelectValue>
+            {SORT_OPTIONS.find((o) => o.value === currentSort)?.label ?? 'Newest'}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {SORT_OPTIONS.map((option) => (

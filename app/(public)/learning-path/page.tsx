@@ -36,14 +36,14 @@ export default async function LearningPathsPage({
   return (
     <div className="container py-8">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">Learning Paths</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Learning Series</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Structured content journeys curated for your professional development.
         </p>
       </div>
       <PathListClient paths={pathData} />
       {paths.length === 0 && (
-        <p className="text-muted-foreground text-center py-8">No learning paths available yet.</p>
+        <p className="text-muted-foreground text-center py-8">No learning series available yet.</p>
       )}
     </div>
   );

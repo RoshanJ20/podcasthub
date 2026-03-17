@@ -18,22 +18,23 @@ const STEPS = ['Details', 'Content', 'Review'] as const;
  * Props for WizardStepIndicator.
  *
  * @property currentStep - Zero-indexed step number (0 = Details, 1 = Content, 2 = Review).
+ * @property onStepClick - Called when the user clicks a completed step to navigate back.
  */
 interface WizardStepIndicatorProps {
   currentStep: number;
+  onStepClick: (step: number) => void;
 }
 
 /**
  * Renders a horizontal step indicator with connecting lines between steps.
  *
- * Each step displays a numbered circle and label. Completed steps replace
- * the number with a check icon and use primary styling. The active step
- * uses primary styling with bold label text. Future steps are muted.
+ * Completed steps are clickable buttons that navigate back. The active step
+ * uses primary styling with bold label text. Future steps are muted and inert.
  *
- * @param props - Component props containing the current step index.
+ * @param props - Component props containing the current step index and click handler.
  * @returns A horizontal step indicator bar.
  */
-export function WizardStepIndicator({ currentStep }: WizardStepIndicatorProps) {
+export function WizardStepIndicator({ currentStep, onStepClick }: WizardStepIndicatorProps) {
   return (
     <div className="flex items-center justify-center gap-2 mb-8">
       {STEPS.map((label, index) => {
@@ -45,22 +46,27 @@ export function WizardStepIndicator({ currentStep }: WizardStepIndicatorProps) {
             {index > 0 && (
               <div className={`h-px w-12 ${isCompleted ? 'bg-primary' : 'bg-border'}`} />
             )}
-            <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={!isCompleted}
+              onClick={() => isCompleted && onStepClick(index)}
+              className="flex items-center gap-2 disabled:cursor-default"
+            >
               {/* Step circle: check icon for completed, number for active/future */}
               <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
+                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-opacity ${
                   isActive || isCompleted
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground'
-                }`}
+                } ${isCompleted ? 'hover:opacity-80' : ''}`}
               >
                 {isCompleted ? <Check className="h-4 w-4" /> : index + 1}
               </div>
-              {/* Step label: bold for active, muted for others */}
+              {/* Step label */}
               <span className={`text-sm ${isActive ? 'font-medium' : 'text-muted-foreground'}`}>
                 {label}
               </span>
-            </div>
+            </button>
           </div>
         );
       })}

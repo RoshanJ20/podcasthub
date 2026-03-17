@@ -6,7 +6,10 @@
  */
 'use client';
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { variants, getTransition } from '@/lib/animation';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import { resolveStorageUrl } from '@/lib/storage-url';
@@ -25,6 +28,7 @@ export function AttachmentViewer({ urls }: AttachmentViewerProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [containerWidth, setContainerWidth] = useState<number | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
 
   const activeUrl = urls[activeIndex] || '';
 
@@ -49,8 +53,18 @@ export function AttachmentViewer({ urls }: AttachmentViewerProps) {
     return <p className="text-muted-foreground text-center py-8">No attachments available.</p>;
   }
 
+  const Wrapper = reducedMotion ? 'div' : motion.div;
+  const wrapperProps = reducedMotion
+    ? {}
+    : {
+        initial: 'hidden' as const,
+        animate: 'visible' as const,
+        variants: variants.mercuryFade,
+        transition: getTransition('slow'),
+      };
+
   return (
-    <div className="space-y-3" ref={containerRef}>
+    <Wrapper className="space-y-3" ref={containerRef} {...wrapperProps}>
       {/* Toolbar — always visible */}
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/50 p-2">
         <div className="flex items-center gap-2">
@@ -110,11 +124,11 @@ export function AttachmentViewer({ urls }: AttachmentViewerProps) {
       </div>
 
       {/* PDF in scrollable container */}
-      <div className="overflow-auto rounded-lg border" style={{ maxHeight: '70vh' }}>
+      <div className="overflow-auto rounded-lg border" style={{ minHeight: '80vh' }}>
         <Document file={resolveStorageUrl(activeUrl)} onLoadSuccess={onDocumentLoadSuccess}>
           <Page pageNumber={currentPage} width={containerWidth ? containerWidth - 2 : undefined} />
         </Document>
       </div>
-    </div>
+    </Wrapper>
   );
 }

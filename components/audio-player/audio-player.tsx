@@ -1,15 +1,25 @@
 /**
- * Full-featured audio player component with HLS streaming support.
+ * Full-featured audio player with Mercury-inspired styling.
  *
- * Provides play/pause, skip +/-10s, progress seeking, volume control,
- * playback speed selection, and audio type toggling (Brief Summary / Detailed Overview versions).
- * Integrates with the Zustand player store and uses HLS.js for adaptive
- * streaming. Supports keyboard shortcuts (spacebar for play/pause).
+ * Domain-colored left strip, filled play button, glow shadow in dark mode,
+ * animated play/pause icon morph, and bookmark bounce micro-interaction.
+ * Integrates with the Zustand player store and uses HLS.js for adaptive streaming.
+ *
+ * Dependencies:
+ * - motion/react for icon morph and bookmark bounce
+ * - lib/animation for transition tokens
+ * - lib/domain-colors for DomainColor type
+ * - next-themes for dark/light mode detection
  */
 'use client';
-import { useEffect, useCallback } from 'react';
+
+import { useEffect, useCallback, useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+
 import { usePlayerStore } from '@/stores/player-store';
 import { useHlsPlayer } from '@/hooks/use-hls-player';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { transitions } from '@/lib/animation';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import {
@@ -24,11 +34,17 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatTime } from '@/lib/format-time';
+import type { DomainColor } from '@/lib/domain-colors';
 
 /** Playback speed options. */
 const SPEED_OPTIONS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
-export function AudioPlayer() {
+interface AudioPlayerProps {
+  /** Domain color for accent theming. */
+  domainColor?: DomainColor;
+}
+
+export function AudioPlayer({ domainColor }: AudioPlayerProps) {
   const {
     currentPodcast,
     isPlaying,
@@ -46,6 +62,9 @@ export function AudioPlayer() {
   } = usePlayerStore();
 
   const { audioRef, onTimeUpdate, onLoadedMetadata, seekTo } = useHlsPlayer();
+
+  const reducedMotion = useReducedMotion();
+  const [bookmarkBounce, setBookmarkBounce] = useState(false);
 
   /** Handle keyboard shortcuts. */
   const handleKeyDown = useCallback(
@@ -79,7 +98,7 @@ export function AudioPlayer() {
   const hasLongVersion = currentPodcast?.audioLongUrl;
 
   return (
-    <div data-testid="audio-player" className="w-full space-y-4 rounded-lg border bg-card p-4">
+    <div data-testid="audio-player" className="w-full space-y-2">
       {/* Hidden audio element */}
       <audio
         ref={audioRef}
@@ -89,47 +108,56 @@ export function AudioPlayer() {
         preload="metadata"
       />
 
-      {/* Podcast title */}
-      {currentPodcast && (
-        <div className="text-center">
-          <h3 className="text-lg font-semibold truncate">{currentPodcast.title}</h3>
-        </div>
-      )}
-
-      {/* Progress bar */}
+      {/* Progress bar — domain-colored */}
       <div className="space-y-1">
-        <Slider
-          aria-label="Seek"
-          min={0}
-          max={duration || 100}
-          value={[currentTime]}
-          onValueChange={(value) => seekTo(Array.isArray(value) ? value[0] : value)}
-        />
+        <div style={{ '--primary': domainColor?.border } as React.CSSProperties}>
+          <Slider
+            aria-label="Seek"
+            min={0}
+            max={duration || 100}
+            value={[currentTime]}
+            onValueChange={(value) => seekTo(Array.isArray(value) ? value[0] : value)}
+          />
+        </div>
         <div className="flex justify-between text-xs text-muted-foreground">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
         </div>
       </div>
 
-      {/* Controls */}
+      {/* Main controls */}
       <div className="flex items-center justify-center gap-2">
-        {/* Skip backward */}
         <Button variant="ghost" size="icon" onClick={skipBackward} aria-label="Skip backward">
           <SkipBack className="h-4 w-4" />
         </Button>
 
-        {/* Play / Pause */}
-        <Button
-          variant="outline"
-          size="icon"
+        {/* Play / Pause — domain-colored filled circle */}
+        <button
           onClick={togglePlay}
           aria-label={isPlaying ? 'Pause' : 'Play'}
-          className="h-10 w-10"
+          className="flex h-12 w-12 items-center justify-center rounded-full transition-transform hover:scale-105 active:scale-95"
+          style={{
+            backgroundColor: domainColor?.border ?? 'var(--primary)',
+            color: 'white',
+            boxShadow: domainColor
+              ? `0 2px 8px ${domainColor.glow.replace('0.15', '0.3')}`
+              : undefined,
+          }}
         >
-          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
-        </Button>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={isPlaying ? 'pause' : 'play'}
+              initial={reducedMotion ? undefined : { scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={reducedMotion ? undefined : { scale: 0.8, opacity: 0 }}
+              transition={transitions.fast}
+              className="flex items-center justify-center"
+            >
+              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+            </motion.span>
+          </AnimatePresence>
+        </button>
 
-        {/* Skip forward */}
         <Button variant="ghost" size="icon" onClick={skipForward} aria-label="Skip forward">
           <SkipForward className="h-4 w-4" />
         </Button>
@@ -148,15 +176,17 @@ export function AudioPlayer() {
           >
             <VolumeIcon className="h-4 w-4" />
           </Button>
-          <Slider
-            aria-label="Volume"
-            min={0}
-            max={1}
-            step={0.01}
-            value={[volume]}
-            onValueChange={(value) => setVolume(Array.isArray(value) ? value[0] : value)}
-            className="w-24"
-          />
+          <div style={{ '--primary': domainColor?.border } as React.CSSProperties}>
+            <Slider
+              aria-label="Volume"
+              min={0}
+              max={1}
+              step={0.01}
+              value={[volume]}
+              onValueChange={(value) => setVolume(Array.isArray(value) ? value[0] : value)}
+              className="w-24"
+            />
+          </div>
         </div>
 
         {/* Playback speed */}
@@ -174,36 +204,43 @@ export function AudioPlayer() {
           {playbackRate}x
         </Button>
 
-        {/* Bookmark button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={async () => {
-            if (!currentPodcast) return;
-            const timestampSeconds = Math.floor(currentTime);
-            try {
-              const response = await fetch('/api/bookmarks', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  podcastId: currentPodcast.id,
-                  timestampSeconds,
-                }),
-              });
-              if (!response.ok) {
-                toast.error('Failed to add bookmark');
-                return;
-              }
-              toast.success(`Bookmark added at ${formatTime(timestampSeconds)}`);
-            } catch {
-              toast.error('Failed to add bookmark');
-            }
-          }}
-          aria-label="Add bookmark"
+        {/* Bookmark button with bounce micro-animation */}
+        <motion.div
+          animate={bookmarkBounce ? { scale: [1, 1.3, 1] } : {}}
+          transition={transitions.fast}
         >
-          <Bookmark className="h-4 w-4" />
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={async () => {
+              if (!currentPodcast) return;
+              const timestampSeconds = Math.floor(currentTime);
+              try {
+                const response = await fetch('/api/bookmarks', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    podcastId: currentPodcast.id,
+                    timestampSeconds,
+                  }),
+                });
+                if (!response.ok) {
+                  toast.error('Failed to add bookmark');
+                  return;
+                }
+                setBookmarkBounce(true);
+                setTimeout(() => setBookmarkBounce(false), 400);
+                toast.success(`Bookmark added at ${formatTime(timestampSeconds)}`);
+              } catch {
+                toast.error('Failed to add bookmark');
+              }
+            }}
+            aria-label="Add bookmark"
+          >
+            <Bookmark className="h-4 w-4" />
+          </Button>
+        </motion.div>
 
         {/* Audio type toggle */}
         {hasLongVersion && (
