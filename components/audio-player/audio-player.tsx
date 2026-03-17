@@ -13,7 +13,7 @@
  */
 'use client';
 
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
 import { usePlayerStore } from '@/stores/player-store';
@@ -21,17 +21,7 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { transitions } from '@/lib/animation';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import {
-  Play,
-  Pause,
-  SkipForward,
-  SkipBack,
-  Volume2,
-  VolumeX,
-  Volume1,
-  Bookmark,
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { Play, Pause, SkipForward, SkipBack } from 'lucide-react';
 import { formatTime } from '@/lib/format-time';
 import type { DomainColor } from '@/lib/domain-colors';
 
@@ -51,13 +41,11 @@ export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
     isPlaying,
     currentTime,
     duration,
-    volume,
     playbackRate,
     audioType,
     togglePlay,
     skipForward,
     skipBackward,
-    setVolume,
     setPlaybackRate,
     toggleAudioType,
   } = usePlayerStore();
@@ -65,7 +53,6 @@ export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
   const seekTo = onSeek ?? (() => {});
 
   const reducedMotion = useReducedMotion();
-  const [bookmarkBounce, setBookmarkBounce] = useState(false);
 
   /** Handle keyboard shortcuts. */
   const handleKeyDown = useCallback(
@@ -83,18 +70,6 @@ export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
-
-  /** Volume icon based on level. */
-  const VolumeIcon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
-  /** Toggle mute — restore to full volume when unmuting. */
-  const lastNonZeroVolume = usePlayerStore((s) => (s.volume > 0 ? s.volume : 1));
-  const toggleMute = () => {
-    if (volume > 0) {
-      setVolume(0);
-    } else {
-      setVolume(lastNonZeroVolume);
-    }
-  };
 
   const hasLongVersion = currentPodcast?.audioLongUrl;
 
@@ -157,30 +132,6 @@ export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
 
       {/* Secondary controls row */}
       <div className="flex items-center justify-between gap-4">
-        {/* Volume */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleMute}
-            aria-label={volume === 0 ? 'Unmute' : 'Mute'}
-            className="h-8 w-8"
-          >
-            <VolumeIcon className="h-4 w-4" />
-          </Button>
-          <div style={{ '--primary': domainColor?.border } as React.CSSProperties}>
-            <Slider
-              aria-label="Volume"
-              min={0}
-              max={1}
-              step={0.01}
-              value={[volume]}
-              onValueChange={(value) => setVolume(Array.isArray(value) ? value[0] : value)}
-              className="w-24"
-            />
-          </div>
-        </div>
-
         {/* Playback speed */}
         <Button
           variant="ghost"
@@ -195,44 +146,6 @@ export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
         >
           {playbackRate}x
         </Button>
-
-        {/* Bookmark button with bounce micro-animation */}
-        <motion.div
-          animate={bookmarkBounce ? { scale: [1, 1.3, 1] } : {}}
-          transition={transitions.fast}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={async () => {
-              if (!currentPodcast) return;
-              const timestampSeconds = Math.floor(currentTime);
-              try {
-                const response = await fetch('/api/bookmarks', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    podcastId: currentPodcast.id,
-                    timestampSeconds,
-                  }),
-                });
-                if (!response.ok) {
-                  toast.error('Failed to add bookmark');
-                  return;
-                }
-                setBookmarkBounce(true);
-                setTimeout(() => setBookmarkBounce(false), 400);
-                toast.success(`Bookmark added at ${formatTime(timestampSeconds)}`);
-              } catch {
-                toast.error('Failed to add bookmark');
-              }
-            }}
-            aria-label="Add bookmark"
-          >
-            <Bookmark className="h-4 w-4" />
-          </Button>
-        </motion.div>
 
         {/* Audio type toggle */}
         {hasLongVersion && (
