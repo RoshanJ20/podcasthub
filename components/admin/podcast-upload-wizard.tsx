@@ -16,6 +16,7 @@
 'use client';
 
 import { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -86,6 +87,8 @@ const TOTAL_STEPS = 3;
  */
 export const PodcastUploadWizard = forwardRef<PodcastUploadWizardHandle, PodcastUploadWizardProps>(
   function PodcastUploadWizard({ mode = 'create', initialData, onSuccess, onStepChange }, ref) {
+    const router = useRouter();
+
     /* ---------- Step navigation state ---------- */
     const [currentStep, setCurrentStep] = useState(0);
 
@@ -358,6 +361,9 @@ export const PodcastUploadWizard = forwardRef<PodcastUploadWizardHandle, Podcast
           mode === 'create' ? 'Podcast created successfully' : 'Podcast updated successfully'
         );
         onSuccess?.();
+
+        // Redirect to bulletins page after successful submission
+        router.push('/bulletins');
       } catch (err) {
         const message = err instanceof Error ? err.message : 'An error occurred';
         toast.error(message);
@@ -367,6 +373,7 @@ export const PodcastUploadWizard = forwardRef<PodcastUploadWizardHandle, Podcast
     }, [
       form,
       mode,
+      router,
       thumbnailFile,
       audioShortFile,
       audioLongFile,

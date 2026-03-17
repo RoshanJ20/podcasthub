@@ -259,7 +259,7 @@ function SidebarBookmarks({
  * @param props.relatedPodcasts - Optional list of related podcasts (reserved for future use).
  */
 export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
-  const { audioRef, onTimeUpdate, onLoadedMetadata, seekTo } = useHlsPlayer();
+  const { seekTo } = useHlsPlayer();
   const reducedMotion = useReducedMotion();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -362,18 +362,6 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   const sectionProps = reducedMotion
     ? {}
     : { variants: variants.slideInFromLeft, transition: transitions.normal };
-
-  /** Persistent audio element — must live outside AnimatePresence. */
-  const audioElement = (
-    <audio
-      ref={audioRef}
-      onTimeUpdate={onTimeUpdate}
-      onLoadedMetadata={onLoadedMetadata}
-      onEnded={() => usePlayerStore.getState().pause()}
-      preload="metadata"
-      className="hidden"
-    />
-  );
 
   /** Mercury fade — blur-to-clear entrance, same as page load. */
   const mercuryIn = {
@@ -538,7 +526,6 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   if (!hasAttachments) {
     return (
       <Wrapper className="mx-auto max-w-5xl px-4 py-8 lg:py-12" {...wrapperProps}>
-        {audioElement}
         {headerContent}
         {fullContent}
         <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
@@ -553,8 +540,6 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
     <Wrapper className="mx-auto px-4 py-8 lg:py-12" {...wrapperProps}>
       {/* Back link + badges — above the flex row so sidebar aligns with hero card */}
       {!isAttachmentOpen && headerContent}
-
-      {audioElement}
 
       <div className="flex items-start gap-4">
         {/* Left column — waits for panel transition, then swaps content */}

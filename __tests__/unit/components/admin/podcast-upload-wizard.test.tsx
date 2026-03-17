@@ -84,6 +84,13 @@ vi.mock('@/components/admin/thumbnail-crop-dialog', () => ({
 }));
 
 /**
+ * Mock next/navigation to satisfy useRouter calls inside the wizard.
+ */
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
+/**
  * Mock global fetch to prevent real API calls.
  */
 const mockFetch = vi.fn();

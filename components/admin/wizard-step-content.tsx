@@ -141,7 +141,7 @@ export function WizardStepContent({
                   {audioShortFileName}
                 </span>
               ) : (
-                <span className="text-xs text-muted-foreground/60">Up to 500 MB</span>
+                <span className="text-xs text-muted-foreground/60">Up to 10 MB</span>
               )}
             </button>
           </div>
@@ -182,7 +182,7 @@ export function WizardStepContent({
                   {audioLongFileName}
                 </span>
               ) : (
-                <span className="text-xs text-muted-foreground/60">Up to 500 MB</span>
+                <span className="text-xs text-muted-foreground/60">Up to 20 MB</span>
               )}
             </button>
           </div>
@@ -219,7 +219,7 @@ export function WizardStepContent({
             >
               <Paperclip className="h-5 w-5 text-muted-foreground" />
               <span className="text-xs font-medium">Attachments</span>
-              <span className="text-xs text-muted-foreground/60">PDF · up to 50 MB</span>
+              <span className="text-xs text-muted-foreground/60">PDF · up to 10 MB</span>
             </button>
 
             {/* Attached file chips */}

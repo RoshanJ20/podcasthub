@@ -1,17 +1,20 @@
 /**
  * Custom hook for HLS.js audio playback integration.
  *
- * Manages an HTML5 audio element with HLS.js for adaptive streaming (.m3u8)
+ * Manages a shared global HTML5 audio element with HLS.js for adaptive streaming (.m3u8)
  * and native playback for standard audio formats. Syncs play/pause, volume,
  * and playback rate from the Zustand player store to the audio element.
+ *
+ * The audio element is shared across all pages via AudioContext, persisting when navigating.
  */
 'use client';
-import { useRef, useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import Hls from 'hls.js';
 import { usePlayerStore } from '@/stores/player-store';
+import { useAudioRef } from '@/components/audio-player/audio-context';
 
 export function useHlsPlayer() {
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useAudioRef();
   const hlsRef = useRef<Hls | null>(null);
   const { currentPodcast, audioType, isPlaying, volume, playbackRate } = usePlayerStore();
 
@@ -50,7 +53,7 @@ export function useHlsPlayer() {
     } else {
       audio.src = audioUrl;
     }
-  }, [audioUrl]);
+  }, [audioUrl, audioRef]);
 
   /** Sync play/pause state with the audio element. */
   useEffect(() => {
@@ -63,39 +66,42 @@ export function useHlsPlayer() {
           /* Autoplay blocked by browser — expected, non-critical */
         });
     } else audio.pause();
-  }, [isPlaying]);
+  }, [isPlaying, audioRef]);
 
   /** Sync volume with the audio element. */
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume;
-  }, [volume]);
+  }, [volume, audioRef]);
 
   /** Sync playback rate with the audio element. */
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = playbackRate;
-  }, [playbackRate]);
+  }, [playbackRate, audioRef]);
 
   /** Handler for the audio element's timeupdate event. */
   const onTimeUpdate = useCallback(() => {
     if (audioRef.current) {
       usePlayerStore.getState().setCurrentTime(audioRef.current.currentTime);
     }
-  }, []);
+  }, [audioRef]);
 
   /** Handler for the audio element's loadedmetadata event. */
   const onLoadedMetadata = useCallback(() => {
     if (audioRef.current) {
       usePlayerStore.getState().setDuration(audioRef.current.duration);
     }
-  }, []);
+  }, [audioRef]);
 
   /** Imperatively seek the audio element and update store. */
-  const seekTo = useCallback((time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      usePlayerStore.getState().seek(time);
-    }
-  }, []);
+  const seekTo = useCallback(
+    (time: number) => {
+      if (audioRef.current) {
+        audioRef.current.currentTime = time;
+        usePlayerStore.getState().seek(time);
+      }
+    },
+    [audioRef]
+  );
 
   return { audioRef, onTimeUpdate, onLoadedMetadata, seekTo };
 }

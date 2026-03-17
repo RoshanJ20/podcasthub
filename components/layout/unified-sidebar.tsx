@@ -169,16 +169,22 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
           <>
             <div className="my-1" />
             <SectionLabel label="Admin" collapsed={collapsed} />
-            {adminLinks.map((link) => (
-              <SidebarNavItem
-                key={link.href}
-                href={link.href}
-                label={link.label}
-                icon={link.icon}
-                isActive={isRouteActive(link.href, pathname)}
-                collapsed={collapsed}
-              />
-            ))}
+            {adminLinks
+              .filter(
+                (link) =>
+                  // Only show Users link to superadmins
+                  link.href !== '/admin/users' || userRole === 'superadmin'
+              )
+              .map((link) => (
+                <SidebarNavItem
+                  key={link.href}
+                  href={link.href}
+                  label={link.label}
+                  icon={link.icon}
+                  isActive={isRouteActive(link.href, pathname)}
+                  collapsed={collapsed}
+                />
+              ))}
           </>
         )}
       </nav>

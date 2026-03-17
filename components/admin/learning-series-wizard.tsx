@@ -13,6 +13,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -83,6 +84,7 @@ export const LearningSeriesWizard = forwardRef<
   LearningSeriesWizardHandle,
   LearningSeriesWizardProps
 >(function LearningSeriesWizard({ onSuccess, onStepChange }, ref) {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [graphId, setGraphId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -188,12 +190,14 @@ export const LearningSeriesWizard = forwardRef<
   }, [form, graphId, loadFromApi, setAutoSaveGraphId, goToStep]);
 
   /**
-   * Resets the store and fires the success callback.
+   * Resets the store, fires the success callback, and redirects to learning paths.
    */
   const handleDone = useCallback(() => {
     reset();
     onSuccess?.();
-  }, [reset, onSuccess]);
+    // Redirect to learning paths page after successful creation
+    router.push('/learning-path');
+  }, [reset, onSuccess, router]);
 
   return (
     <div className="w-full py-6">

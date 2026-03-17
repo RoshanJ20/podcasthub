@@ -10,6 +10,10 @@ import { render, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PodcastDetailLayout } from '@/components/audio-player/podcast-detail-layout';
 
+vi.mock('@/components/audio-player/audio-context', () => ({
+  useAudioRef: () => ({ current: null }),
+}));
+
 vi.mock('hls.js', () => ({
   default: class MockHls {
     static isSupported() {

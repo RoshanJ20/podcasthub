@@ -1,6 +1,16 @@
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { UsersTable } from '@/components/admin/users-table';
 
-export default function AdminUsersPage() {
+export default async function AdminUsersPage() {
+  const headersList = await headers();
+  const userRole = headersList.get('x-user-role');
+
+  // Only superadmins can access user management
+  if (userRole !== 'superadmin') {
+    redirect('/unauthorized');
+  }
+
   return (
     <div className="space-y-6">
       <div>

@@ -24,7 +24,6 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedNumber } from '@/components/ui/animated-number';
-import { DateRangePicker } from './date-range-picker';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -88,7 +87,7 @@ export function AnalyticsCharts() {
 
   return (
     <div className="space-y-6">
-      <DateRangePicker onDateChange={fetchAnalytics} />
+      {/* <DateRangePicker onDateChange={fetchAnalytics} /> */}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">

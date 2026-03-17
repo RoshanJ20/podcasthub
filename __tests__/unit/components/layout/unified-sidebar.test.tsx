@@ -16,6 +16,7 @@ import { usePlayerStore } from '@/stores/player-store';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 vi.mock('@/stores/player-store', () => ({
@@ -91,7 +92,7 @@ describe('UnifiedSidebar', () => {
   describe('admin section', () => {
     it('renders the Admin section when isAdmin={true}', () => {
       const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} isAdmin={true} />);
-      const dashboardLink = container.querySelector('a[href="/admin"]');
+      const dashboardLink = container.querySelector('a[href="/admin/analytics"]');
       expect(dashboardLink).not.toBeNull();
     });
 
@@ -108,7 +109,7 @@ describe('UnifiedSidebar', () => {
 
     it('does NOT render the Admin dashboard link when isAdmin is false', () => {
       const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} isAdmin={false} />);
-      const dashboardLink = container.querySelector('a[href="/admin"]');
+      const dashboardLink = container.querySelector('a[href="/admin/analytics"]');
       expect(dashboardLink).toBeNull();
     });
 

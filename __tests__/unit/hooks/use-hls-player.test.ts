@@ -8,6 +8,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useHlsPlayer } from '@/hooks/use-hls-player';
 
+vi.mock('@/components/audio-player/audio-context', () => ({
+  useAudioRef: () => ({ current: null }),
+}));
+
 vi.mock('hls.js', () => ({
   default: class MockHls {
     static isSupported() {
