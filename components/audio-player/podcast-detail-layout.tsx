@@ -131,7 +131,7 @@ function SidebarBookmarks({
   }, [podcastId]);
 
   return (
-    <div className="rounded-xl border border-border bg-card p-3">
+    <div className="p-3">
       <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         Bookmarks
       </h3>
@@ -489,9 +489,11 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
             {pdfPanel}
           </div>
         ) : (
-          <div className="sticky top-8 w-[180px] shrink-0 space-y-3">
-            <div className="rounded-xl border border-border bg-card">{sidebarContent}</div>
-            <SidebarBookmarks podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} />
+          <div className="sticky top-8 w-[180px] shrink-0 self-stretch rounded-xl border border-border bg-card">
+            {sidebarContent}
+            <div className="border-t border-border">
+              <SidebarBookmarks podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} />
+            </div>
           </div>
         )}
       </div>
