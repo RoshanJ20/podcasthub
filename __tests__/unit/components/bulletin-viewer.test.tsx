@@ -28,16 +28,20 @@ global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
 let capturedOnLoadSuccess: ((data: { numPages: number }) => void) | null = null;
 
+let pdfLoaded = false;
+
 vi.mock('react-pdf', () => ({
   Document: ({
     children,
     onLoadSuccess,
+    loading,
   }: {
     children: React.ReactNode;
     onLoadSuccess?: (data: { numPages: number }) => void;
+    loading?: React.ReactNode;
   }) => {
     capturedOnLoadSuccess = onLoadSuccess ?? null;
-    return <div data-testid="pdf-document">{children}</div>;
+    return <div data-testid="pdf-document">{pdfLoaded ? children : loading}</div>;
   },
   Page: ({ pageNumber }: { pageNumber: number }) => (
     <div data-testid={`pdf-page-${pageNumber}`} style={{ height: 800 }}>
@@ -62,6 +66,7 @@ vi.mock('@tanstack/react-virtual', () => ({
 }));
 
 function simulatePdfLoad(numPages: number) {
+  pdfLoaded = true;
   act(() => {
     capturedOnLoadSuccess?.({ numPages });
   });
@@ -70,6 +75,7 @@ function simulatePdfLoad(numPages: number) {
 beforeEach(() => {
   cleanup();
   capturedOnLoadSuccess = null;
+  pdfLoaded = false;
 });
 
 describe('BulletinViewer', () => {

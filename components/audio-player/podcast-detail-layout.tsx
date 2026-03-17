@@ -42,23 +42,31 @@ const BulletinViewer = dynamic(() => import('./bulletin-viewer').then((m) => m.B
   ssr: false,
   loading: () => (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border bg-muted/50 px-3 py-2">
-        <div className="h-5 w-32 animate-pulse rounded bg-muted" />
+      {/* Toolbar skeleton */}
+      <div className="flex items-center justify-between border-b border-border bg-muted/50 px-3 py-2.5">
+        <div className="h-5 w-36 animate-pulse rounded-md bg-muted-foreground/15" />
+        <div className="flex gap-2">
+          <div className="h-7 w-7 animate-pulse rounded-md bg-muted-foreground/10" />
+          <div className="h-7 w-7 animate-pulse rounded-md bg-muted-foreground/10" />
+        </div>
       </div>
-      <div className="mx-auto max-w-lg flex-1 animate-pulse space-y-6 p-8">
+      {/* Document skeleton */}
+      <div className="mx-auto max-w-lg flex-1 animate-pulse space-y-5 p-10">
         <div className="space-y-3">
-          <div className="h-6 w-3/4 rounded bg-muted" />
-          <div className="h-4 w-1/2 rounded bg-muted" />
+          <div className="h-7 w-3/4 rounded-md bg-muted-foreground/15" />
+          <div className="h-5 w-1/2 rounded-md bg-muted-foreground/10" />
         </div>
-        <div className="space-y-2">
-          <div className="h-3 w-full rounded bg-muted" />
-          <div className="h-3 w-full rounded bg-muted" />
-          <div className="h-3 w-5/6 rounded bg-muted" />
+        <div className="space-y-2.5">
+          <div className="h-3.5 w-full rounded bg-muted-foreground/10" />
+          <div className="h-3.5 w-full rounded bg-muted-foreground/10" />
+          <div className="h-3.5 w-5/6 rounded bg-muted-foreground/10" />
+          <div className="h-3.5 w-full rounded bg-muted-foreground/10" />
+          <div className="h-3.5 w-4/6 rounded bg-muted-foreground/10" />
         </div>
-        <div className="h-40 w-full rounded-lg bg-muted" />
-        <div className="space-y-2">
-          <div className="h-3 w-full rounded bg-muted" />
-          <div className="h-3 w-3/4 rounded bg-muted" />
+        <div className="h-44 w-full rounded-xl bg-muted-foreground/8" />
+        <div className="space-y-2.5">
+          <div className="h-3.5 w-full rounded bg-muted-foreground/10" />
+          <div className="h-3.5 w-3/4 rounded bg-muted-foreground/10" />
         </div>
       </div>
     </div>

@@ -175,8 +175,43 @@ export function BulletinViewer({
 
       {/* Scrollable PDF container */}
       <div ref={scrollContainerRef} className="flex-1 overflow-auto bg-muted/30">
-        <Document file={resolvedUrl} onLoadSuccess={onDocumentLoadSuccess}>
-          {numPages > 0 ? (
+        <Document
+          file={resolvedUrl}
+          onLoadSuccess={onDocumentLoadSuccess}
+          loading={
+            <div className="mx-auto max-w-lg animate-pulse space-y-5 p-10">
+              {/* Title */}
+              <div className="space-y-3">
+                <div className="h-7 w-3/4 rounded-md bg-muted-foreground/15" />
+                <div className="h-5 w-1/2 rounded-md bg-muted-foreground/10" />
+              </div>
+              {/* Paragraph */}
+              <div className="space-y-2.5">
+                <div className="h-3.5 w-full rounded bg-muted-foreground/10" />
+                <div className="h-3.5 w-full rounded bg-muted-foreground/10" />
+                <div className="h-3.5 w-5/6 rounded bg-muted-foreground/10" />
+                <div className="h-3.5 w-full rounded bg-muted-foreground/10" />
+                <div className="h-3.5 w-4/6 rounded bg-muted-foreground/10" />
+              </div>
+              {/* Image block */}
+              <div className="h-44 w-full rounded-xl bg-muted-foreground/8" />
+              {/* More text */}
+              <div className="space-y-2.5">
+                <div className="h-3.5 w-full rounded bg-muted-foreground/10" />
+                <div className="h-3.5 w-full rounded bg-muted-foreground/10" />
+                <div className="h-3.5 w-3/4 rounded bg-muted-foreground/10" />
+              </div>
+              {/* Table rows */}
+              <div className="space-y-2">
+                <div className="h-10 w-full rounded-lg bg-muted-foreground/8" />
+                <div className="h-10 w-full rounded-lg bg-muted-foreground/5" />
+                <div className="h-10 w-full rounded-lg bg-muted-foreground/8" />
+                <div className="h-10 w-full rounded-lg bg-muted-foreground/5" />
+              </div>
+            </div>
+          }
+        >
+          {numPages > 0 && (
             <div
               style={{
                 height: virtualizer.getTotalSize(),
@@ -204,38 +239,6 @@ export function BulletinViewer({
                   />
                 </div>
               ))}
-            </div>
-          ) : (
-            /* Document skeleton — mimics a page with header, lines, and blocks */
-            <div className="mx-auto max-w-lg animate-pulse space-y-6 p-8">
-              {/* Title block */}
-              <div className="space-y-3">
-                <div className="h-6 w-3/4 rounded bg-border" />
-                <div className="h-4 w-1/2 rounded bg-border/70" />
-              </div>
-              {/* Paragraph lines */}
-              <div className="space-y-2.5">
-                <div className="h-3 w-full rounded bg-border/60" />
-                <div className="h-3 w-full rounded bg-border/60" />
-                <div className="h-3 w-5/6 rounded bg-border/60" />
-                <div className="h-3 w-full rounded bg-border/60" />
-                <div className="h-3 w-4/6 rounded bg-border/60" />
-              </div>
-              {/* Image/chart placeholder */}
-              <div className="h-40 w-full rounded-lg bg-border/40" />
-              {/* More lines */}
-              <div className="space-y-2.5">
-                <div className="h-3 w-full rounded bg-border/60" />
-                <div className="h-3 w-full rounded bg-border/60" />
-                <div className="h-3 w-3/4 rounded bg-border/60" />
-              </div>
-              {/* Table-like rows */}
-              <div className="space-y-2">
-                <div className="h-8 w-full rounded bg-border/40" />
-                <div className="h-8 w-full rounded bg-border/30" />
-                <div className="h-8 w-full rounded bg-border/40" />
-                <div className="h-8 w-full rounded bg-border/30" />
-              </div>
             </div>
           )}
         </Document>
