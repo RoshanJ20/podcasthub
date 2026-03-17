@@ -270,10 +270,6 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
           domainColor={domainColor}
         />
       </div>
-
-      <div className="mt-4">
-        <BookmarkPanel podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} />
-      </div>
     </motion.div>
   );
 
@@ -393,6 +389,9 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
         {audioElement}
         {headerContent}
         {fullContent}
+        <div className="mt-4">
+          <BookmarkPanel podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} />
+        </div>
       </Wrapper>
     );
   }
@@ -430,8 +429,11 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
             {pdfPanel}
           </div>
         ) : (
-          <div className="sticky top-8 w-[180px] shrink-0 rounded-xl border border-border bg-card">
-            {sidebarContent}
+          <div className="sticky top-8 w-[180px] shrink-0 space-y-4">
+            <div className="rounded-xl border border-border bg-card">{sidebarContent}</div>
+            <div className="rounded-xl border border-border bg-card">
+              <BookmarkPanel podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} />
+            </div>
           </div>
         )}
       </div>
