@@ -157,37 +157,6 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   /** Shared left-column content (compact or full). */
   const leftContent = (
     <>
-      {/* Back link + badges — hidden when panel is open to save space */}
-      {!isAttachmentOpen && (
-        <Section {...sectionProps}>
-          <Link
-            href="/bulletins"
-            className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" />
-            Back to library
-          </Link>
-
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <span
-              className="inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold"
-              style={{ backgroundColor: badgeBg, color: badgeText }}
-            >
-              {podcast.domain}
-            </span>
-            <span className="text-xs text-muted-foreground">{podcast.year}</span>
-            {podcast.tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </Section>
-      )}
-
       {/* Hero card OR compact player */}
       <AnimatePresence mode="wait" initial={false}>
         {isAttachmentOpen ? (
@@ -318,10 +287,42 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
     />
   ) : null;
 
+  /** Back link + badges — reusable block. */
+  const headerContent = (
+    <Section {...sectionProps}>
+      <Link
+        href="/bulletins"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" />
+        Back to library
+      </Link>
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span
+          className="inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold"
+          style={{ backgroundColor: badgeBg, color: badgeText }}
+        >
+          {podcast.domain}
+        </span>
+        <span className="text-xs text-muted-foreground">{podcast.year}</span>
+        {podcast.tags.map((tag) => (
+          <span
+            key={tag}
+            className="inline-flex rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+          >
+            {tag}
+          </span>
+        ))}
+      </div>
+    </Section>
+  );
+
   /** No attachments — render full-width layout without sidebar. */
   if (!hasAttachments) {
     return (
       <Wrapper className="mx-auto max-w-5xl px-4 py-8 lg:py-12" {...wrapperProps}>
+        {headerContent}
         {leftContent}
       </Wrapper>
     );
@@ -330,6 +331,9 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   /** Two-column layout: main content + attachment sidebar/PDF panel. */
   return (
     <Wrapper className="mx-auto px-4 py-8 lg:py-12" {...wrapperProps}>
+      {/* Back link + badges — above the flex row so sidebar aligns with hero card */}
+      {!isAttachmentOpen && headerContent}
+
       <div className="flex items-start gap-4">
         {/* Left column — expands/compresses with CSS transition */}
         <div
@@ -345,7 +349,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
             {pdfPanel}
           </div>
         ) : (
-          <div className="sticky top-8 w-[180px] shrink-0 overflow-hidden rounded-xl border border-border bg-card">
+          <div className="w-[180px] shrink-0 overflow-hidden rounded-xl border border-border bg-card">
             {sidebarContent}
           </div>
         )}
