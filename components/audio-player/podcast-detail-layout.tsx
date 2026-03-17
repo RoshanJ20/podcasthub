@@ -1,35 +1,39 @@
 /**
  * Client-side layout for the podcast detail page.
  *
- * Layout: Thumbnail + metadata on the left, player on the right.
- * Below the hero row: AnimatedTabs with Transcript, Attachments, Bookmarks.
+ * Two-column layout with persistent attachment sidebar on the right.
+ * Clicking a file opens a slide-in PDF panel (70% width) while the
+ * left column compresses to 30% with compact player/transcript/bookmarks.
  *
- * Sections cascade in from the left using sectionStagger + slideInFromLeft.
- * Domain colors thread through all child components.
+ * Two-phase animation: motion/react animates open/close, then swaps
+ * to ResizablePanelGroup for drag-to-resize once animation completes.
  *
  * Dependencies:
- * - motion/react for entrance animations
- * - lib/animation for shared variants and stagger configs
+ * - motion/react for open/close animations
+ * - lib/animation for shared variants and transition configs
  * - lib/domain-colors for per-domain color tokens
+ * - lib/attachment-utils for filename extraction
  * - next-themes for dark/light mode
- * - components/ui/animated-tabs for tab UI
+ * - components/ui/resizable for drag-to-resize split view
  */
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from 'next-themes';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import { usePlayerStore } from '@/stores/player-store';
 import { useHlsPlayer } from '@/hooks/use-hls-player';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { variants, transitions, sectionStagger } from '@/lib/animation';
 import { getDomainColor } from '@/lib/domain-colors';
-import { AnimatedTabs } from '@/components/ui/animated-tabs';
+import { extractAttachmentName } from '@/lib/attachment-utils';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { AudioPlayer } from './audio-player';
+import { CompactPlayer } from './compact-player';
 import { TranscriptViewer } from './transcript-viewer';
 import { BulletinViewer } from './bulletin-viewer';
 import { BookmarkPanel } from './bookmark-panel';
@@ -61,6 +65,15 @@ interface PodcastDetailLayoutProps {
   relatedPodcasts?: PodcastRecord[];
 }
 
+/**
+ * Renders the podcast detail page with a two-column layout.
+ *
+ * Default state: main content left + 140px attachment sidebar right.
+ * Expanded state: 30/70 split with compact player on left, PDF viewer on right.
+ *
+ * @param props.podcast - The podcast record to display.
+ * @param props.relatedPodcasts - Optional list of related podcasts (reserved for future use).
+ */
 export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   const { seekTo } = useHlsPlayer();
   const reducedMotion = useReducedMotion();
@@ -71,6 +84,23 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
   const badgeText = isDark ? domainColor.darkText : domainColor.text;
 
   const hasAttachments = podcast.bulletinUrls.length > 0;
+
+  /** Slide-in panel state. */
+  const [activeAttachmentUrl, setActiveAttachmentUrl] = useState<string | null>(null);
+  const [isAnimationComplete, setIsAnimationComplete] = useState(false);
+  const isAttachmentOpen = activeAttachmentUrl !== null;
+
+  /** Open an attachment in the PDF panel. */
+  const openAttachment = (url: string) => {
+    setIsAnimationComplete(false);
+    setActiveAttachmentUrl(url);
+  };
+
+  /** Close the PDF panel. */
+  const closeAttachment = () => {
+    setIsAnimationComplete(false);
+    setActiveAttachmentUrl(null);
+  };
 
   /** Load the podcast into the player store on mount. */
   useEffect(() => {
@@ -102,54 +132,10 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
     [activeTranscript]
   );
 
-  /** Build tab items for AnimatedTabs. */
-  const tabItems = useMemo(() => {
-    const items = [
-      {
-        value: 'transcript',
-        label: 'Transcript',
-        content: (
-          <TranscriptViewer
-            segments={segments}
-            fullText={activeTranscript?.fullText}
-            onSeek={seekTo}
-            domainColor={domainColor}
-          />
-        ),
-      },
-    ];
-
-    if (hasAttachments) {
-      items.push({
-        value: 'attachments',
-        label: 'Attachments',
-        content: (
-          <BulletinViewer
-            url={podcast.bulletinUrls[0]}
-            onClose={() => {
-              /* Close handled by parent slide-in panel in future refactor */
-            }}
-          />
-        ),
-      });
-    }
-
-    items.push({
-      value: 'bookmarks',
-      label: 'Bookmarks',
-      content: <BookmarkPanel podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} />,
-    });
-
-    return items;
-  }, [
-    segments,
-    activeTranscript?.fullText,
-    seekTo,
-    domainColor,
-    hasAttachments,
-    podcast.bulletinUrls,
-    podcast.id,
-  ]);
+  /** Active filename for the PDF toolbar. */
+  const activeFilename = activeAttachmentUrl
+    ? extractAttachmentName(activeAttachmentUrl)
+    : undefined;
 
   /* Choose wrapper element based on reduced-motion preference. */
   const Wrapper = reducedMotion ? 'div' : motion.div;
@@ -162,8 +148,9 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
     ? {}
     : { variants: variants.slideInFromLeft, transition: transitions.normal };
 
-  return (
-    <Wrapper className="mx-auto max-w-5xl px-4 py-8 lg:py-12" {...wrapperProps}>
+  /** Shared left-column content (compact or full). */
+  const leftContent = (
+    <>
       {/* Back link + badges */}
       <Section {...sectionProps}>
         <Link
@@ -193,45 +180,185 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
         </div>
       </Section>
 
-      {/* Hero card: colored left edge, thumbnail + metadata, player */}
-      <Section
-        className="flex overflow-hidden rounded-xl border border-border bg-card"
-        {...sectionProps}
-      >
-        {/* Domain-colored left edge */}
-        <div className="w-1.5 shrink-0" style={{ backgroundColor: domainColor.border }} />
+      {/* Hero card OR compact player */}
+      <AnimatePresence mode="wait">
+        {isAttachmentOpen ? (
+          <motion.div
+            key="compact"
+            initial={reducedMotion ? undefined : { opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reducedMotion ? undefined : { opacity: 0, y: -10 }}
+            transition={transitions.fast}
+          >
+            <CompactPlayer domainColor={domainColor} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="hero"
+            initial={reducedMotion ? undefined : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={reducedMotion ? undefined : { opacity: 0 }}
+            transition={transitions.fast}
+          >
+            <Section
+              className="flex overflow-hidden rounded-xl border border-border bg-card"
+              {...sectionProps}
+            >
+              <div className="w-1.5 shrink-0" style={{ backgroundColor: domainColor.border }} />
+              <div className="flex flex-1 flex-col gap-6 p-5 lg:flex-row lg:items-start lg:p-6">
+                <div className="flex min-w-0 flex-1 items-start gap-5">
+                  <div className="relative hidden size-32 shrink-0 overflow-hidden rounded-xl sm:block lg:size-40">
+                    <Image
+                      src={resolveStorageUrl(podcast.thumbnailUrl)}
+                      alt={podcast.title}
+                      fill
+                      className="object-cover"
+                      sizes="160px"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+                      {podcast.title}
+                    </h1>
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                      {podcast.description}
+                    </p>
+                  </div>
+                </div>
+                <div className="w-full lg:w-100 lg:shrink-0">
+                  <AudioPlayer domainColor={domainColor} />
+                </div>
+              </div>
+            </Section>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <div className="flex flex-1 flex-col gap-6 p-5 lg:flex-row lg:items-start lg:p-6">
-          <div className="flex min-w-0 flex-1 items-start gap-5">
-            <div className="relative hidden size-32 shrink-0 overflow-hidden rounded-xl sm:block lg:size-40">
-              <Image
-                src={resolveStorageUrl(podcast.thumbnailUrl)}
-                alt={podcast.title}
-                fill
-                className="object-cover"
-                sizes="160px"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
-                {podcast.title}
-              </h1>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                {podcast.description}
-              </p>
-            </div>
-          </div>
-
-          <div className="w-full lg:w-100 lg:shrink-0">
-            <AudioPlayer domainColor={domainColor} />
-          </div>
-        </div>
+      {/* Transcript */}
+      <Section className="mt-6" {...sectionProps}>
+        <TranscriptViewer
+          segments={segments}
+          fullText={activeTranscript?.fullText}
+          onSeek={seekTo}
+          domainColor={domainColor}
+          compact={isAttachmentOpen}
+        />
       </Section>
 
-      {/* Tabs: Transcript / Attachments / Bookmarks */}
-      <Section className="mt-8" {...sectionProps}>
-        <AnimatedTabs tabs={tabItems} defaultValue="transcript" layoutId="podcast-detail-tabs" />
+      {/* Bookmarks */}
+      <Section className="mt-4" {...sectionProps}>
+        <BookmarkPanel
+          podcastId={podcast.id}
+          onSeek={seekTo}
+          domainColor={domainColor}
+          compact={isAttachmentOpen}
+        />
       </Section>
+    </>
+  );
+
+  /** Attachment sidebar file list. */
+  const sidebarContent = (
+    <div data-testid="attachment-sidebar" className="space-y-2 p-3">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Attachments
+      </h3>
+      {podcast.bulletinUrls.map((url, index) => {
+        const isActive = activeAttachmentUrl === url;
+        return (
+          <button
+            key={url}
+            data-testid={`attachment-file-${index}`}
+            data-active={isActive ? 'true' : 'false'}
+            title={url.split('/').pop() ?? `Attachment ${index + 1}`}
+            onClick={() => openAttachment(url)}
+            className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-muted"
+            style={
+              isActive
+                ? {
+                    backgroundColor: isDark ? `${domainColor.darkBg}40` : domainColor.bg,
+                    borderLeft: `2px solid ${domainColor.border}`,
+                  }
+                : undefined
+            }
+          >
+            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="truncate">{extractAttachmentName(url, index)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  /** PDF viewer panel (right side when open). */
+  const pdfPanel = activeAttachmentUrl ? (
+    <BulletinViewer url={activeAttachmentUrl} filename={activeFilename} onClose={closeAttachment} />
+  ) : null;
+
+  /** No attachments — render full-width layout without sidebar. */
+  if (!hasAttachments) {
+    return (
+      <Wrapper className="mx-auto max-w-5xl px-4 py-8 lg:py-12" {...wrapperProps}>
+        {leftContent}
+      </Wrapper>
+    );
+  }
+
+  /** Phase 2: resizable mode — panel fully open, animation done. */
+  if (isAttachmentOpen && isAnimationComplete) {
+    return (
+      <Wrapper className="mx-auto max-w-7xl px-4 py-8 lg:py-12" {...wrapperProps}>
+        <ResizablePanelGroup direction="horizontal" className="min-h-[calc(100vh-120px)]">
+          <ResizablePanel defaultSize={30} minSize={20}>
+            <div className="h-full overflow-y-auto pr-4">{leftContent}</div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={70} minSize={40}>
+            <div className="flex h-full flex-col">
+              {pdfPanel}
+              <div className="border-t border-border">{sidebarContent}</div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </Wrapper>
+    );
+  }
+
+  /** Phase 1: default or animating — motion/react controls widths. */
+  return (
+    <Wrapper className="mx-auto max-w-7xl px-4 py-8 lg:py-12" {...wrapperProps}>
+      <div className="flex min-h-[calc(100vh-120px)] gap-4">
+        {/* Left column */}
+        <motion.div
+          className="min-w-0 overflow-y-auto"
+          animate={{ flex: isAttachmentOpen ? '0 0 30%' : '1 1 0%' }}
+          transition={reducedMotion ? { duration: 0 } : transitions.panelSlide}
+          onAnimationComplete={() => {
+            if (isAttachmentOpen) setIsAnimationComplete(true);
+          }}
+        >
+          {leftContent}
+        </motion.div>
+
+        {/* Right column: sidebar or PDF viewer */}
+        <motion.div
+          className="shrink-0 overflow-hidden rounded-xl border border-border bg-card"
+          animate={{
+            width: isAttachmentOpen ? '70%' : 140,
+            flex: isAttachmentOpen ? '0 0 70%' : '0 0 140px',
+          }}
+          transition={reducedMotion ? { duration: 0 } : transitions.panelSlide}
+        >
+          {isAttachmentOpen ? (
+            <div className="flex h-full flex-col">
+              {pdfPanel}
+              <div className="border-t border-border">{sidebarContent}</div>
+            </div>
+          ) : (
+            sidebarContent
+          )}
+        </motion.div>
+      </div>
     </Wrapper>
   );
 }
