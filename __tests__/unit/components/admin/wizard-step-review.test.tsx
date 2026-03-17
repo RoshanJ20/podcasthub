@@ -6,7 +6,7 @@
  * - Displays tags as badges
  * - Shows "Not provided" for missing audio files
  * - Shows filename when audio is present
- * - Shows transcript character count
+ * - Shows transcript summary
  * - Shows thumbnail preview image
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -50,68 +50,42 @@ function buildProps(overrides: Partial<WizardStepReviewProps> = {}): WizardStepR
   };
 }
 
-/**
- * Finds the value element within a review row identified by its label text.
- *
- * @param container - The DOM container to search in.
- * @param labelText - The label text to locate the row.
- * @returns The sibling value element, or null if not found.
- */
-function getReviewRowValue(container: HTMLElement, labelText: string): HTMLElement | null {
-  const labels = container.querySelectorAll('.text-sm.font-medium.text-muted-foreground');
-  for (const label of labels) {
-    if (label.textContent === labelText) {
-      return label.nextElementSibling as HTMLElement | null;
-    }
-  }
-  return null;
-}
-
 afterEach(() => {
   cleanup();
 });
 
 describe('WizardStepReview', () => {
   it('displays title, description, domain, and year correctly', () => {
-    const { container } = render(<WizardStepReview {...buildProps()} />);
+    render(<WizardStepReview {...buildProps()} />);
 
     expect(screen.getByText('Audit Standards Update Q1 2026')).toBeInTheDocument();
     expect(
       screen.getByText('A comprehensive overview of changes to auditing standards.')
     ).toBeInTheDocument();
 
-    /* Domain appears as a Badge - check via row value */
-    const domainValue = getReviewRowValue(container, 'Domain');
-    expect(domainValue?.textContent).toContain('Auditing');
+    /* Domain appears as a Badge in the header strip */
+    expect(screen.getByText('Auditing')).toBeInTheDocument();
 
-    const yearValue = getReviewRowValue(container, 'Year');
-    expect(yearValue?.textContent).toBe('2026');
+    /* Year appears in the header strip */
+    expect(screen.getByText('2026')).toBeInTheDocument();
   });
 
   it('displays tags as badges', () => {
-    const { container } = render(
-      <WizardStepReview {...buildProps({ tags: ['IFRS', 'ISA', 'Tax'] })} />
-    );
+    render(<WizardStepReview {...buildProps({ tags: ['IFRS', 'ISA', 'Tax'] })} />);
 
-    const tagsValue = getReviewRowValue(container, 'Tags');
-    const badges = tagsValue?.querySelectorAll('[data-slot="badge"]') ?? [];
-
-    /* Badge component may render duplicate spans via useRender; check text content */
-    const badgeTexts = Array.from(badges).map((b) => b.textContent);
-    expect(badgeTexts).toContain('IFRS');
-    expect(badgeTexts).toContain('ISA');
-    expect(badgeTexts).toContain('Tax');
+    expect(screen.getByText('IFRS')).toBeInTheDocument();
+    expect(screen.getByText('ISA')).toBeInTheDocument();
+    expect(screen.getByText('Tax')).toBeInTheDocument();
   });
 
   it('shows "None" when tags array is empty', () => {
-    const { container } = render(<WizardStepReview {...buildProps({ tags: [] })} />);
+    render(<WizardStepReview {...buildProps({ tags: [] })} />);
 
-    const tagsValue = getReviewRowValue(container, 'Tags');
-    expect(tagsValue?.textContent).toContain('None');
+    expect(screen.getByText('None')).toBeInTheDocument();
   });
 
   it('shows "Not provided" for missing audio files', () => {
-    const { container } = render(
+    render(
       <WizardStepReview
         {...buildProps({
           audioShortUrl: null,
@@ -122,11 +96,9 @@ describe('WizardStepReview', () => {
       />
     );
 
-    const briefSummaryValue = getReviewRowValue(container, 'Brief Summary');
-    expect(briefSummaryValue?.textContent).toBe('Not provided');
-
-    const detailedOverviewValue = getReviewRowValue(container, 'Detailed Overview');
-    expect(detailedOverviewValue?.textContent).toBe('Not provided');
+    /* FilePill components show "Not provided" in italic when value is null */
+    const notProvidedElements = screen.getAllByText('Not provided');
+    expect(notProvidedElements.length).toBeGreaterThanOrEqual(2);
   });
 
   it('shows filename when audio is present', () => {
@@ -145,8 +117,8 @@ describe('WizardStepReview', () => {
     expect(screen.getByText('detailed-overview.mp3')).toBeInTheDocument();
   });
 
-  it('shows transcript character count', () => {
-    const { container } = render(
+  it('shows transcript summary when transcripts are provided', () => {
+    render(
       <WizardStepReview
         {...buildProps({
           shortTranscript: 'Hello world',
@@ -155,15 +127,13 @@ describe('WizardStepReview', () => {
       />
     );
 
-    const briefTranscriptValue = getReviewRowValue(container, 'Brief Summary Transcript');
-    expect(briefTranscriptValue?.textContent).toBe('11 characters');
-
-    const detailedTranscriptValue = getReviewRowValue(container, 'Detailed Overview Transcript');
-    expect(detailedTranscriptValue?.textContent).toBe('46 characters');
+    /* Component shows "Short: 11 chars · Long: 46 chars" */
+    expect(screen.getByText(/Short: 11 chars/)).toBeInTheDocument();
+    expect(screen.getByText(/Long: 46 chars/)).toBeInTheDocument();
   });
 
-  it('shows "Not provided" for empty transcripts', () => {
-    const { container } = render(
+  it('does not show transcript section when transcripts are empty', () => {
+    render(
       <WizardStepReview
         {...buildProps({
           shortTranscript: '',
@@ -172,11 +142,8 @@ describe('WizardStepReview', () => {
       />
     );
 
-    const briefTranscriptValue = getReviewRowValue(container, 'Brief Summary Transcript');
-    expect(briefTranscriptValue?.textContent).toBe('Not provided');
-
-    const detailedTranscriptValue = getReviewRowValue(container, 'Detailed Overview Transcript');
-    expect(detailedTranscriptValue?.textContent).toBe('Not provided');
+    /* No transcript section is rendered when both are empty */
+    expect(screen.queryByText(/Transcripts/)).not.toBeInTheDocument();
   });
 
   it('shows thumbnail preview image when thumbnailUrl exists', () => {
@@ -189,7 +156,7 @@ describe('WizardStepReview', () => {
       />
     );
 
-    const image = screen.getByRole('img', { name: /thumbnail preview/i });
+    const image = screen.getByRole('img', { name: /thumbnail/i });
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', 'https://storage.example.com/thumb.jpg');
   });
@@ -205,10 +172,10 @@ describe('WizardStepReview', () => {
     );
 
     /* No thumbnail image should be rendered when URL is null */
-    expect(screen.queryByRole('img', { name: /thumbnail preview/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /thumbnail/i })).not.toBeInTheDocument();
   });
 
-  it('shows bulletin attachment filenames', () => {
+  it('shows bulletin attachment count when files exist', () => {
     render(
       <WizardStepReview
         {...buildProps({
@@ -217,12 +184,12 @@ describe('WizardStepReview', () => {
       />
     );
 
-    expect(screen.getByText('report-q1.pdf')).toBeInTheDocument();
-    expect(screen.getByText('appendix-a.pdf')).toBeInTheDocument();
+    /* Component shows file count (e.g., "2 files") rather than individual names */
+    expect(screen.getByText('2 files')).toBeInTheDocument();
   });
 
-  it('shows "None" when no bulletin attachments exist', () => {
-    const { container } = render(
+  it('shows "Not provided" when no bulletin attachments exist', () => {
+    render(
       <WizardStepReview
         {...buildProps({
           bulletinFileNames: [],
@@ -230,7 +197,8 @@ describe('WizardStepReview', () => {
       />
     );
 
-    const attachmentsValue = getReviewRowValue(container, 'Attachments');
-    expect(attachmentsValue?.textContent).toContain('None');
+    /* FilePill for Attachments shows "Not provided" when empty */
+    const attachmentsSection = screen.getByText('Attachments').closest('div');
+    expect(attachmentsSection?.textContent).toContain('Not provided');
   });
 });

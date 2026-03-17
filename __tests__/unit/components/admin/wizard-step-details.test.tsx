@@ -94,7 +94,7 @@ describe('WizardStepDetails', () => {
     expect(screen.getByText(/Domain/)).toBeInTheDocument();
     expect(screen.getByText(/Year/)).toBeInTheDocument();
     expect(screen.getByText(/Tags/)).toBeInTheDocument();
-    expect(screen.getByText(/Thumbnail Image/)).toBeInTheDocument();
+    expect(screen.getByText(/^Thumbnail/)).toBeInTheDocument();
   });
 
   it('renders * indicator on Title, Description, Domain, and Year labels', () => {

@@ -73,10 +73,10 @@ describe('AudioPlayer', () => {
     expect(container.querySelector('button[aria-label="Skip backward"]')).not.toBeNull();
   });
 
-  it('renders volume slider', () => {
+  it('does not render volume slider (full player omits inline volume)', () => {
     const { container } = render(<AudioPlayer />);
     const volumeSlider = container.querySelector('[aria-label="Volume"]');
-    expect(volumeSlider).not.toBeNull();
+    expect(volumeSlider).toBeNull();
   });
 
   it('renders playback speed button', () => {

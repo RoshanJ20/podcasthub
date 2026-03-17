@@ -109,8 +109,8 @@ describe('CompactPlayer', () => {
     expect(container.querySelector('button[aria-label="Add bookmark"]')).toBeNull();
   });
 
-  it('does NOT render audio type toggle', () => {
+  it('renders audio type toggle when long version is available', () => {
     const { container } = render(<CompactPlayer />);
-    expect(container.querySelector('button[aria-label="Brief Summary version"]')).toBeNull();
+    expect(container.querySelector('button[aria-label="Brief Summary version"]')).not.toBeNull();
   });
 });

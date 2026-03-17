@@ -21,6 +21,7 @@ vi.mock('@/lib/db', () => ({
       count: vi.fn(),
     },
     userActivity: {
+      count: vi.fn(),
       findMany: vi.fn(),
       groupBy: vi.fn(),
     },
@@ -84,6 +85,7 @@ describe('GET /api/admin/analytics', () => {
 
     vi.mocked(prisma.podcast.count).mockResolvedValue(10);
     vi.mocked(prisma.learningGraph.count).mockResolvedValue(3);
+    vi.mocked(prisma.userActivity.count).mockResolvedValue(3);
     vi.mocked(prisma.userActivity.findMany).mockResolvedValue([
       { podcast: { domain: 'Auditing' }, createdAt: new Date('2026-01-15') },
       { podcast: { domain: 'Auditing' }, createdAt: new Date('2026-01-20') },
@@ -123,6 +125,7 @@ describe('GET /api/admin/analytics', () => {
 
     vi.mocked(prisma.podcast.count).mockResolvedValue(5);
     vi.mocked(prisma.learningGraph.count).mockResolvedValue(1);
+    vi.mocked(prisma.userActivity.count).mockResolvedValue(1);
     vi.mocked(prisma.userActivity.findMany).mockResolvedValue([
       { podcast: { domain: 'Auditing' }, createdAt: new Date('2026-01-15') },
     ] as never);
@@ -158,6 +161,7 @@ describe('GET /api/admin/analytics', () => {
 
     vi.mocked(prisma.podcast.count).mockResolvedValue(0);
     vi.mocked(prisma.learningGraph.count).mockResolvedValue(0);
+    vi.mocked(prisma.userActivity.count).mockResolvedValue(3);
 
     // First findMany call returns listen activities, second returns monthly trends
     // Since both calls use the same mock, we use mockResolvedValue

@@ -56,6 +56,34 @@ vi.mock('sonner', () => ({
 }));
 
 /**
+ * Mock ThumbnailCropDialog to bypass canvas API limitations in jsdom.
+ * Immediately calls onCrop with a synthetic file when Crop is clicked.
+ */
+vi.mock('@/components/admin/thumbnail-crop-dialog', () => ({
+  ThumbnailCropDialog: ({
+    open,
+    onCrop,
+    onCancel,
+  }: {
+    open: boolean;
+    onCrop: (file: File) => void;
+    onCancel: () => void;
+  }) => {
+    if (!open) return null;
+    return (
+      <div>
+        <button
+          onClick={() => onCrop(new File(['cropped'], 'thumbnail.jpg', { type: 'image/jpeg' }))}
+        >
+          Crop
+        </button>
+        <button onClick={onCancel}>Cancel</button>
+      </div>
+    );
+  },
+}));
+
+/**
  * Mock global fetch to prevent real API calls.
  */
 const mockFetch = vi.fn();
@@ -99,6 +127,17 @@ async function fillAndAdvanceTo(
   const thumbnailFile = new File(['img'], 'thumb.png', { type: 'image/png' });
   await user.upload(thumbnailInput, thumbnailFile);
 
+  /* Confirm the crop dialog that opens after file selection */
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: /Crop/i })).toBeInTheDocument();
+  });
+  await user.click(screen.getByRole('button', { name: /Crop/i }));
+
+  /* Wait for crop dialog to close */
+  await waitFor(() => {
+    expect(screen.queryByRole('button', { name: /Crop/i })).not.toBeInTheDocument();
+  });
+
   /* Advance through steps */
   for (let step = 0; step < targetStep; step++) {
     await user.click(screen.getByRole('button', { name: /Next/i }));
@@ -108,6 +147,15 @@ async function fillAndAdvanceTo(
       await waitFor(() => {
         expect(screen.getByText('Files')).toBeInTheDocument();
       });
+
+      /* If we need to advance past Content, provide a required audio file */
+      if (targetStep > 1) {
+        const audioInput = document.querySelector(
+          'input[type="file"][accept="audio/*"]'
+        ) as HTMLInputElement;
+        const audioFile = new File(['audio'], 'test.mp3', { type: 'audio/mpeg' });
+        await user.upload(audioInput, audioFile);
+      }
     } else if (step === 1) {
       /* Wait for step 2 (Review) to render */
       await waitFor(() => {
@@ -137,7 +185,7 @@ describe('PodcastUploadWizard', () => {
     expect(screen.getByLabelText(/Description/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Year/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Tags/)).toBeInTheDocument();
-    expect(screen.getByText(/Thumbnail Image/)).toBeInTheDocument();
+    expect(screen.getByText(/^Thumbnail/)).toBeInTheDocument();
 
     /* "Next" button should be visible on step 1 */
     expect(screen.getByRole('button', { name: /Next/i })).toBeInTheDocument();
@@ -188,7 +236,7 @@ describe('PodcastUploadWizard', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/Title/)).toBeInTheDocument();
     });
-    expect(screen.getByText(/Thumbnail Image/)).toBeInTheDocument();
+    expect(screen.getByText(/^Thumbnail/)).toBeInTheDocument();
   });
 
   it('step 3 shows "Submit" button', async () => {
