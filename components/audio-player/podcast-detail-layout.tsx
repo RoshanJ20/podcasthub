@@ -537,7 +537,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
         {audioElement}
         {headerContent}
         {fullContent}
-        <div className="mt-4">
+        <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
           <BookmarkPanel podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} />
         </div>
       </Wrapper>
