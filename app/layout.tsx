@@ -4,12 +4,15 @@
  * Key responsibilities:
  * - Loads Geist font family
  * - Wraps app with ThemeProvider (dark/light mode via next-themes)
+ * - Provides AudioProvider for persistent global audio element
  * - Provides Sonner toast notifications
  * - Sets global metadata
  */
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { CommandPalette } from '@/components/layout/command-palette';
+import { AudioProvider } from '@/components/audio-player/audio-context';
+import { GlobalAudioPlayer } from '@/components/audio-player/global-audio-player';
 import { Toaster } from 'sonner';
 import './globals.css';
 
@@ -32,9 +35,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <CommandPalette />
-          {children}
-          <Toaster richColors position="bottom-right" />
+          <AudioProvider>
+            <CommandPalette />
+            <GlobalAudioPlayer />
+            {children}
+            <Toaster richColors position="bottom-right" />
+          </AudioProvider>
         </ThemeProvider>
       </body>
     </html>

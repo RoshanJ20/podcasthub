@@ -129,13 +129,6 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
         {!collapsed && (
           <div className="flex min-w-0 flex-1 items-center justify-between">
             <span className="text-sm font-semibold tracking-tight">PodcastHub</span>
-            {/* ⌘K badge */}
-            <kbd
-              aria-label="Open command palette with Command K"
-              className="inline-flex items-center gap-1 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-            >
-              ⌘K
-            </kbd>
           </div>
         )}
       </div>
@@ -176,16 +169,22 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
           <>
             <div className="my-1" />
             <SectionLabel label="Admin" collapsed={collapsed} />
-            {adminLinks.map((link) => (
-              <SidebarNavItem
-                key={link.href}
-                href={link.href}
-                label={link.label}
-                icon={link.icon}
-                isActive={isRouteActive(link.href, pathname)}
-                collapsed={collapsed}
-              />
-            ))}
+            {adminLinks
+              .filter(
+                (link) =>
+                  // Only show Users link to superadmins
+                  link.href !== '/admin/users' || userRole === 'superadmin'
+              )
+              .map((link) => (
+                <SidebarNavItem
+                  key={link.href}
+                  href={link.href}
+                  label={link.label}
+                  icon={link.icon}
+                  isActive={isRouteActive(link.href, pathname)}
+                  collapsed={collapsed}
+                />
+              ))}
           </>
         )}
       </nav>

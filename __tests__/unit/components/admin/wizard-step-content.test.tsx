@@ -33,6 +33,7 @@ function buildProps(overrides: Partial<WizardStepContentProps> = {}): WizardStep
     bulletinUrls: [],
     bulletinFileNames: [],
     onBulletinsChange: vi.fn(),
+    onBulletinRemove: vi.fn(),
     shortTranscript: '',
     onShortTranscriptChange: vi.fn(),
     longTranscript: '',
@@ -44,14 +45,15 @@ function buildProps(overrides: Partial<WizardStepContentProps> = {}): WizardStep
 }
 
 describe('WizardStepContent', () => {
-  it('renders all 5 field labels with correct names', () => {
+  it('renders all field labels with correct names', () => {
     render(<WizardStepContent {...buildProps()} />);
 
-    expect(screen.getByText('Brief Summary')).toBeInTheDocument();
-    expect(screen.getByText('Detailed Overview')).toBeInTheDocument();
+    expect(screen.getByText('Files')).toBeInTheDocument();
+    expect(screen.getByText('Audio (short)')).toBeInTheDocument();
+    expect(screen.getByText('Audio (long)')).toBeInTheDocument();
     expect(screen.getByText('Attachments')).toBeInTheDocument();
-    expect(screen.getByText('Brief Summary Transcript')).toBeInTheDocument();
-    expect(screen.getByText('Detailed Overview Transcript')).toBeInTheDocument();
+    expect(screen.getByText('Brief Summary Transcript (Short)')).toBeInTheDocument();
+    expect(screen.getByText('Detailed Overview Transcript (Long)')).toBeInTheDocument();
   });
 
   it('does not show any * indicators on fields', () => {
@@ -107,7 +109,7 @@ describe('WizardStepContent', () => {
       />
     );
 
-    expect(screen.getByText(`Loaded: ${transcript.length} characters`)).toBeInTheDocument();
+    expect(screen.getByText(`${transcript.length} chars`)).toBeInTheDocument();
   });
 
   it('shows transcript character count when long transcript is loaded', () => {
@@ -121,7 +123,7 @@ describe('WizardStepContent', () => {
       />
     );
 
-    expect(screen.getByText(`Loaded: ${transcript.length} characters`)).toBeInTheDocument();
+    expect(screen.getByText(`${transcript.length} chars`)).toBeInTheDocument();
   });
 
   it('shows upload progress when isUploading is true', () => {

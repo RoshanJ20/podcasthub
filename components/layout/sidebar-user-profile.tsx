@@ -3,19 +3,19 @@
  *
  * Key responsibilities:
  * - Display the current user's avatar (initials fallback), name, and role
- * - Provide a settings/profile link via a gear icon
+ * - Provide a settings/profile link via a gear icon and a logout button
  * - In collapsed mode show only the avatar with a Tooltip containing
  *   the user's name for accessibility
  *
  * Dependencies:
- * - shadcn/ui Avatar components (base-ui based)
- * - shadcn/ui Tooltip components for collapsed-mode label
+ * - shadcn/ui Avatar, Tooltip components
  * - Next.js Link for profile navigation
  */
 'use client';
 
 import Link from 'next/link';
-import { Settings } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Settings, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -57,8 +57,9 @@ function getInitials(name: string): string {
 /**
  * Renders the current user's profile area at the bottom of the sidebar.
  *
- * In expanded mode the avatar, name, role badge, and settings link are shown.
- * In collapsed mode only the avatar is rendered with a right-anchored Tooltip.
+ * In expanded mode the avatar, name, role badge, settings link, and logout
+ * button are shown. In collapsed mode only the avatar is rendered with a
+ * right-anchored Tooltip linking to the profile page.
  *
  * @param props - See {@link SidebarUserProfileProps}.
  */
@@ -68,7 +69,20 @@ export function SidebarUserProfile({
   avatarUrl,
   collapsed = false,
 }: SidebarUserProfileProps) {
+  const router = useRouter();
   const initials = getInitials(name);
+
+  /**
+   * Calls the logout API endpoint and redirects to the login page.
+   */
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/login');
+    } catch (err) {
+      console.error('Logout failed:', err);
+    }
+  };
 
   const avatar = (
     <Avatar>
@@ -117,6 +131,14 @@ export function SidebarUserProfile({
       >
         <Settings className="size-4" />
       </Link>
+
+      <button
+        onClick={handleLogout}
+        aria-label="Logout"
+        className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+      >
+        <LogOut className="size-4" />
+      </button>
     </div>
   );
 }

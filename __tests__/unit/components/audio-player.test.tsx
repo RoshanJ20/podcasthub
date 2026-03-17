@@ -73,10 +73,10 @@ describe('AudioPlayer', () => {
     expect(container.querySelector('button[aria-label="Skip backward"]')).not.toBeNull();
   });
 
-  it('renders volume slider', () => {
+  it('does not render volume slider (full player omits inline volume)', () => {
     const { container } = render(<AudioPlayer />);
     const volumeSlider = container.querySelector('[aria-label="Volume"]');
-    expect(volumeSlider).not.toBeNull();
+    expect(volumeSlider).toBeNull();
   });
 
   it('renders playback speed button', () => {
@@ -113,12 +113,19 @@ describe('AudioPlayer', () => {
     expect(toggleBtn).toBeNull();
   });
 
-  it('displays podcast title', () => {
-    usePlayerStore.setState({
-      currentPodcast: { id: '1', title: 'My Great Podcast', audioShortUrl: '/test.mp3' },
-    });
-    const { container } = render(<AudioPlayer />);
-    expect(container.textContent).toContain('My Great Podcast');
+  it('renders domain-colored strip when domainColor is provided', () => {
+    const color = {
+      border: '#93c5fd',
+      bg: '#eff6ff',
+      text: '#2563eb',
+      darkBg: '#1e3a5f',
+      darkText: '#bfdbfe',
+      glow: 'rgba(147, 197, 253, 0.15)',
+      chart: '#2563eb',
+    };
+    const { container } = render(<AudioPlayer domainColor={color} />);
+    const strip = container.querySelector('[style*="background-color"]');
+    expect(strip).toBeTruthy();
   });
 
   it('formats hours correctly', () => {

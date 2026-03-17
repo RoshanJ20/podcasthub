@@ -8,7 +8,8 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
+import { Search } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -30,11 +31,14 @@ export function LibraryFilters() {
 
   const currentDomain = searchParams.get('domain') ?? 'all';
   const currentSort = searchParams.get('sort') ?? 'newest';
+  const currentSearch = searchParams.get('q') ?? '';
+  const [searchValue, setSearchValue] = useState(currentSearch);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const updateParams = useCallback(
     (key: string, value: string) => {
       const params = new URLSearchParams(searchParams.toString());
-      if (value === 'all' || value === 'newest') {
+      if (value === 'all' || value === 'newest' || value === '') {
         params.delete(key);
       } else {
         params.set(key, value);
@@ -46,11 +50,35 @@ export function LibraryFilters() {
     [searchParams, router]
   );
 
+  /** Debounce search input — update URL after 300ms of no typing. */
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (searchValue !== currentSearch) {
+        updateParams('q', searchValue);
+      }
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchValue, currentSearch, updateParams]);
+
   return (
     <div className="flex flex-wrap items-center gap-3">
+      {/* Search input */}
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          placeholder="Search..."
+          className="h-9 w-56 rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
+        />
+      </div>
       <Select value={currentDomain} onValueChange={(val) => updateParams('domain', val ?? 'all')}>
-        <SelectTrigger aria-label="Filter by domain">
-          <SelectValue placeholder="All Domains" />
+        <SelectTrigger className="w-44" aria-label="Filter by domain">
+          <SelectValue>{currentDomain === 'all' ? 'All Domains' : currentDomain}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Domains</SelectItem>
@@ -63,8 +91,10 @@ export function LibraryFilters() {
       </Select>
 
       <Select value={currentSort} onValueChange={(val) => updateParams('sort', val ?? 'newest')}>
-        <SelectTrigger aria-label="Sort podcasts">
-          <SelectValue placeholder="Newest" />
+        <SelectTrigger className="w-36" aria-label="Sort podcasts">
+          <SelectValue>
+            {SORT_OPTIONS.find((o) => o.value === currentSort)?.label ?? 'Newest'}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
           {SORT_OPTIONS.map((option) => (

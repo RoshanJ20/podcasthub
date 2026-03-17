@@ -57,22 +57,19 @@ describe('PodcastCard', () => {
     expect(link!.getAttribute('href')).toBe(`/podcast/${defaultProps.id}`);
   });
 
-  it('renders tags', () => {
+  it('does not render tags (tags retained in interface but not displayed)', () => {
     render(<PodcastCard {...defaultProps} />);
     for (const tag of defaultProps.tags) {
-      const els = screen.getAllByText(tag);
-      expect(els.length).toBeGreaterThan(0);
+      expect(screen.queryByText(tag)).toBeNull();
     }
   });
 
-  it('renders at most 3 tags', () => {
+  it('accepts tags prop without rendering them on the card', () => {
     const manyTags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
     render(<PodcastCard {...defaultProps} tags={manyTags} />);
-    expect(screen.getAllByText('tag1').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('tag2').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('tag3').length).toBeGreaterThan(0);
-    expect(screen.queryByText('tag4')).toBeNull();
-    expect(screen.queryByText('tag5')).toBeNull();
+    for (const tag of manyTags) {
+      expect(screen.queryByText(tag)).toBeNull();
+    }
   });
 
   it('renders without tags when tags array is empty', () => {

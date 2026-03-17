@@ -2,7 +2,8 @@
  * Public learning path viewer page.
  *
  * Server component that fetches a learning graph by ID and renders
- * the read-only viewer with completion tracking.
+ * the read-only viewer with completion tracking, domain-colored
+ * Mercury-inspired styling.
  */
 import { prisma } from '@/lib/db';
 import { notFound } from 'next/navigation';
@@ -26,7 +27,6 @@ export default async function LearningPathViewerPage({
 
   if (!graph) return notFound();
 
-  // Serialize dates for client component
   const episodes = graph.episodes.map((e) => ({
     id: e.id,
     title: e.title,
@@ -50,15 +50,14 @@ export default async function LearningPathViewerPage({
   }));
 
   return (
-    <div className="container py-6">
-      <h1 className="text-2xl font-bold mb-2">{graph.title}</h1>
-      {graph.description && <p className="text-muted-foreground mb-6">{graph.description}</p>}
-      <PathViewerWrapper
-        graphId={graph.id}
-        pathType={graph.pathType as 'graph' | 'linear'}
-        episodes={episodes}
-        edges={edges}
-      />
-    </div>
+    <PathViewerWrapper
+      graphId={graph.id}
+      title={graph.title}
+      description={graph.description}
+      domain={graph.domain ?? ''}
+      pathType={graph.pathType as 'graph' | 'linear'}
+      episodes={episodes}
+      edges={edges}
+    />
   );
 }

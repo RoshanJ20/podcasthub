@@ -7,6 +7,7 @@
  *
  * @dependencies vitest, @testing-library/react, EditPodcastClient, PodcastUploadWizard
  */
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
@@ -44,6 +45,30 @@ vi.mock('@/components/admin/podcast-upload-wizard', () => ({
  */
 vi.mock('lucide-react', () => ({
   ChevronRight: () => <span data-testid="chevron-right" />,
+  ChevronRightIcon: () => <span data-testid="chevron-right-icon" />,
+  MoreHorizontalIcon: () => <span data-testid="more-horizontal-icon" />,
+}));
+
+/**
+ * Mock @base-ui/react modules used by the Breadcrumb component.
+ */
+vi.mock('@base-ui/react/merge-props', () => ({
+  mergeProps: (...objs: Record<string, unknown>[]) => Object.assign({}, ...objs),
+}));
+
+vi.mock('@base-ui/react/use-render', () => ({
+  useRender: ({
+    props,
+    render,
+  }: {
+    props: Record<string, unknown>;
+    render?: React.ReactElement;
+  }) => {
+    if (render && React.isValidElement(render)) {
+      return React.cloneElement(render, props as React.Attributes);
+    }
+    return <a {...props} />;
+  },
 }));
 
 /**

@@ -138,16 +138,22 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
                   <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                     Admin
                   </p>
-                  {adminLinks.map((link) => (
-                    <SidebarNavItem
-                      key={link.href}
-                      href={link.href}
-                      label={link.label}
-                      icon={link.icon}
-                      isActive={isRouteActive(link.href, pathname)}
-                      onClick={closeDrawer}
-                    />
-                  ))}
+                  {adminLinks
+                    .filter(
+                      (link) =>
+                        // Only show Users link to superadmins
+                        link.href !== '/admin/users' || userRole === 'superadmin'
+                    )
+                    .map((link) => (
+                      <SidebarNavItem
+                        key={link.href}
+                        href={link.href}
+                        label={link.label}
+                        icon={link.icon}
+                        isActive={isRouteActive(link.href, pathname)}
+                        onClick={closeDrawer}
+                      />
+                    ))}
                 </>
               )}
             </nav>

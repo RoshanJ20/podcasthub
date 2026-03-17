@@ -21,16 +21,22 @@ Drop thumbnails from the home page entirely. Both card types use the same text-b
 
 Each domain gets a color triplet: `border` (accent line), `bg` (badge background), `text` (badge text).
 
+Actual domains from `lib/schemas/common.ts` (`DOMAINS` constant):
+
 | Domain                   | Border    | Badge BG  | Badge Text |
 | ------------------------ | --------- | --------- | ---------- |
-| Audit Technology         | `#c4b5fd` | `#f5f3ff` | `#7c3aed`  |
-| Quality and Risk         | `#fcd34d` | `#fefce8` | `#b45309`  |
+| Audit Methodology        | `#c4b5fd` | `#f5f3ff` | `#7c3aed`  |
 | Accounting and Reporting | `#6ee7b7` | `#ecfdf5` | `#047857`  |
-| Tax                      | `#93c5fd` | `#eff6ff` | `#2563eb`  |
-| Advisory                 | `#fda4af` | `#fff1f2` | `#e11d48`  |
-| Regulatory               | `#cbd5e1` | `#f8fafc` | `#475569`  |
+| Audit Technology         | `#93c5fd` | `#eff6ff` | `#2563eb`  |
+| Quality and Risk         | `#fcd34d` | `#fefce8` | `#b45309`  |
+| LEAP                     | `#fda4af` | `#fff1f2` | `#e11d48`  |
+| Auditing                 | `#cbd5e1` | `#f8fafc` | `#475569`  |
 
 Fallback for unknown domains: neutral slate (`#e2e8f0` / `#f8fafc` / `#64748b`).
+
+`getDomainColor()` normalizes input with `domain.trim()` for resilient matching.
+
+Dark mode: colors are applied via inline `style` since they are domain-data-driven. The pastel backgrounds and muted text colors work acceptably on dark backgrounds. The border accent is decorative-only (not the sole information carrier). Badge contrast ratios meet WCAG AA for all listed triplets.
 
 ## Card Structure
 
@@ -46,8 +52,11 @@ Fallback for unknown domains: neutral slate (`#e2e8f0` / `#f8fafc` / `#64748b`).
   ↑ 3px left border in domain color
 ```
 
+Entire card is wrapped in a `<Link>` to the detail page.
+
 **Props:**
 
+- `id`: string — used to build the detail page href
 - `variant`: `"podcast"` | `"series"`
 - `title`: string
 - `description`: string | null
@@ -55,14 +64,25 @@ Fallback for unknown domains: neutral slate (`#e2e8f0` / `#f8fafc` / `#64748b`).
 - For podcast: `year`, `tags`
 - For series: `episodeCount`, `completedCount`
 
+**Computed:**
+
+- `href`: podcast → `/podcast/${id}`, series → `/learning-path/${id}`
+
 **Variant differences (bottom metadata only):**
 
-- **Podcast:** tag badges + year (top-right)
-- **Series:** episode count + progress bar, year replaced by episode count in top-right
+- **Podcast:** tag badges (bottom-left), year (top-right metadata slot)
+- **Series:** episode count (top-right metadata slot), progress bar with ARIA attributes (`role="progressbar"`, `aria-valuenow`, `aria-valuemin`, `aria-valuemax`)
+
+**Empty states:**
+
+- If `recentPodcasts` is empty: show "No technical content yet." centered text
+- If `recentPaths` is empty: show "No learning series yet." centered text
 
 ### Home page layout
 
 Two-column grid (existing `lg:grid-cols-2`). Each column renders a stacked list of `HomeCard` items inside `StaggeredGrid` / `StaggeredGridItem` for entrance animation.
+
+The Prisma query and data mapping in `page.tsx` should be simplified to only select the fields `HomeCard` needs (no `audioShortUrl`, `audioLongUrl`, `bulletinUrls`, etc.).
 
 ## New Files
 
@@ -73,15 +93,16 @@ Two-column grid (existing `lg:grid-cols-2`). Each column renders a stacked list 
 
 ## Modified Files
 
-| File                    | Change                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------ |
-| `app/(public)/page.tsx` | Replace `PodcastGrid` + `PathCard` grid with `HomeCard` lists inside `StaggeredGrid` |
+| File                                  | Change                                                                                          |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `app/(public)/page.tsx`               | Replace `PodcastGrid` + `PathCard` with `HomeCard` lists inside `StaggeredGrid`; simplify query |
+| `components/library/podcast-grid.tsx` | Revert the `columns` prop (no longer used on home page)                                         |
 
 ## Files NOT Modified
 
 - `components/library/podcast-card.tsx` — unchanged, still used on `/bulletins` page with full thumbnails
 - `components/learning-path/path-card.tsx` — unchanged, still used on `/learning-path` page
-- `components/library/podcast-grid.tsx` — the `columns` prop added earlier can be reverted since we no longer use `PodcastGrid` on the home page
+- `components/home/category-grid.tsx` — unchanged, not currently used on home page (hidden by prior change)
 
 ## Animation
 
@@ -89,6 +110,7 @@ Use existing `StaggeredGrid` + `StaggeredGridItem` components (already in `compo
 
 ## Testing
 
-- Unit test for `getDomainColor()` — returns correct colors for each known domain and fallback for unknown
-- Snapshot or render test for `HomeCard` — both variants render correct structure
-- Existing sidebar/nav tests already updated for "Learning Series" rename
+- Unit test for `getDomainColor()` — returns correct triplet for each known domain, falls back to slate for unknown domains, handles trimmed input
+- Render test for `HomeCard` podcast variant — renders link to `/podcast/[id]`, domain badge, title, description, tags, year
+- Render test for `HomeCard` series variant — renders link to `/learning-path/[id]`, domain badge, title, description, episode count, progress bar with ARIA attributes
+- Edge cases: null description, empty tags array, zero episode count

@@ -16,6 +16,8 @@ export const transitions = {
   normal: { type: 'spring' as const, stiffness: 80, damping: 10, mass: 1 },
   slow: { type: 'spring' as const, stiffness: 60, damping: 12, mass: 1 },
   emphasis: { type: 'spring' as const, stiffness: 50, damping: 8, mass: 1 },
+  /** Stiffer than normal/slow — intentionally snappier for panel resize feel. */
+  panelSlide: { type: 'spring' as const, stiffness: 200, damping: 25, mass: 1 },
 } as const;
 
 /** Zero-duration transition used when the user prefers reduced motion. */
@@ -42,6 +44,16 @@ export const variants = {
     hidden: { opacity: 0, x: 20 },
     visible: { opacity: 1, x: 0 },
   },
+  /** Slide in from left with larger offset — for page sections. */
+  slideInFromLeft: {
+    hidden: { opacity: 0, x: -30 },
+    visible: { opacity: 1, x: 0 },
+  },
+  /** Mercury fog/diffusion — content starts blurred and resolves into clarity. */
+  mercuryFade: {
+    hidden: { opacity: 0, y: 8, filter: 'blur(4px)' },
+    visible: { opacity: 1, y: 0, filter: 'blur(0px)' },
+  },
 } as const;
 
 /**
@@ -54,6 +66,22 @@ export const staggerContainer = {
   visible: {
     transition: {
       staggerChildren: 0.04,
+    },
+  },
+} as const;
+
+/**
+ * Section-level stagger for larger content blocks (metadata, player, tabs).
+ *
+ * Slower than grid stagger (80ms vs 40ms) with a 100ms initial delay,
+ * giving each section room to breathe as it enters.
+ */
+export const sectionStagger = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1,
     },
   },
 } as const;

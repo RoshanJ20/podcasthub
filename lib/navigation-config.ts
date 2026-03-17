@@ -9,16 +9,7 @@
  * - Export the NavLink interface for type-safe consumers
  * - Provide the isRouteActive helper for highlighting active links
  */
-import {
-  Home,
-  Headphones,
-  Route,
-  BarChart3,
-  User,
-  LayoutDashboard,
-  Upload,
-  Users,
-} from 'lucide-react';
+import { Home, Headphones, Route, BarChart3, User, Users } from 'lucide-react';
 import type React from 'react';
 
 /**
@@ -43,7 +34,7 @@ export const mainLinks: NavLink[] = [{ href: '/', label: 'Home', icon: Home }];
  */
 export const libraryLinks: NavLink[] = [
   { href: '/bulletins', label: 'Technical Content', icon: Headphones },
-  { href: '/learning-path', label: 'Learning Paths', icon: Route },
+  { href: '/learning-path', label: 'Learning Series', icon: Route },
 ];
 
 /**
@@ -58,11 +49,11 @@ export const personalLinks: NavLink[] = [
  * Admin-only navigation links. Rendered only when the user holds an admin role.
  */
 export const adminLinks: NavLink[] = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/upload', label: 'Upload', icon: Upload },
-  { href: '/admin/learning-graphs', label: 'Learning Paths', icon: Route },
+  { href: '/admin/analytics', label: 'Dashboard', icon: BarChart3 },
+  // { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/upload', label: 'Upload Technical Content', icon: Headphones },
+  { href: '/admin/learning-graphs/new', label: 'Upload Learning Series', icon: Route },
   { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
 /**

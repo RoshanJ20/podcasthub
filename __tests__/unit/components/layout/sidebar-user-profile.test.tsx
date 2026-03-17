@@ -9,9 +9,13 @@
  * - Tooltip wraps the avatar in collapsed mode
  * - getInitials derivation (tested through rendered output)
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, cleanup } from '@testing-library/react';
 import { SidebarUserProfile } from '@/components/layout/sidebar-user-profile';
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
 
 beforeEach(() => {
   cleanup();

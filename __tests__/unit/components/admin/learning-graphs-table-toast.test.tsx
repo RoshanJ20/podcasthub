@@ -68,7 +68,7 @@ describe('LearningGraphsTable toast notifications', () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(toast.success).toHaveBeenCalledWith('Learning path deleted');
+      expect(toast.success).toHaveBeenCalledWith('Learning series deleted');
     });
     expect(toast.error).not.toHaveBeenCalled();
   });
@@ -91,7 +91,7 @@ describe('LearningGraphsTable toast notifications', () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Failed to delete learning path');
+      expect(toast.error).toHaveBeenCalledWith('Failed to delete learning series');
     });
     expect(toast.success).not.toHaveBeenCalled();
   });
@@ -111,7 +111,7 @@ describe('LearningGraphsTable toast notifications', () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Failed to delete learning path');
+      expect(toast.error).toHaveBeenCalledWith('Failed to delete learning series');
     });
     expect(toast.success).not.toHaveBeenCalled();
   });

@@ -25,7 +25,7 @@ export function PodcastGrid({ podcasts }: PodcastGridProps) {
   }
 
   return (
-    <StaggeredGrid className="grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <StaggeredGrid className="grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {podcasts.map((podcast) => (
         <StaggeredGridItem key={podcast.id}>
           <PodcastCard

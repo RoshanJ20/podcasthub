@@ -114,7 +114,7 @@ export function CommandPalette({ isAdmin = false }: CommandPaletteProps) {
           </CommandItem>
           <CommandItem onSelect={() => navigate('/learning-path')}>
             <Route className="mr-2 size-4" />
-            Learning Paths
+            Learning Series
           </CommandItem>
           <CommandItem onSelect={() => navigate('/search')}>
             <Search className="mr-2 size-4" />

@@ -6,31 +6,63 @@
  */
 'use client';
 
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 import { PodcastUploadWizard } from '@/components/admin/podcast-upload-wizard';
+import type { PodcastUploadWizardHandle } from '@/components/admin/podcast-upload-wizard';
+import { Button } from '@/components/ui/button';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 export default function UploadPage() {
   const router = useRouter();
+  const wizardRef = useRef<PodcastUploadWizardHandle>(null);
+  const [wizardStep, setWizardStep] = useState(0);
+
+  const handleBack = () => {
+    if (wizardStep > 0) {
+      wizardRef.current?.goBack();
+    } else {
+      router.back();
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-        <Link href="/admin" className="hover:text-foreground transition-colors">
-          Dashboard
-        </Link>
-        <ChevronRight className="h-4 w-4" />
-        <span className="text-foreground">Upload</span>
-      </nav>
+    <div className="max-w-3xl mx-auto space-y-6">
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href="/admin" />}>Dashboard</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Upload</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
-      <div>
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={handleBack} aria-label="Go back">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
         <h1 className="text-xl font-semibold tracking-tight">Upload New Podcast</h1>
       </div>
 
-      <PodcastUploadWizard mode="create" onSuccess={() => router.push('/admin')} />
+      <PodcastUploadWizard
+        ref={wizardRef}
+        mode="create"
+        onSuccess={() => router.push('/admin')}
+        onStepChange={setWizardStep}
+      />
     </div>
   );
 }

@@ -3,7 +3,7 @@
  *
  * Verifies:
  * - The app logo and name "PodcastHub" are rendered
- * - Main nav links (Home) and Library section (Technical Content, Learning Paths) render
+ * - Main nav links (Home) and Library section (Technical Content, Learning Series) render
  * - The Admin section renders when isAdmin={true}
  * - The Admin section does NOT render when isAdmin is false or undefined
  */
@@ -16,6 +16,7 @@ import { usePlayerStore } from '@/stores/player-store';
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/',
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 vi.mock('@/stores/player-store', () => ({
@@ -23,6 +24,7 @@ vi.mock('@/stores/player-store', () => ({
 }));
 
 vi.mock('next/image', () => ({
+  // eslint-disable-next-line @next/next/no-img-element
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }));
 
@@ -72,7 +74,7 @@ describe('UnifiedSidebar', () => {
       expect(anchor).not.toBeNull();
     });
 
-    it('renders a Learning Paths link', () => {
+    it('renders a Learning Series link', () => {
       const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} />);
       const anchor = container.querySelector('a[href="/learning-path"]');
       expect(anchor).not.toBeNull();
@@ -83,14 +85,14 @@ describe('UnifiedSidebar', () => {
       const text = container.textContent ?? '';
       expect(text).toContain('Library');
       expect(text).toContain('Technical Content');
-      expect(text).toContain('Learning Paths');
+      expect(text).toContain('Learning Series');
     });
   });
 
   describe('admin section', () => {
     it('renders the Admin section when isAdmin={true}', () => {
       const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} isAdmin={true} />);
-      const dashboardLink = container.querySelector('a[href="/admin"]');
+      const dashboardLink = container.querySelector('a[href="/admin/analytics"]');
       expect(dashboardLink).not.toBeNull();
     });
 
@@ -107,7 +109,7 @@ describe('UnifiedSidebar', () => {
 
     it('does NOT render the Admin dashboard link when isAdmin is false', () => {
       const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} isAdmin={false} />);
-      const dashboardLink = container.querySelector('a[href="/admin"]');
+      const dashboardLink = container.querySelector('a[href="/admin/analytics"]');
       expect(dashboardLink).toBeNull();
     });
 

@@ -1,20 +1,29 @@
 /**
  * Bookmark panel for the podcast detail page.
  *
- * Displays a list of user bookmarks for a given podcast, sorted by timestamp.
- * Supports adding bookmarks at the current playback time, inline editing of
- * bookmark notes, deleting bookmarks, and seeking to a bookmark's timestamp.
+ * Displays a staggered-animated list of user bookmarks sorted by timestamp.
+ * Supports adding, editing, deleting, and seeking to bookmarks.
+ * Uses domain color for timestamp accent and layout animations for add/remove.
+ *
+ * Dependencies:
+ * - motion/react for stagger entrance and layout animations
+ * - lib/animation for transition/variant tokens
+ * - lib/domain-colors for DomainColor type
  */
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { usePlayerStore } from '@/stores/player-store';
+import { useReducedMotion } from '@/hooks/use-reduced-motion';
+import { variants, transitions, staggerContainer } from '@/lib/animation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookmarkPlus, Pencil, Trash2, Clock, Check, X } from 'lucide-react';
+import { BookmarkPlus, Pencil, Trash2, Clock, Check, X, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatTime } from '@/lib/format-time';
+import type { DomainColor } from '@/lib/domain-colors';
 
 interface Bookmark {
   id: string;
@@ -27,15 +36,26 @@ interface Bookmark {
 interface BookmarkPanelProps {
   podcastId: string;
   onSeek?: (time: number) => void;
+  /** Domain color for accent theming. */
+  domainColor?: DomainColor;
+  /** When true, renders a collapsed header with bookmark count badge, expandable on click. */
+  compact?: boolean;
 }
 
-export function BookmarkPanel({ podcastId, onSeek }: BookmarkPanelProps) {
+export function BookmarkPanel({
+  podcastId,
+  onSeek,
+  domainColor,
+  compact = false,
+}: BookmarkPanelProps) {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [addingNote, setAddingNote] = useState(false);
   const [newNote, setNewNote] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editNote, setEditNote] = useState('');
+  const reducedMotion = useReducedMotion();
 
   const currentTime = usePlayerStore((s) => s.currentTime);
 
@@ -145,8 +165,57 @@ export function BookmarkPanel({ podcastId, onSeek }: BookmarkPanelProps) {
     return <div className="p-4 text-sm text-muted-foreground">Loading bookmarks...</div>;
   }
 
+  /* Compact collapsed view: header with bookmark count badge, expandable on click. */
+  if (compact && !isExpanded) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-3">
+        <button
+          onClick={() => setIsExpanded(true)}
+          aria-label="Toggle bookmarks"
+          className="flex w-full items-center justify-between text-sm"
+        >
+          <span className="font-medium">Bookmarks</span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums">
+            {bookmarks.length}
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  /** Use animated or plain elements depending on reduced-motion preference. */
+  const ListEl = reducedMotion ? 'ul' : motion.ul;
+  const ItemEl = reducedMotion ? 'li' : motion.li;
+
+  const listProps = reducedMotion
+    ? {}
+    : { variants: staggerContainer, initial: 'hidden' as const, animate: 'visible' as const };
+
+  const itemMotionProps = (id: string) =>
+    reducedMotion
+      ? {}
+      : {
+          key: id,
+          layout: true as const,
+          variants: variants.fadeUp,
+          transition: transitions.normal,
+          exit: { opacity: 0, x: -20, transition: transitions.fast },
+        };
+
   return (
     <div className="space-y-4 p-4">
+      {/* Compact expanded header: collapse button to return to collapsed state */}
+      {compact && isExpanded && (
+        <button
+          onClick={() => setIsExpanded(false)}
+          aria-label="Toggle bookmarks"
+          className="flex w-full items-center justify-between text-sm"
+        >
+          <span className="font-medium">Bookmarks</span>
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+        </button>
+      )}
+
       {/* Add bookmark controls */}
       <div className="flex items-center gap-2">
         <Button size="sm" variant="outline" onClick={handleAdd} aria-label="Add bookmark">
@@ -178,83 +247,90 @@ export function BookmarkPanel({ podcastId, onSeek }: BookmarkPanelProps) {
           No bookmarks yet. Click the bookmark button to save your place.
         </p>
       ) : (
-        <ScrollArea className="max-h-[400px]">
-          <ul className="space-y-2">
-            {bookmarks.map((bm) => (
-              <li key={bm.id} className="flex items-start gap-2 rounded-md border p-2 text-sm">
-                {/* Timestamp — clickable to seek */}
-                <button
-                  onClick={() => onSeek?.(bm.timestampSeconds)}
-                  className="flex shrink-0 items-center gap-1 text-primary hover:underline"
-                  aria-label={`Seek to ${formatTime(bm.timestampSeconds)}`}
+        <ScrollArea className="max-h-100">
+          <ListEl className="space-y-2" {...listProps}>
+            <AnimatePresence>
+              {bookmarks.map((bm) => (
+                <ItemEl
+                  key={bm.id}
+                  className="flex items-start gap-2 rounded-md border p-2 text-sm"
+                  {...itemMotionProps(bm.id)}
                 >
-                  <Clock className="h-3 w-3" />
-                  {formatTime(bm.timestampSeconds)}
-                </button>
+                  {/* Timestamp — domain-colored, clickable to seek */}
+                  <button
+                    onClick={() => onSeek?.(bm.timestampSeconds)}
+                    className="flex shrink-0 items-center gap-1 hover:underline"
+                    style={{ color: domainColor?.border ?? 'var(--primary)' }}
+                    aria-label={`Seek to ${formatTime(bm.timestampSeconds)}`}
+                  >
+                    <Clock className="h-3 w-3" />
+                    {formatTime(bm.timestampSeconds)}
+                  </button>
 
-                {/* Note display or edit */}
-                <div className="flex-1 min-w-0">
-                  {editingId === bm.id ? (
-                    <div className="flex items-center gap-1">
-                      <Input
-                        value={editNote}
-                        onChange={(e) => setEditNote(e.target.value)}
-                        className="h-7 text-sm"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') saveEdit(bm.id);
-                          if (e.key === 'Escape') cancelEdit();
-                        }}
-                      />
+                  {/* Note display or edit */}
+                  <div className="flex-1 min-w-0">
+                    {editingId === bm.id ? (
+                      <div className="flex items-center gap-1">
+                        <Input
+                          value={editNote}
+                          onChange={(e) => setEditNote(e.target.value)}
+                          className="h-7 text-sm"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveEdit(bm.id);
+                            if (e.key === 'Escape') cancelEdit();
+                          }}
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => saveEdit(bm.id)}
+                          aria-label="Save note"
+                        >
+                          <Check className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={cancelEdit}
+                          aria-label="Cancel edit"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground truncate">{bm.note || '—'}</span>
+                    )}
+                  </div>
+
+                  {/* Action buttons */}
+                  {editingId !== bm.id && (
+                    <div className="flex shrink-0 items-center gap-1">
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7"
-                        onClick={() => saveEdit(bm.id)}
-                        aria-label="Save note"
+                        onClick={() => startEdit(bm)}
+                        aria-label="Edit note"
                       >
-                        <Check className="h-3 w-3" />
+                        <Pencil className="h-3 w-3" />
                       </Button>
                       <Button
                         size="icon"
                         variant="ghost"
                         className="h-7 w-7"
-                        onClick={cancelEdit}
-                        aria-label="Cancel edit"
+                        onClick={() => handleDelete(bm.id)}
+                        aria-label="Delete bookmark"
                       >
-                        <X className="h-3 w-3" />
+                        <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
-                  ) : (
-                    <span className="text-muted-foreground truncate">{bm.note || '—'}</span>
                   )}
-                </div>
-
-                {/* Action buttons */}
-                {editingId !== bm.id && (
-                  <div className="flex shrink-0 items-center gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7"
-                      onClick={() => startEdit(bm)}
-                      aria-label="Edit note"
-                    >
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7"
-                      onClick={() => handleDelete(bm.id)}
-                      aria-label="Delete bookmark"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+                </ItemEl>
+              ))}
+            </AnimatePresence>
+          </ListEl>
         </ScrollArea>
       )}
     </div>
