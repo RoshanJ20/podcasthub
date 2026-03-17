@@ -31,6 +31,7 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { variants, transitions, sectionStagger } from '@/lib/animation';
 import { getDomainColor } from '@/lib/domain-colors';
 import { extractAttachmentName } from '@/lib/attachment-utils';
+import { formatTime } from '@/lib/format-time';
 import { AudioPlayer } from './audio-player';
 import { CompactPlayer } from './compact-player';
 import dynamic from 'next/dynamic';
@@ -98,6 +99,65 @@ interface PodcastRecord {
 interface PodcastDetailLayoutProps {
   podcast: PodcastRecord;
   relatedPodcasts?: PodcastRecord[];
+}
+
+interface SidebarBookmark {
+  id: string;
+  timestampSeconds: number;
+  note: string | null;
+}
+
+/** Slim bookmark list for the 180px sidebar — just timestamps and short notes. */
+function SidebarBookmarks({
+  podcastId,
+  onSeek,
+  domainColor,
+}: {
+  podcastId: string;
+  onSeek: (time: number) => void;
+  domainColor: ReturnType<typeof getDomainColor>;
+}) {
+  const [bookmarks, setBookmarks] = useState<SidebarBookmark[]>([]);
+
+  useEffect(() => {
+    fetch(`/api/bookmarks?podcastId=${podcastId}`)
+      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((d) => {
+        const items = (d.data ?? []) as SidebarBookmark[];
+        items.sort((a, b) => a.timestampSeconds - b.timestampSeconds);
+        setBookmarks(items);
+      })
+      .catch(() => {});
+  }, [podcastId]);
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-3">
+      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Bookmarks
+      </h3>
+      {bookmarks.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No bookmarks yet</p>
+      ) : (
+        <div className="space-y-1">
+          {bookmarks.map((bm) => (
+            <button
+              key={bm.id}
+              onClick={() => onSeek(bm.timestampSeconds)}
+              className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs transition-colors hover:bg-muted"
+            >
+              <span
+                className="shrink-0 font-mono tabular-nums"
+                style={{ color: domainColor.border }}
+              >
+                {formatTime(bm.timestampSeconds)}
+              </span>
+              {bm.note && <span className="truncate text-muted-foreground">{bm.note}</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /**
@@ -429,11 +489,9 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
             {pdfPanel}
           </div>
         ) : (
-          <div className="sticky top-8 w-[180px] shrink-0 space-y-4">
+          <div className="sticky top-8 w-[180px] shrink-0 space-y-3">
             <div className="rounded-xl border border-border bg-card">{sidebarContent}</div>
-            <div className="rounded-xl border border-border bg-card">
-              <BookmarkPanel podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} />
-            </div>
+            <SidebarBookmarks podcastId={podcast.id} onSeek={seekTo} domainColor={domainColor} />
           </div>
         )}
       </div>
