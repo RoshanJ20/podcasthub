@@ -4,6 +4,9 @@
  * Generates text-embedding-3-large vectors (1536 dimensions) via Azure OpenAI.
  * Includes retry logic for transient failures (429/5xx).
  */
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('embeddings');
 
 const API_VERSION = '2024-02-01';
 
@@ -59,6 +62,10 @@ export async function generateEmbedding(
 
       if (response.status === 429 || response.status >= 500) {
         if (attempt < maxRetries - 1) {
+          log.warn(
+            { error: `HTTP ${response.status}`, attempt },
+            'Embedding generation attempt failed, retrying'
+          );
           await new Promise((resolve) =>
             setTimeout(resolve, retryDelayMs * Math.pow(2, attempt) + Math.random() * 1000)
           );

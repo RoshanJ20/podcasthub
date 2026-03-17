@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { UploadProgressBar } from '@/components/admin/upload-progress-bar';
 import { cn } from '@/lib/utils';
 import { MAX_FILE_SIZES } from '@/lib/upload';
 
@@ -38,6 +39,7 @@ import { MAX_FILE_SIZES } from '@/lib/upload';
  * @property bulletinUrls - Array of uploaded attachment URLs.
  * @property bulletinFileNames - Array of uploaded attachment file names.
  * @property onBulletinsChange - Callback when attachment files are selected.
+ * @property onBulletinRemove - Callback when an individual attachment is removed, receives its list index.
  * @property shortTranscript - Text content of the brief summary transcript.
  * @property onShortTranscriptChange - Callback when brief summary transcript text changes.
  * @property longTranscript - Text content of the detailed overview transcript.
@@ -99,7 +101,7 @@ export function WizardStepContent({
   return (
     <div className="space-y-5">
       {/* Upload progress indicator */}
-      {isUploading && <ProgressBar progress={uploadProgress} />}
+      {isUploading && <UploadProgressBar progress={uploadProgress} />}
 
       {/* Audio + Attachments — three equal columns */}
       <div className="space-y-1.5">
@@ -280,24 +282,6 @@ export function WizardStepContent({
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-/**
- * Simple progress bar for displaying file upload progress.
- *
- * @param props - Component props.
- * @param props.progress - Upload progress percentage (0-100).
- * @returns A styled progress bar element.
- */
-function ProgressBar({ progress }: { progress: number }) {
-  return (
-    <div className="w-full bg-secondary rounded-full h-2.5">
-      <div
-        className="bg-primary h-2.5 rounded-full transition-all duration-300"
-        style={{ width: `${progress}%` }}
-      />
     </div>
   );
 }

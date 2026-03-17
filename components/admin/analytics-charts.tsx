@@ -24,6 +24,9 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedNumber } from '@/components/ui/animated-number';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('analytics-charts');
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
@@ -56,7 +59,10 @@ export function AnalyticsCharts() {
       const analyticsResponse = await response.json();
       setData(analyticsResponse);
     } catch (error) {
-      console.warn('Failed to fetch analytics:', error);
+      log.warn(
+        { error: error instanceof Error ? error.message : String(error) },
+        'Failed to fetch analytics'
+      );
       setData(null);
     } finally {
       setIsLoading(false);

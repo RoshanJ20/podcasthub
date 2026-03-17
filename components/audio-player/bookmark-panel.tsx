@@ -20,18 +20,14 @@ import { variants, transitions, staggerContainer } from '@/lib/animation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BookmarkPlus, Pencil, Trash2, Clock, Check, X, ChevronUp } from 'lucide-react';
+import { BookmarkPlus, X, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatTime } from '@/lib/format-time';
 import type { DomainColor } from '@/lib/domain-colors';
+import { createLogger } from '@/lib/logger';
+import { BookmarkListItem, type Bookmark } from './bookmark-list-item';
 
-interface Bookmark {
-  id: string;
-  podcastId: string;
-  timestampSeconds: number;
-  note: string | null;
-  createdAt: string;
-}
+const log = createLogger('bookmark-panel');
 
 interface BookmarkPanelProps {
   podcastId: string;
@@ -68,7 +64,10 @@ export function BookmarkPanel({
       items.sort((a, b) => a.timestampSeconds - b.timestampSeconds);
       setBookmarks(items);
     } catch (error) {
-      console.warn('Failed to fetch bookmarks:', error);
+      log.warn(
+        { error: error instanceof Error ? error.message : String(error) },
+        'Failed to fetch bookmarks'
+      );
     } finally {
       setLoading(false);
     }
@@ -251,83 +250,21 @@ export function BookmarkPanel({
           <ListEl className="space-y-2" {...listProps}>
             <AnimatePresence>
               {bookmarks.map((bm) => (
-                <ItemEl
+                <BookmarkListItem
                   key={bm.id}
-                  className="flex items-start gap-2 rounded-md border p-2 text-sm"
-                  {...itemMotionProps(bm.id)}
-                >
-                  {/* Timestamp — domain-colored, clickable to seek */}
-                  <button
-                    onClick={() => onSeek?.(bm.timestampSeconds)}
-                    className="flex shrink-0 items-center gap-1 hover:underline"
-                    style={{ color: domainColor?.border ?? 'var(--primary)' }}
-                    aria-label={`Seek to ${formatTime(bm.timestampSeconds)}`}
-                  >
-                    <Clock className="h-3 w-3" />
-                    {formatTime(bm.timestampSeconds)}
-                  </button>
-
-                  {/* Note display or edit */}
-                  <div className="flex-1 min-w-0">
-                    {editingId === bm.id ? (
-                      <div className="flex items-center gap-1">
-                        <Input
-                          value={editNote}
-                          onChange={(e) => setEditNote(e.target.value)}
-                          className="h-7 text-sm"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') saveEdit(bm.id);
-                            if (e.key === 'Escape') cancelEdit();
-                          }}
-                        />
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => saveEdit(bm.id)}
-                          aria-label="Save note"
-                        >
-                          <Check className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={cancelEdit}
-                          aria-label="Cancel edit"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground truncate">{bm.note || '—'}</span>
-                    )}
-                  </div>
-
-                  {/* Action buttons */}
-                  {editingId !== bm.id && (
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => startEdit(bm)}
-                        aria-label="Edit note"
-                      >
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-7 w-7"
-                        onClick={() => handleDelete(bm.id)}
-                        aria-label="Delete bookmark"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  )}
-                </ItemEl>
+                  bookmark={bm}
+                  ItemEl={ItemEl}
+                  itemProps={itemMotionProps(bm.id)}
+                  editingId={editingId}
+                  editNote={editNote}
+                  domainColor={domainColor}
+                  onSeek={onSeek}
+                  onStartEdit={startEdit}
+                  onSaveEdit={saveEdit}
+                  onCancelEdit={cancelEdit}
+                  onDelete={handleDelete}
+                  onEditNoteChange={setEditNote}
+                />
               ))}
             </AnimatePresence>
           </ListEl>

@@ -21,6 +21,10 @@ import {
 } from '@/lib/auth/middleware-helpers';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '@/lib/auth/cookies';
 
+/**
+ * Represents the decoded JWT payload for an authenticated user.
+ * Carried through middleware to propagate identity to downstream request handlers via headers.
+ */
 interface UserPayload {
   userId: string;
   email: string;
@@ -29,6 +33,10 @@ interface UserPayload {
 
 /**
  * Verifies a JWT using the jose library (Edge-compatible).
+ *
+ * @param token - The raw JWT string to verify.
+ * @param secret - The HMAC secret used to sign the token.
+ * @returns The decoded {@link UserPayload} on success, or `null` if the token is invalid or expired.
  */
 async function verifyToken(token: string, secret: string): Promise<UserPayload | null> {
   try {
@@ -44,7 +52,15 @@ async function verifyToken(token: string, secret: string): Promise<UserPayload |
 }
 
 /**
- * Signs a new access token using jose (Edge-compatible).
+ * Signs a new short-lived access token using jose (Edge-compatible).
+ *
+ * Reads the expiry duration from `JWT_ACCESS_EXPIRY` (e.g. `"15m"`, `"1h"`, `"1d"`).
+ * Falls back to `"15m"` when the variable is absent or unparseable.
+ *
+ * @param payload - The {@link UserPayload} to embed in the token claims.
+ * @param secret - The HMAC secret to sign the token with.
+ * @returns A signed JWT string.
+ * @throws Never — signing errors propagate to the caller (middleware) which will handle them.
  */
 async function signNewAccessToken(payload: UserPayload, secret: string): Promise<string> {
   const expiry = process.env.JWT_ACCESS_EXPIRY || '15m';
@@ -64,20 +80,26 @@ async function signNewAccessToken(payload: UserPayload, secret: string): Promise
     .sign(new TextEncoder().encode(secret));
 }
 
-export async function middleware(request: NextRequest): Promise<NextResponse> {
-  const { pathname } = request.nextUrl;
-
-  // Health check, auth routes, and media proxy are always accessible
-  if (pathname === '/api/health' || pathname === '/api/media' || isAuthRoute(pathname)) {
-    return NextResponse.next();
-  }
-
-  const accessSecret = process.env.JWT_ACCESS_SECRET || '';
-  const refreshSecret = process.env.JWT_REFRESH_SECRET || '';
-
-  // Try access token first
+/**
+ * Resolves the authenticated user from the request cookies.
+ *
+ * Tries the access token first. If it is absent or expired, attempts a silent refresh
+ * using the refresh token and issues a new access token.
+ *
+ * @param request - The incoming Next.js request.
+ * @param accessSecret - The HMAC secret used for access tokens.
+ * @param refreshSecret - The HMAC secret used for refresh tokens.
+ * @returns An object containing the resolved `user` payload (or `null`) and a
+ *   `newAccessToken` string (or `null`) when a silent refresh occurred.
+ */
+async function resolveAuthenticatedUser(
+  request: NextRequest,
+  accessSecret: string,
+  refreshSecret: string
+): Promise<{ user: UserPayload | null; newAccessToken: string | null }> {
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+
   let user: UserPayload | null = null;
   let newAccessToken: string | null = null;
 
@@ -94,40 +116,93 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     }
   }
 
-  // Admin routes: require admin or superadmin role
-  if (isAdminRoute(pathname)) {
-    if (!user) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('redirectTo', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    if (user.role !== 'admin' && user.role !== 'superadmin') {
-      return NextResponse.redirect(new URL('/unauthorized', request.url));
-    }
-    return addUserHeaders(request, user, newAccessToken);
+  return { user, newAccessToken };
+}
+
+/**
+ * Handles authorization for admin routes.
+ *
+ * Redirects unauthenticated visitors to `/login` and visitors without an admin
+ * role to `/unauthorized`. Passes through admins with enriched headers.
+ *
+ * @param request - The incoming Next.js request.
+ * @param user - The resolved user payload, or `null` if unauthenticated.
+ * @param newAccessToken - A refreshed access token to set on the response, if any.
+ * @returns A `NextResponse` redirect or a header-enriched pass-through response.
+ */
+function handleAdminRoute(
+  request: NextRequest,
+  user: UserPayload | null,
+  newAccessToken: string | null
+): NextResponse {
+  if (!user) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirectTo', request.nextUrl.pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+  if (user.role !== 'admin' && user.role !== 'superadmin') {
+    return NextResponse.redirect(new URL('/unauthorized', request.url));
+  }
+  return addUserHeaders(request, user, newAccessToken);
+}
+
+/**
+ * Handles authorization for API routes.
+ *
+ * Public GET endpoints (`/api/podcasts`, `/api/learning-graphs`, `/api/search`) are
+ * accessible without authentication. All other API calls require a valid JWT.
+ *
+ * @param request - The incoming Next.js request.
+ * @param user - The resolved user payload, or `null` if unauthenticated.
+ * @param newAccessToken - A refreshed access token to set on the response, if any.
+ * @returns A `NextResponse` with appropriate status or enriched headers.
+ */
+function handleApiRoute(
+  request: NextRequest,
+  user: UserPayload | null,
+  newAccessToken: string | null
+): NextResponse {
+  const { pathname } = request.nextUrl;
+  const isPublicApi =
+    request.method === 'GET' &&
+    (pathname.startsWith('/api/podcasts') ||
+      pathname.startsWith('/api/learning-graphs') ||
+      pathname.startsWith('/api/search'));
+
+  if (isPublicApi) {
+    if (user) return addUserHeaders(request, user, newAccessToken);
+    return NextResponse.next();
   }
 
-  // API routes: public GETs allowed, writes require auth
-  if (isApiRoute(pathname)) {
-    const isPublicApi =
-      request.method === 'GET' &&
-      (pathname.startsWith('/api/podcasts') ||
-        pathname.startsWith('/api/learning-graphs') ||
-        pathname.startsWith('/api/search'));
-
-    if (isPublicApi) {
-      if (user) return addUserHeaders(request, user, newAccessToken);
-      return NextResponse.next();
-    }
-
-    if (!user) {
-      return NextResponse.json(
-        { status: 401, error_code: 'UNAUTHORIZED', message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    return addUserHeaders(request, user, newAccessToken);
+  if (!user) {
+    return NextResponse.json(
+      { status: 401, error_code: 'UNAUTHORIZED', message: 'Unauthorized' },
+      { status: 401 }
+    );
   }
+  return addUserHeaders(request, user, newAccessToken);
+}
+
+export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl;
+
+  // Health check, auth routes, and media proxy are always accessible
+  if (pathname === '/api/health' || pathname === '/api/media' || isAuthRoute(pathname)) {
+    return NextResponse.next();
+  }
+
+  const accessSecret = process.env.JWT_ACCESS_SECRET || '';
+  const refreshSecret = process.env.JWT_REFRESH_SECRET || '';
+
+  const { user, newAccessToken } = await resolveAuthenticatedUser(
+    request,
+    accessSecret,
+    refreshSecret
+  );
+
+  if (isAdminRoute(pathname)) return handleAdminRoute(request, user, newAccessToken);
+
+  if (isApiRoute(pathname)) return handleApiRoute(request, user, newAccessToken);
 
   // Public page routes
   if (isPublicRoute(pathname)) {
@@ -145,6 +220,21 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   return addUserHeaders(request, user, newAccessToken);
 }
 
+/**
+ * Builds a pass-through `NextResponse` that forwards user identity as request headers.
+ *
+ * Sets `x-user-id`, `x-user-email`, and `x-user-role` so that API route handlers and
+ * Server Components can read the authenticated user without re-verifying the JWT.
+ * When a silent token refresh has occurred, the new access token is written back as an
+ * HttpOnly cookie so the client receives the updated credential transparently.
+ *
+ * @param request - The incoming Next.js request whose headers will be cloned and extended.
+ * @param user - The authenticated user whose identity will be injected into the headers.
+ * @param refreshedAccessToken - A newly issued access token to persist as a cookie, or
+ *   `null`/`undefined` when no refresh took place.
+ * @returns A `NextResponse` that continues the request with the enriched headers (and,
+ *   if provided, the refreshed cookie).
+ */
 function addUserHeaders(
   request: NextRequest,
   user: UserPayload,

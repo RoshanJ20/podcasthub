@@ -18,6 +18,9 @@ import { useRouter } from 'next/navigation';
 import { Settings, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('sidebar-user-profile');
 
 /**
  * Props for the SidebarUserProfile component.
@@ -80,7 +83,7 @@ export function SidebarUserProfile({
       await fetch('/api/auth/logout', { method: 'POST' });
       router.push('/login');
     } catch (err) {
-      console.error('Logout failed:', err);
+      log.error({ error: err instanceof Error ? err.message : String(err) }, 'Logout failed');
     }
   };
 

@@ -1,9 +1,30 @@
 /**
- * JWT access and refresh token utilities.
+ * JWT Token Generation and Verification Utilities
  *
- * Signs and verifies tokens using separate secrets for access and refresh
- * tokens. Expiry durations are configurable via environment variables
- * JWT_ACCESS_EXPIRY (default '15m') and JWT_REFRESH_EXPIRY (default '7d').
+ * @module lib/auth/jwt
+ *
+ * @description Provides JWT token generation and verification utilities for the
+ * authentication system. Handles both short-lived access tokens and long-lived
+ * refresh tokens using distinct signing secrets.
+ *
+ * @responsibilities
+ * - Sign JWT access tokens embedding user identity and role claims
+ * - Sign JWT refresh tokens for obtaining new access tokens without re-login
+ * - Verify and decode access tokens, returning typed payloads
+ * - Verify and decode refresh tokens, returning typed payloads
+ *
+ * @dependencies
+ * - jsonwebtoken — JWT signing and verification
+ * - JWT_ACCESS_SECRET — environment variable; secret used to sign access tokens
+ * - JWT_REFRESH_SECRET — environment variable; secret used to sign refresh tokens
+ * - JWT_ACCESS_EXPIRY — optional env var; access token lifetime (default: '15m')
+ * - JWT_REFRESH_EXPIRY — optional env var; refresh token lifetime (default: '7d')
+ *
+ * @security
+ * Access and refresh tokens are signed with separate secrets so that a
+ * compromised refresh secret cannot be used to forge access tokens and vice
+ * versa. Access tokens are intentionally short-lived (15 minutes by default)
+ * to limit the blast radius of token leakage.
  */
 import jwt, { type SignOptions } from 'jsonwebtoken';
 

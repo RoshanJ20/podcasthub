@@ -15,6 +15,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatTime } from '@/lib/format-time';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('progress-dashboard');
 
 interface ProgressRecord {
   id: string;
@@ -80,7 +83,10 @@ export function ProgressDashboard() {
         setProgress(progressData.data ?? []);
         setBookmarks(bookmarksData.data ?? []);
       } catch (error) {
-        console.warn('Failed to fetch progress data:', error);
+        log.warn(
+          { error: error instanceof Error ? error.message : String(error) },
+          'Failed to fetch progress data'
+        );
       } finally {
         setLoading(false);
       }
