@@ -24,6 +24,7 @@
 
 import Image from 'next/image';
 import { motion } from 'motion/react';
+import type { HTMLMotionProps } from 'motion/react';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import type { getDomainColor } from '@/lib/domain-colors';
 import { AudioPlayer } from './audio-player';
@@ -53,12 +54,7 @@ export interface PodcastMainContentProps {
   /** Callback invoked when the user clicks a transcript cue or bookmark timestamp. */
   onSeek: (time: number) => void;
   /** Motion props for the blur-to-clear entrance animation. */
-  mercuryIn: {
-    initial: Record<string, unknown>;
-    animate: Record<string, unknown>;
-    exit: Record<string, unknown>;
-    transition: Record<string, unknown>;
-  };
+  mercuryIn: Pick<HTMLMotionProps<'div'>, 'initial' | 'animate' | 'exit' | 'transition'>;
 }
 
 /**

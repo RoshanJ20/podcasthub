@@ -175,7 +175,7 @@ export function PodcastDetailLayout({ podcast }: PodcastDetailLayoutProps) {
 
   /* Choose wrapper element based on reduced-motion preference. */
   const Wrapper = reducedMotion ? 'div' : motion.div;
-  const Section = reducedMotion ? 'div' : motion.div;
+  const Section: React.ElementType = reducedMotion ? 'div' : motion.div;
 
   const wrapperProps = reducedMotion
     ? {}

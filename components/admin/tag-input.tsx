@@ -38,7 +38,7 @@ interface TagInputProps {
   /** Called when the user clicks the remove icon on an individual tag chip. */
   onRemoveTag: (tag: string) => void;
   /** Optional ref forwarded to the underlying text input element. */
-  inputRef?: React.RefObject<HTMLInputElement>;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 }
 
 /**
