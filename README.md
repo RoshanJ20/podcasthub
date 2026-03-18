@@ -16,32 +16,32 @@ Internal enterprise audio podcast platform for managing, distributing, and track
 
 ## Tech Stack
 
-| Layer         | Technology                              | Purpose                                             |
-| ------------- | --------------------------------------- | --------------------------------------------------- |
-| Framework     | Next.js 16 (App Router), TypeScript 5   | Full-stack React framework with SSR/SSG             |
-| Styling       | Tailwind CSS 4, shadcn/ui (Radix)       | Utility-first CSS with accessible component library |
-| State         | Zustand                                 | Client-side state (audio player, graph editor)      |
-| Forms         | React Hook Form + Zod                   | Form state management and validation                |
-| Charts        | Recharts                                | Analytics dashboard visualizations                  |
-| Graph Editor  | @xyflow/react, Dagre                    | Visual learning path editor with auto-layout        |
-| Drag & Drop   | @dnd-kit                                | Sortable lists (podcast ordering, linear editor)    |
-| PDF Viewer    | react-pdf (pdfjs-dist)                  | In-app attachment/document viewing                  |
-| Audio         | HLS.js                                  | Adaptive audio streaming with native fallback       |
-| Database      | PostgreSQL 16, Prisma ORM (v7)          | Data persistence, migrations, pgvector search       |
-| Auth          | Custom JWT (jose + bcryptjs)            | HttpOnly cookie auth with refresh token rotation    |
-| Storage       | MinIO (dev) / Azure Blob Storage (prod) | File uploads (audio, images, PDFs) via S3 API       |
-| Logging       | Pino                                    | Structured JSON logging with child loggers          |
-| Validation    | Zod v4                                  | Request body + form validation (shared schemas)     |
-| Security      | CSP, HSTS, CORS, next.config headers    | HTTP security headers, XSS/clickjack prevention     |
-| Notifications | Sonner                                  | Toast notifications                                 |
-| Icons         | Lucide React                            | Consistent icon set                                 |
-| Theming       | next-themes                             | Dark/light mode switching                           |
-| Testing       | Vitest, RTL, Playwright, MSW            | Unit, component, E2E tests (449 tests)              |
-| Linting       | ESLint 9 (flat config), Prettier        | Code quality and formatting                         |
-| Git Hooks     | Husky + lint-staged                     | Pre-commit lint/format enforcement                  |
-| Monitoring    | Sentry                                  | Error tracking and performance monitoring           |
-| CI/CD         | GitHub Actions                          | Automated lint, test, build, deploy pipelines       |
-| Deployment    | Docker, Azure Container Apps            | Containerized production deployment                 |
+| Layer         | Technology                                | Purpose                                               |
+| ------------- | ----------------------------------------- | ----------------------------------------------------- |
+| Framework     | Next.js 16 (App Router), TypeScript 5     | Full-stack React framework with SSR/SSG               |
+| Styling       | Tailwind CSS 4, shadcn/ui (Radix)         | Utility-first CSS with accessible component library   |
+| State         | Zustand                                   | Client-side state (audio player, graph editor)        |
+| Forms         | React Hook Form + Zod                     | Form state management and validation                  |
+| Charts        | Recharts                                  | Analytics dashboard visualizations                    |
+| Graph Editor  | @xyflow/react, Dagre                      | Visual learning path editor with auto-layout          |
+| Drag & Drop   | @dnd-kit                                  | Sortable lists (podcast ordering, linear editor)      |
+| PDF Viewer    | react-pdf (pdfjs-dist)                    | In-app attachment/document viewing                    |
+| Audio         | HLS.js                                    | Adaptive audio streaming with native fallback         |
+| Database      | PostgreSQL 16, Prisma ORM (v7)            | Data persistence, migrations, pgvector search         |
+| Auth          | Custom JWT (jose + bcryptjs)              | HttpOnly cookie auth with refresh token rotation      |
+| Storage       | Azurite (dev) / Azure Blob Storage (prod) | File uploads (audio, images, PDFs) via Azure Blob API |
+| Logging       | Pino                                      | Structured JSON logging with child loggers            |
+| Validation    | Zod v4                                    | Request body + form validation (shared schemas)       |
+| Security      | CSP, HSTS, CORS, next.config headers      | HTTP security headers, XSS/clickjack prevention       |
+| Notifications | Sonner                                    | Toast notifications                                   |
+| Icons         | Lucide React                              | Consistent icon set                                   |
+| Theming       | next-themes                               | Dark/light mode switching                             |
+| Testing       | Vitest, RTL, Playwright, MSW              | Unit, component, E2E tests (449 tests)                |
+| Linting       | ESLint 9 (flat config), Prettier          | Code quality and formatting                           |
+| Git Hooks     | Husky + lint-staged                       | Pre-commit lint/format enforcement                    |
+| Monitoring    | Sentry                                    | Error tracking and performance monitoring             |
+| CI/CD         | GitHub Actions                            | Automated lint, test, build, deploy pipelines         |
+| Deployment    | Docker, Azure Container Apps              | Containerized production deployment                   |
 
 ## Architecture
 
@@ -68,7 +68,7 @@ graph TB
             PostgreSQL["PostgreSQL 16"]
         end
         subgraph "Object Storage"
-            BlobStorage["Azure Blob Storage<br/>(S3-compatible)<br/>Audio, PDFs, Thumbnails"]
+            BlobStorage["Azure Blob Storage<br/>Audio, PDFs, Thumbnails"]
         end
     end
 
@@ -81,7 +81,7 @@ graph TB
     subgraph "Local Dev"
         DockerCompose["Docker Compose"]
         PGLocal["PostgreSQL 16"]
-        MinIO["MinIO<br/>(S3-compatible)"]
+        Azurite["Azurite<br/>(Azure Blob Storage)"]
     end
 
     WebApp -->|"HTTPS"| FrontDoor
@@ -95,13 +95,13 @@ graph TB
     ACR -->|"Deploy"| NextJS
     NextJS -.->|"Logs + Metrics"| AzureMonitor
 
-    DockerCompose --> PGLocal & MinIO
+    DockerCompose --> PGLocal & Azurite
 
     style FrontDoor fill:#0078d4,color:#fff
     style PostgreSQL fill:#336791,color:#fff
     style BlobStorage fill:#0078d4,color:#fff
     style ACR fill:#0078d4,color:#fff
-    style MinIO fill:#c41d15,color:#fff
+    style Azurite fill:#0078d4,color:#fff
 ```
 
 For detailed architecture diagrams covering frontend components, backend API routes, database schema (ER diagram), end-to-end product flow, and deployment infrastructure, see [docs/architecture-diagrams.md](docs/architecture-diagrams.md).
@@ -110,7 +110,7 @@ For detailed architecture diagrams covering frontend components, backend API rou
 
 - **Node.js** >= 20
 - **npm** >= 10
-- **Docker** and **Docker Compose** (for PostgreSQL and MinIO)
+- **Docker** and **Docker Compose** (for PostgreSQL and Azurite)
 
 ## Local Development Setup
 
@@ -124,7 +124,7 @@ npm install
 # 3. Copy environment file and adjust values
 cp .env.example .env
 
-# 4. Start infrastructure (PostgreSQL + MinIO)
+# 4. Start infrastructure (PostgreSQL + Azurite)
 docker compose up -d
 
 # 5. Run database migrations
@@ -141,29 +141,27 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 
 ## Environment Variables
 
-| Variable                  | Description                         | Default                  |
-| ------------------------- | ----------------------------------- | ------------------------ |
-| `DATABASE_URL`            | PostgreSQL connection string        | See `.env.example`       |
-| `JWT_ACCESS_SECRET`       | Secret for signing access tokens    | (required, min 32 chars) |
-| `JWT_REFRESH_SECRET`      | Secret for signing refresh tokens   | (required, min 32 chars) |
-| `JWT_ACCESS_EXPIRY`       | Access token TTL                    | `15m`                    |
-| `JWT_REFRESH_EXPIRY`      | Refresh token TTL                   | `7d`                     |
-| `BCRYPT_SALT_ROUNDS`      | bcrypt hashing cost factor          | `12`                     |
-| `S3_ENDPOINT`             | MinIO / S3-compatible endpoint      | `http://localhost:9000`  |
-| `S3_ACCESS_KEY`           | S3 access key                       | `minioadmin`             |
-| `S3_SECRET_KEY`           | S3 secret key                       | `minioadmin`             |
-| `S3_BUCKET_AUDIO`         | Bucket for audio files              | `audio`                  |
-| `S3_BUCKET_THUMBNAILS`    | Bucket for thumbnail images         | `thumbnails`             |
-| `S3_BUCKET_BULLETINS`     | Bucket for bulletin PDFs            | `bulletins`              |
-| `AZURE_OPENAI_ENDPOINT`   | Azure OpenAI service endpoint       | (optional)               |
-| `AZURE_OPENAI_KEY`        | Azure OpenAI API key                | (optional)               |
-| `AZURE_OPENAI_DEPLOYMENT` | Azure OpenAI deployment name        | (optional)               |
-| `SENTRY_DSN`              | Sentry error tracking DSN (server)  | (optional)               |
-| `NEXT_PUBLIC_SENTRY_DSN`  | Sentry DSN (client bundle)          | (optional)               |
-| `NEXT_PUBLIC_APP_URL`     | Public application URL              | `http://localhost:3000`  |
-| `NODE_ENV`                | Runtime environment                 | `development`            |
-| `LOG_LEVEL`               | Pino log level                      | `debug`                  |
-| `SLOW_QUERY_THRESHOLD_MS` | Prisma slow query warning threshold | `500`                    |
+| Variable                       | Description                          | Default                  |
+| ------------------------------ | ------------------------------------ | ------------------------ |
+| `DATABASE_URL`                 | PostgreSQL connection string         | See `.env.example`       |
+| `JWT_ACCESS_SECRET`            | Secret for signing access tokens     | (required, min 32 chars) |
+| `JWT_REFRESH_SECRET`           | Secret for signing refresh tokens    | (required, min 32 chars) |
+| `JWT_ACCESS_EXPIRY`            | Access token TTL                     | `15m`                    |
+| `JWT_REFRESH_EXPIRY`           | Refresh token TTL                    | `7d`                     |
+| `BCRYPT_SALT_ROUNDS`           | bcrypt hashing cost factor           | `12`                     |
+| `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection string | See `.env.example`       |
+| `AZURE_BLOB_CONTAINER`         | Azure Blob container name            | `podcast-hub`            |
+| `AZURE_OPENAI_ENDPOINT`        | Azure OpenAI service endpoint (v2)   | (optional)               |
+| `AZURE_OPENAI_KEY`             | Azure OpenAI API key (v2)            | (optional)               |
+| `AZURE_OPENAI_DEPLOYMENT`      | Azure OpenAI deployment name (v2)    | (optional)               |
+
+> **Note:** The `AZURE_OPENAI_*` variables power v2 features (semantic search, AI-powered embeddings via pgvector). The infrastructure and schema are in place, but these features are not yet active — you do not need an Azure OpenAI key to run the application.
+> | `SENTRY_DSN` | Sentry error tracking DSN (server) | (optional) |
+> | `NEXT_PUBLIC_SENTRY_DSN` | Sentry DSN (client bundle) | (optional) |
+> | `NEXT_PUBLIC_APP_URL` | Public application URL | `http://localhost:3000` |
+> | `NODE_ENV` | Runtime environment | `development` |
+> | `LOG_LEVEL` | Pino log level | `debug` |
+> | `SLOW_QUERY_THRESHOLD_MS` | Prisma slow query warning threshold | `500` |
 
 ## Testing
 

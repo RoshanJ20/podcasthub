@@ -3,7 +3,7 @@
  *
  * Key responsibilities:
  * - Security headers (CSP, HSTS, X-Frame-Options, etc.)
- * - Image optimization remote patterns for MinIO/Azure
+ * - Image optimization remote patterns for Azurite/Azure Blob Storage
  * - Webpack config for react-pdf compatibility
  */
 import type { NextConfig } from 'next';
@@ -47,7 +47,7 @@ const nextConfig: NextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '9000',
+        port: '10000',
         pathname: '/**',
       },
     ],

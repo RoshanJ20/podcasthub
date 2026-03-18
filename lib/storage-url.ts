@@ -5,7 +5,7 @@
  * This helper converts them to URLs that the browser can load.
  *
  * In development, files are proxied through /api/media to avoid browser
- * security restrictions on loading media from localhost:9000 (MinIO).
+ * security restrictions on loading media from localhost:10000 (Azurite).
  */
 
 /**

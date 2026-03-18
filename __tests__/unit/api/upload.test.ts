@@ -6,7 +6,7 @@
  * - Validates request body with Zod (filename, content_type, file_size, category)
  * - Rejects invalid MIME types for the given category
  * - Rejects files exceeding max size for the given category
- * - Returns presigned upload URL, key, and bucket on success
+ * - Returns presigned upload URL, key, and container on success
  * - Handles ApiError instances with createErrorResponse
  * - Handles unexpected errors with internalError
  */
@@ -22,6 +22,7 @@ vi.mock('@/lib/auth/api-helpers', () => ({
 // Mock storage
 vi.mock('@/lib/storage', () => ({
   generatePresignedUploadUrl: vi.fn(),
+  CONTAINER: 'test-container',
 }));
 
 import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
@@ -166,7 +167,7 @@ describe('POST /api/upload', () => {
     expect(body.error_code).toBe('BAD_REQUEST');
   });
 
-  it('returns presigned URL, key, and bucket on success for audio', async () => {
+  it('returns presigned URL, key, and container on success for audio', async () => {
     const request = createUploadRequest({
       filename: 'podcast.mp3',
       content_type: 'audio/mpeg',
@@ -180,8 +181,8 @@ describe('POST /api/upload', () => {
     expect(response.status).toBe(200);
     expect(body.data.upload_url).toBe('https://s3.example.com/presigned-upload-url');
     expect(body.data.key).toMatch(/^audio\//);
-    expect(body.data.bucket).toBeDefined();
-    expect(typeof body.data.bucket).toBe('string');
+    expect(body.data.container).toBe('test-container');
+    expect(typeof body.data.container).toBe('string');
   });
 
   it('returns presigned URL on success for image', async () => {

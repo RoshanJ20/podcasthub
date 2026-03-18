@@ -7,7 +7,7 @@
  * - Checks MIME type against allowed types for the file category
  * - Enforces max file size limits per category
  * - Generates a unique storage key and presigned upload URL
- * - Returns the presigned URL, key, and bucket for client-side upload
+ * - Returns the presigned URL, key, and container for client-side upload
  *
  * Dependencies:
  * - next/server (NextResponse)
@@ -15,11 +15,11 @@
  * - @/lib/auth/api-helpers (requireAuth, requireRole)
  * - @/lib/api/errors (ApiError, createErrorResponse, badRequest, validationFailed, internalError)
  * - @/lib/upload (FILE_TYPE_GROUPS, MAX_FILE_SIZES, validateFileType, generateUniqueKey, formatFileSize)
- * - @/lib/storage (generatePresignedUploadUrl)
+ * - @/lib/storage (generatePresignedUploadUrl, CONTAINER)
  *
  * @route POST /api/upload
  * @body { filename: string, content_type: string, file_size: number, category: 'audio' | 'image' | 'pdf' }
- * @returns { data: { upload_url: string, key: string, bucket: string } }
+ * @returns { data: { upload_url: string, key: string, container: string } }
  */
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -33,7 +33,7 @@ import {
   generateUniqueKey,
   formatFileSize,
 } from '@/lib/upload';
-import { generatePresignedUploadUrl } from '@/lib/storage';
+import { generatePresignedUploadUrl, CONTAINER } from '@/lib/storage';
 import { withRequestLogging } from '@/lib/api/request-logging-middleware';
 
 /** Zod schema for validating upload request body. */
@@ -44,18 +44,15 @@ const uploadRequestSchema = z.object({
   category: z.enum(['audio', 'image', 'pdf']),
 });
 
-/** S3 bucket name from environment, with a sensible default. */
-const UPLOAD_BUCKET = process.env.S3_UPLOAD_BUCKET ?? 'podcast-hub-uploads';
-
 /**
- * Handles file upload requests by generating a presigned S3 upload URL.
+ * Handles file upload requests by generating a presigned Azure Blob Storage upload URL.
  *
  * Validates authentication, authorization, request body, MIME type, and file size
  * before generating and returning a presigned URL for direct client-side upload.
  * Wrapped with request logging for operation tracking.
  *
  * @param request - The incoming POST request with upload metadata
- * @returns JSON response with presigned URL, key, and bucket, or an error response
+ * @returns JSON response with presigned URL, key, and container, or an error response
  */
 export const POST = withRequestLogging(async (request: NextRequest): Promise<NextResponse> => {
   // Require admin authentication — throws ApiError if unauthorized
@@ -92,13 +89,13 @@ export const POST = withRequestLogging(async (request: NextRequest): Promise<Nex
 
   // Generate unique key and presigned upload URL
   const key = generateUniqueKey(category, filename);
-  const uploadUrl = await generatePresignedUploadUrl(UPLOAD_BUCKET, key, content_type);
+  const uploadUrl = await generatePresignedUploadUrl(key, content_type);
 
   return NextResponse.json({
     data: {
       upload_url: uploadUrl,
       key,
-      bucket: UPLOAD_BUCKET,
+      container: CONTAINER,
     },
   });
 });

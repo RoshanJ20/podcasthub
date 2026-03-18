@@ -1,7 +1,7 @@
 /**
  * Direct file upload endpoint for Podcast Hub v2.
  *
- * Receives a file via multipart form data, uploads it to S3/MinIO server-side,
+ * Receives a file via multipart form data, uploads it to Azure Blob Storage server-side,
  * and returns the storage key. This avoids browser CORS issues with presigned URLs.
  *
  * @route POST /api/upload/file
@@ -11,8 +11,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { s3Client } from '@/lib/storage';
+import { uploadBuffer } from '@/lib/storage';
 import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
 import { createErrorResponse, badRequest } from '@/lib/api/errors';
 import {
@@ -24,14 +23,12 @@ import {
 } from '@/lib/upload';
 import { withRequestLogging } from '@/lib/api/request-logging-middleware';
 
-const UPLOAD_BUCKET = process.env.S3_UPLOAD_BUCKET ?? 'podcast-hub-uploads';
-
 /**
- * Handles POST requests to upload a file to S3/MinIO storage.
+ * Handles POST requests to upload a file to Azure Blob Storage.
  *
  * Accepts multipart form data with a 'file' and 'category' field. Validates the
  * file type against allowed MIME types for the category and enforces size limits.
- * Generates a unique storage key and uploads the file to the configured S3 bucket.
+ * Generates a unique storage key and uploads the file to the configured Azure Blob container.
  * Requires admin or superadmin role. Wrapped with request logging for operation tracking.
  *
  * @param request - The incoming Next.js request object with multipart form data
@@ -75,14 +72,7 @@ export const POST = withRequestLogging(async (request: NextRequest): Promise<Nex
   const key = generateUniqueKey(category, file.name);
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: UPLOAD_BUCKET,
-      Key: key,
-      Body: buffer,
-      ContentType: file.type,
-    })
-  );
+  await uploadBuffer(key, buffer, file.type);
 
   return NextResponse.json({ data: { key } });
 });
