@@ -14,7 +14,7 @@ import type { NextRequest } from 'next/server';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { s3Client } from '@/lib/storage';
 import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
-import { ApiError, createErrorResponse, badRequest, internalError } from '@/lib/api/errors';
+import { createErrorResponse, badRequest } from '@/lib/api/errors';
 import {
   FILE_TYPE_GROUPS,
   MAX_FILE_SIZES,
@@ -22,9 +22,7 @@ import {
   generateUniqueKey,
   formatFileSize,
 } from '@/lib/upload';
-import { createLogger } from '@/lib/logger';
-
-const log = createLogger('upload-file-api');
+import { withRequestLogging } from '@/lib/api/request-logging-middleware';
 
 const UPLOAD_BUCKET = process.env.S3_UPLOAD_BUCKET ?? 'podcast-hub-uploads';
 
@@ -34,7 +32,7 @@ const UPLOAD_BUCKET = process.env.S3_UPLOAD_BUCKET ?? 'podcast-hub-uploads';
  * Accepts multipart form data with a 'file' and 'category' field. Validates the
  * file type against allowed MIME types for the category and enforces size limits.
  * Generates a unique storage key and uploads the file to the configured S3 bucket.
- * Requires admin or superadmin role.
+ * Requires admin or superadmin role. Wrapped with request logging for operation tracking.
  *
  * @param request - The incoming Next.js request object with multipart form data
  * @returns JSON response with the generated storage key ({ data: { key: string } })
@@ -42,55 +40,49 @@ const UPLOAD_BUCKET = process.env.S3_UPLOAD_BUCKET ?? 'podcast-hub-uploads';
  * @throws {ApiError} 401 if the user is not authenticated
  * @throws {ApiError} 403 if the user does not have admin or superadmin role
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
-  try {
-    const user = requireAuth(request);
-    requireRole(user, ['admin', 'superadmin']);
+export const POST = withRequestLogging(async (request: NextRequest): Promise<NextResponse> => {
+  const user = requireAuth(request);
+  requireRole(user, ['admin', 'superadmin']);
 
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
-    const category = formData.get('category') as string | null;
+  const formData = await request.formData();
+  const file = formData.get('file') as File | null;
+  const category = formData.get('category') as string | null;
 
-    if (!file || !category) {
-      return createErrorResponse(badRequest('file and category are required'));
-    }
-
-    if (!['audio', 'image', 'pdf'].includes(category)) {
-      return createErrorResponse(badRequest('category must be audio, image, or pdf'));
-    }
-
-    const typedCategory = category as 'audio' | 'image' | 'pdf';
-
-    if (!validateFileType(file.type, FILE_TYPE_GROUPS[typedCategory])) {
-      return createErrorResponse(
-        badRequest(`File type '${file.type}' not allowed for '${category}'`)
-      );
-    }
-
-    if (file.size > MAX_FILE_SIZES[typedCategory]) {
-      return createErrorResponse(
-        badRequest(
-          `File size ${formatFileSize(file.size)} exceeds max ${formatFileSize(MAX_FILE_SIZES[typedCategory])}`
-        )
-      );
-    }
-
-    const key = generateUniqueKey(category, file.name);
-    const buffer = Buffer.from(await file.arrayBuffer());
-
-    await s3Client.send(
-      new PutObjectCommand({
-        Bucket: UPLOAD_BUCKET,
-        Key: key,
-        Body: buffer,
-        ContentType: file.type,
-      })
-    );
-
-    return NextResponse.json({ data: { key } });
-  } catch (error) {
-    if (error instanceof ApiError) return createErrorResponse(error);
-    log.error({ error }, 'File upload failed');
-    return createErrorResponse(internalError());
+  if (!file || !category) {
+    return createErrorResponse(badRequest('file and category are required'));
   }
-}
+
+  if (!['audio', 'image', 'pdf'].includes(category)) {
+    return createErrorResponse(badRequest('category must be audio, image, or pdf'));
+  }
+
+  const typedCategory = category as 'audio' | 'image' | 'pdf';
+
+  if (!validateFileType(file.type, FILE_TYPE_GROUPS[typedCategory])) {
+    return createErrorResponse(
+      badRequest(`File type '${file.type}' not allowed for '${category}'`)
+    );
+  }
+
+  if (file.size > MAX_FILE_SIZES[typedCategory]) {
+    return createErrorResponse(
+      badRequest(
+        `File size ${formatFileSize(file.size)} exceeds max ${formatFileSize(MAX_FILE_SIZES[typedCategory])}`
+      )
+    );
+  }
+
+  const key = generateUniqueKey(category, file.name);
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: UPLOAD_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: file.type,
+    })
+  );
+
+  return NextResponse.json({ data: { key } });
+});
