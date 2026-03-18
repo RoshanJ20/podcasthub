@@ -57,10 +57,6 @@ export function HomeCard(props: HomeCardProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const href = variant === 'podcast' ? `/podcast/${id}` : `/learning-path/${id}`;
-  const progress =
-    variant === 'series' && props.episodeCount > 0
-      ? Math.round((props.completedCount / props.episodeCount) * 100)
-      : 0;
 
   const badgeBg = isDark ? color.darkBg : color.bg;
   const badgeText = isDark ? color.darkText : color.text;
@@ -101,24 +97,6 @@ export function HomeCard(props: HomeCardProps) {
           {/* Description */}
           {description && (
             <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{description}</p>
-          )}
-
-          {variant === 'series' && (
-            <div className="mt-3">
-              <div className="h-1.5 w-full rounded-full bg-border/40">
-                <div
-                  className="h-1.5 rounded-full transition-all"
-                  style={{
-                    width: `${progress}%`,
-                    backgroundColor: color.border,
-                  }}
-                  role="progressbar"
-                  aria-valuenow={progress}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                />
-              </div>
-            </div>
           )}
         </div>
       </div>
