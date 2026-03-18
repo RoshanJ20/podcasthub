@@ -5,6 +5,7 @@ Internal enterprise audio podcast platform for managing, distributing, and track
 ## Table of Contents
 
 - [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Local Development Setup](#local-development-setup)
 - [Environment Variables](#environment-variables)
@@ -42,6 +43,69 @@ Internal enterprise audio podcast platform for managing, distributing, and track
 | CI/CD         | GitHub Actions                          | Automated lint, test, build, deploy pipelines       |
 | Deployment    | Docker, Azure Container Apps            | Containerized production deployment                 |
 
+## Architecture
+
+```mermaid
+graph TB
+    subgraph "Client Tier"
+        WebApp["Web Browser<br/>(React 19 + Next.js)"]
+        HLS["HLS.js<br/>Adaptive Streaming"]
+    end
+
+    subgraph "CDN / Edge"
+        FrontDoor["Azure Front Door<br/>(CDN + WAF)"]
+    end
+
+    subgraph "Application Tier"
+        subgraph "Azure Container Apps"
+            NextJS["Next.js 16<br/>Standalone Server<br/>(Node.js 20 LTS)"]
+            EdgeMW["Edge Middleware<br/>(JWT + Route Protection)"]
+        end
+    end
+
+    subgraph "Data Tier"
+        subgraph "Primary Database"
+            PostgreSQL["PostgreSQL 16"]
+        end
+        subgraph "Object Storage"
+            BlobStorage["Azure Blob Storage<br/>(S3-compatible)<br/>Audio, PDFs, Thumbnails"]
+        end
+    end
+
+    subgraph "DevOps"
+        ACR["Azure Container<br/>Registry"]
+        GitHub["GitHub Actions<br/>(CI/CD)"]
+        AzureMonitor["Azure Monitor<br/>(Metrics + Logs)"]
+    end
+
+    subgraph "Local Dev"
+        DockerCompose["Docker Compose"]
+        PGLocal["PostgreSQL 16"]
+        MinIO["MinIO<br/>(S3-compatible)"]
+    end
+
+    WebApp -->|"HTTPS"| FrontDoor
+    HLS -->|"HLS streams"| FrontDoor
+    FrontDoor -->|"Proxy"| NextJS
+    NextJS --> EdgeMW
+    EdgeMW -->|"Prisma ORM"| PostgreSQL
+    EdgeMW -->|"Presigned URLs"| BlobStorage
+
+    GitHub -->|"Build + Push"| ACR
+    ACR -->|"Deploy"| NextJS
+    NextJS -.->|"Logs + Metrics"| AzureMonitor
+
+    DockerCompose --> PGLocal & MinIO
+
+    style FrontDoor fill:#0078d4,color:#fff
+    style PostgreSQL fill:#336791,color:#fff
+    style BlobStorage fill:#0078d4,color:#fff
+    style ACR fill:#0078d4,color:#fff
+    style MinIO fill:#c41d15,color:#fff
+```
+
+For detailed architecture diagrams covering frontend components, backend API routes, database schema (ER diagram), end-to-end product flow, and deployment infrastructure, see [docs/architecture-diagrams.md](docs/architecture-diagrams.md).
+
 ## Prerequisites
 
 - **Node.js** >= 20
@@ -77,28 +141,29 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 
 ## Environment Variables
 
-| Variable                  | Description                        | Default                  |
-| ------------------------- | ---------------------------------- | ------------------------ |
-| `DATABASE_URL`            | PostgreSQL connection string       | See `.env.example`       |
-| `JWT_ACCESS_SECRET`       | Secret for signing access tokens   | (required, min 32 chars) |
-| `JWT_REFRESH_SECRET`      | Secret for signing refresh tokens  | (required, min 32 chars) |
-| `JWT_ACCESS_EXPIRY`       | Access token TTL                   | `15m`                    |
-| `JWT_REFRESH_EXPIRY`      | Refresh token TTL                  | `7d`                     |
-| `BCRYPT_SALT_ROUNDS`      | bcrypt hashing cost factor         | `12`                     |
-| `S3_ENDPOINT`             | MinIO / S3-compatible endpoint     | `http://localhost:9000`  |
-| `S3_ACCESS_KEY`           | S3 access key                      | `minioadmin`             |
-| `S3_SECRET_KEY`           | S3 secret key                      | `minioadmin`             |
-| `S3_BUCKET_AUDIO`         | Bucket for audio files             | `audio`                  |
-| `S3_BUCKET_THUMBNAILS`    | Bucket for thumbnail images        | `thumbnails`             |
-| `S3_BUCKET_BULLETINS`     | Bucket for bulletin PDFs           | `bulletins`              |
-| `AZURE_OPENAI_ENDPOINT`   | Azure OpenAI service endpoint      | (optional)               |
-| `AZURE_OPENAI_KEY`        | Azure OpenAI API key               | (optional)               |
-| `AZURE_OPENAI_DEPLOYMENT` | Azure OpenAI deployment name       | (optional)               |
-| `SENTRY_DSN`              | Sentry error tracking DSN (server) | (optional)               |
-| `NEXT_PUBLIC_SENTRY_DSN`  | Sentry DSN (client bundle)         | (optional)               |
-| `NEXT_PUBLIC_APP_URL`     | Public application URL             | `http://localhost:3000`  |
-| `NODE_ENV`                | Runtime environment                | `development`            |
-| `LOG_LEVEL`               | Pino log level                     | `debug`                  |
+| Variable                  | Description                         | Default                  |
+| ------------------------- | ----------------------------------- | ------------------------ |
+| `DATABASE_URL`            | PostgreSQL connection string        | See `.env.example`       |
+| `JWT_ACCESS_SECRET`       | Secret for signing access tokens    | (required, min 32 chars) |
+| `JWT_REFRESH_SECRET`      | Secret for signing refresh tokens   | (required, min 32 chars) |
+| `JWT_ACCESS_EXPIRY`       | Access token TTL                    | `15m`                    |
+| `JWT_REFRESH_EXPIRY`      | Refresh token TTL                   | `7d`                     |
+| `BCRYPT_SALT_ROUNDS`      | bcrypt hashing cost factor          | `12`                     |
+| `S3_ENDPOINT`             | MinIO / S3-compatible endpoint      | `http://localhost:9000`  |
+| `S3_ACCESS_KEY`           | S3 access key                       | `minioadmin`             |
+| `S3_SECRET_KEY`           | S3 secret key                       | `minioadmin`             |
+| `S3_BUCKET_AUDIO`         | Bucket for audio files              | `audio`                  |
+| `S3_BUCKET_THUMBNAILS`    | Bucket for thumbnail images         | `thumbnails`             |
+| `S3_BUCKET_BULLETINS`     | Bucket for bulletin PDFs            | `bulletins`              |
+| `AZURE_OPENAI_ENDPOINT`   | Azure OpenAI service endpoint       | (optional)               |
+| `AZURE_OPENAI_KEY`        | Azure OpenAI API key                | (optional)               |
+| `AZURE_OPENAI_DEPLOYMENT` | Azure OpenAI deployment name        | (optional)               |
+| `SENTRY_DSN`              | Sentry error tracking DSN (server)  | (optional)               |
+| `NEXT_PUBLIC_SENTRY_DSN`  | Sentry DSN (client bundle)          | (optional)               |
+| `NEXT_PUBLIC_APP_URL`     | Public application URL              | `http://localhost:3000`  |
+| `NODE_ENV`                | Runtime environment                 | `development`            |
+| `LOG_LEVEL`               | Pino log level                      | `debug`                  |
+| `SLOW_QUERY_THRESHOLD_MS` | Prisma slow query warning threshold | `500`                    |
 
 ## Testing
 

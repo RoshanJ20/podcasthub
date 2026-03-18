@@ -25,13 +25,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
-import {
-  ApiError,
-  createErrorResponse,
-  badRequest,
-  validationFailed,
-  internalError,
-} from '@/lib/api/errors';
+import { createErrorResponse, badRequest, validationFailed } from '@/lib/api/errors';
 import {
   FILE_TYPE_GROUPS,
   MAX_FILE_SIZES,
@@ -40,9 +34,7 @@ import {
   formatFileSize,
 } from '@/lib/upload';
 import { generatePresignedUploadUrl } from '@/lib/storage';
-import { createLogger } from '@/lib/logger';
-
-const log = createLogger('upload-api');
+import { withRequestLogging } from '@/lib/api/request-logging-middleware';
 
 /** Zod schema for validating upload request body. */
 const uploadRequestSchema = z.object({
@@ -60,61 +52,53 @@ const UPLOAD_BUCKET = process.env.S3_UPLOAD_BUCKET ?? 'podcast-hub-uploads';
  *
  * Validates authentication, authorization, request body, MIME type, and file size
  * before generating and returning a presigned URL for direct client-side upload.
+ * Wrapped with request logging for operation tracking.
  *
  * @param request - The incoming POST request with upload metadata
  * @returns JSON response with presigned URL, key, and bucket, or an error response
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
-  try {
-    // Require admin authentication
-    const user = requireAuth(request);
-    requireRole(user, ['admin', 'superadmin']);
+export const POST = withRequestLogging(async (request: NextRequest): Promise<NextResponse> => {
+  // Require admin authentication — throws ApiError if unauthorized
+  const user = requireAuth(request);
+  requireRole(user, ['admin', 'superadmin']);
 
-    // Parse and validate request body
-    const body: unknown = await request.json();
-    const parsed = uploadRequestSchema.safeParse(body);
+  // Parse and validate request body
+  const body: unknown = await request.json();
+  const parsed = uploadRequestSchema.safeParse(body);
 
-    if (!parsed.success) {
-      return createErrorResponse(validationFailed(parsed.error.issues));
-    }
-
-    const { filename, content_type, file_size, category } = parsed.data;
-
-    // Validate MIME type against allowed types for the category
-    const allowedTypes = FILE_TYPE_GROUPS[category];
-    if (!validateFileType(content_type, allowedTypes)) {
-      return createErrorResponse(
-        badRequest(`File type '${content_type}' is not allowed for category '${category}'`)
-      );
-    }
-
-    // Validate file size against max for the category
-    const maxSize = MAX_FILE_SIZES[category];
-    if (file_size > maxSize) {
-      return createErrorResponse(
-        badRequest(
-          `File size ${formatFileSize(file_size)} exceeds maximum of ${formatFileSize(maxSize)} for category '${category}'`
-        )
-      );
-    }
-
-    // Generate unique key and presigned upload URL
-    const key = generateUniqueKey(category, filename);
-    const uploadUrl = await generatePresignedUploadUrl(UPLOAD_BUCKET, key, content_type);
-
-    return NextResponse.json({
-      data: {
-        upload_url: uploadUrl,
-        key,
-        bucket: UPLOAD_BUCKET,
-      },
-    });
-  } catch (error) {
-    if (error instanceof ApiError) {
-      return createErrorResponse(error);
-    }
-
-    log.error({ error }, 'Podcast upload failed');
-    return createErrorResponse(internalError());
+  if (!parsed.success) {
+    return createErrorResponse(validationFailed(parsed.error.issues));
   }
-}
+
+  const { filename, content_type, file_size, category } = parsed.data;
+
+  // Validate MIME type against allowed types for the category
+  const allowedTypes = FILE_TYPE_GROUPS[category];
+  if (!validateFileType(content_type, allowedTypes)) {
+    return createErrorResponse(
+      badRequest(`File type '${content_type}' is not allowed for category '${category}'`)
+    );
+  }
+
+  // Validate file size against max for the category
+  const maxSize = MAX_FILE_SIZES[category];
+  if (file_size > maxSize) {
+    return createErrorResponse(
+      badRequest(
+        `File size ${formatFileSize(file_size)} exceeds maximum of ${formatFileSize(maxSize)} for category '${category}'`
+      )
+    );
+  }
+
+  // Generate unique key and presigned upload URL
+  const key = generateUniqueKey(category, filename);
+  const uploadUrl = await generatePresignedUploadUrl(UPLOAD_BUCKET, key, content_type);
+
+  return NextResponse.json({
+    data: {
+      upload_url: uploadUrl,
+      key,
+      bucket: UPLOAD_BUCKET,
+    },
+  });
+});

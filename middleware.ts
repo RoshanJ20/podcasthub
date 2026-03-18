@@ -1,10 +1,12 @@
 /**
- * Next.js middleware for Podcast Hub v2 authentication and authorization.
+ * Next.js middleware for Podcast Hub v2 authentication, authorization, and request tracing.
  *
  * Uses `jose` library for JWT verification (Edge runtime compatible).
  * `jsonwebtoken` does NOT work in Edge middleware — it requires Node.js crypto.
  *
  * Key responsibilities:
+ * - Generates a unique correlation ID (x-request-id) for every request
+ * - Stamps x-request-start for downstream duration calculation
  * - Protects admin routes (requires admin/superadmin role)
  * - Protects write API routes (requires valid JWT)
  * - Allows public GET API routes without auth
@@ -133,17 +135,19 @@ async function resolveAuthenticatedUser(
 function handleAdminRoute(
   request: NextRequest,
   user: UserPayload | null,
-  newAccessToken: string | null
+  newAccessToken: string | null,
+  requestId: string,
+  requestStart: string
 ): NextResponse {
   if (!user) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirectTo', request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    return stampResponse(NextResponse.redirect(loginUrl), requestId);
   }
   if (user.role !== 'admin' && user.role !== 'superadmin') {
-    return NextResponse.redirect(new URL('/unauthorized', request.url));
+    return stampResponse(NextResponse.redirect(new URL('/unauthorized', request.url)), requestId);
   }
-  return addUserHeaders(request, user, newAccessToken);
+  return addUserHeaders(request, user, newAccessToken, requestId, requestStart);
 }
 
 /**
@@ -160,7 +164,9 @@ function handleAdminRoute(
 function handleApiRoute(
   request: NextRequest,
   user: UserPayload | null,
-  newAccessToken: string | null
+  newAccessToken: string | null,
+  requestId: string,
+  requestStart: string
 ): NextResponse {
   const { pathname } = request.nextUrl;
   const isPublicApi =
@@ -170,25 +176,35 @@ function handleApiRoute(
       pathname.startsWith('/api/search'));
 
   if (isPublicApi) {
-    if (user) return addUserHeaders(request, user, newAccessToken);
-    return NextResponse.next();
+    if (user) return addUserHeaders(request, user, newAccessToken, requestId, requestStart);
+    return passthrough(request, requestId, requestStart);
   }
 
   if (!user) {
-    return NextResponse.json(
-      { status: 401, error_code: 'UNAUTHORIZED', message: 'Unauthorized' },
-      { status: 401 }
+    return stampResponse(
+      NextResponse.json(
+        { status: 401, error_code: 'UNAUTHORIZED', message: 'Unauthorized' },
+        { status: 401 }
+      ),
+      requestId
     );
   }
-  return addUserHeaders(request, user, newAccessToken);
+  return addUserHeaders(request, user, newAccessToken, requestId, requestStart);
 }
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const requestId = crypto.randomUUID();
+  const requestStart = Date.now().toString();
   const { pathname } = request.nextUrl;
 
-  // Health check, auth routes, and media proxy are always accessible
-  if (pathname === '/api/health' || pathname === '/api/media' || isAuthRoute(pathname)) {
-    return NextResponse.next();
+  // Health/readiness checks, auth routes, and media proxy are always accessible
+  if (
+    pathname === '/api/health' ||
+    pathname === '/api/ready' ||
+    pathname === '/api/media' ||
+    isAuthRoute(pathname)
+  ) {
+    return passthrough(request, requestId, requestStart);
   }
 
   const accessSecret = process.env.JWT_ACCESS_SECRET || '';
@@ -200,31 +216,72 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     refreshSecret
   );
 
-  if (isAdminRoute(pathname)) return handleAdminRoute(request, user, newAccessToken);
+  if (isAdminRoute(pathname)) {
+    return handleAdminRoute(request, user, newAccessToken, requestId, requestStart);
+  }
 
-  if (isApiRoute(pathname)) return handleApiRoute(request, user, newAccessToken);
+  if (isApiRoute(pathname)) {
+    return handleApiRoute(request, user, newAccessToken, requestId, requestStart);
+  }
 
   // Public page routes
   if (isPublicRoute(pathname)) {
-    if (user) return addUserHeaders(request, user, newAccessToken);
-    return NextResponse.next();
+    if (user) return addUserHeaders(request, user, newAccessToken, requestId, requestStart);
+    return passthrough(request, requestId, requestStart);
   }
 
   // All other routes: require auth
   if (!user) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirectTo', pathname);
-    return NextResponse.redirect(loginUrl);
+    return stampResponse(NextResponse.redirect(loginUrl), requestId);
   }
 
-  return addUserHeaders(request, user, newAccessToken);
+  return addUserHeaders(request, user, newAccessToken, requestId, requestStart);
 }
 
 /**
- * Builds a pass-through `NextResponse` that forwards user identity as request headers.
+ * Creates a pass-through response with correlation headers on request and response.
  *
- * Sets `x-user-id`, `x-user-email`, and `x-user-role` so that API route handlers and
- * Server Components can read the authenticated user without re-verifying the JWT.
+ * Used for unauthenticated paths (health checks, public routes) where user headers
+ * are not needed but correlation tracking is still required.
+ *
+ * @param request - The incoming request whose headers will be cloned and extended.
+ * @param requestId - The unique correlation ID for this request.
+ * @param requestStart - Epoch milliseconds when the request entered middleware.
+ * @returns A NextResponse with x-request-id and x-request-start on both request and response.
+ */
+function passthrough(request: NextRequest, requestId: string, requestStart: string): NextResponse {
+  const headers = new Headers(request.headers);
+  headers.set('x-request-id', requestId);
+  headers.set('x-request-start', requestStart);
+  const response = NextResponse.next({ request: { headers } });
+  response.headers.set('x-request-id', requestId);
+  return response;
+}
+
+/**
+ * Stamps x-request-id on a response that doesn't forward request headers.
+ *
+ * Used for redirects and error JSON responses where request header forwarding
+ * is not applicable but response correlation is still needed.
+ *
+ * @param response - The response to stamp.
+ * @param requestId - The unique correlation ID for this request.
+ * @returns The same response with x-request-id set.
+ */
+function stampResponse(response: NextResponse, requestId: string): NextResponse {
+  response.headers.set('x-request-id', requestId);
+  return response;
+}
+
+/**
+ * Builds a pass-through `NextResponse` that forwards user identity and correlation
+ * headers as request headers.
+ *
+ * Sets `x-user-id`, `x-user-email`, `x-user-role`, `x-request-id`, and `x-request-start`
+ * so that API route handlers and Server Components can read the authenticated user and
+ * correlation context without re-verifying the JWT.
  * When a silent token refresh has occurred, the new access token is written back as an
  * HttpOnly cookie so the client receives the updated credential transparently.
  *
@@ -232,20 +289,27 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
  * @param user - The authenticated user whose identity will be injected into the headers.
  * @param refreshedAccessToken - A newly issued access token to persist as a cookie, or
  *   `null`/`undefined` when no refresh took place.
+ * @param requestId - The unique correlation ID for this request.
+ * @param requestStart - Epoch milliseconds when the request entered middleware.
  * @returns A `NextResponse` that continues the request with the enriched headers (and,
  *   if provided, the refreshed cookie).
  */
 function addUserHeaders(
   request: NextRequest,
   user: UserPayload,
-  refreshedAccessToken?: string | null
+  refreshedAccessToken: string | null | undefined,
+  requestId: string,
+  requestStart: string
 ): NextResponse {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-user-id', user.userId);
   requestHeaders.set('x-user-email', user.email);
   requestHeaders.set('x-user-role', user.role);
+  requestHeaders.set('x-request-id', requestId);
+  requestHeaders.set('x-request-start', requestStart);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set('x-request-id', requestId);
 
   if (refreshedAccessToken) {
     response.cookies.set(ACCESS_TOKEN_COOKIE, refreshedAccessToken, {
