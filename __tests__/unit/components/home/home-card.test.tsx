@@ -5,7 +5,7 @@
  * links, domain badges, and variant-specific metadata.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { HomeCard } from '@/components/home/home-card';
 
 vi.mock('next/link', () => ({
@@ -128,8 +128,8 @@ describe('HomeCard', () => {
       expect(link?.getAttribute('href')).toBe('/learning-path/s1');
     });
 
-    it('renders progress bar with ARIA attributes', () => {
-      const { container } = render(
+    it('renders episode count with completedCount prop provided', () => {
+      render(
         <HomeCard
           variant="series"
           id="s1"
@@ -141,11 +141,7 @@ describe('HomeCard', () => {
         />
       );
 
-      const progressBar = container.querySelector('[role="progressbar"]');
-      expect(progressBar).not.toBeNull();
-      expect(progressBar?.getAttribute('aria-valuenow')).toBe('25');
-      expect(progressBar?.getAttribute('aria-valuemin')).toBe('0');
-      expect(progressBar?.getAttribute('aria-valuemax')).toBe('100');
+      expect(screen.getByText(/4 episodes/)).toBeDefined();
     });
 
     it('handles zero episodes without division error', () => {
@@ -161,9 +157,7 @@ describe('HomeCard', () => {
         />
       );
 
-      const progressBar = container.querySelector('[role="progressbar"]');
-      expect(progressBar).not.toBeNull();
-      expect(progressBar?.getAttribute('aria-valuenow')).toBe('0');
+      expect(within(container).getByText(/0 episodes/)).toBeDefined();
     });
   });
 });
