@@ -6,9 +6,12 @@
  */
 import { headers } from 'next/headers';
 import { prisma } from '@/lib/db';
+import { createLogger } from '@/lib/logger';
 import { UnifiedSidebar } from '@/components/layout/unified-sidebar';
 import { MobileTopBar } from '@/components/layout/mobile-top-bar';
 import { PageTransition } from '@/components/layout/page-transition';
+
+const log = createLogger('admin-layout');
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   // Read actual authenticated user's data from request headers
@@ -29,8 +32,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       if (user?.displayName) {
         userName = user.displayName;
       }
-    } catch {
+    } catch (err) {
       // Fall back to email if fetch fails
+      log.warn(
+        { error: err instanceof Error ? err.message : String(err), userId },
+        'Failed to fetch user context for admin layout'
+      );
       userName = userEmail.split('@')[0];
     }
   }

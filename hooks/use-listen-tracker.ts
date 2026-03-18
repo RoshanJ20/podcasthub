@@ -10,6 +10,9 @@
  */
 import { useEffect, useRef } from 'react';
 import { usePlayerStore } from '@/stores/player-store';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('use-listen-tracker');
 
 const LISTEN_INTERVAL_MS = 30_000;
 
@@ -39,7 +42,10 @@ export function useListenTracker(podcastId: string | null) {
           signal: controller.signal,
         });
       } catch (error) {
-        console.warn('Activity tracking failed:', error);
+        log.warn(
+          { error: error instanceof Error ? error.message : String(error), podcastId },
+          'Activity tracking failed'
+        );
       } finally {
         clearTimeout(timeoutId);
       }

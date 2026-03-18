@@ -16,6 +16,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('profile-form');
 
 interface ProfileFormValues {
   displayName: string;
@@ -51,7 +54,10 @@ export function ProfileForm() {
           totalBookmarks: bookmarkData.pagination?.total ?? 0,
         });
       } catch (error) {
-        console.warn('Failed to fetch profile stats:', error);
+        log.warn(
+          { error: error instanceof Error ? error.message : String(error) },
+          'Failed to fetch profile stats'
+        );
       } finally {
         setStatsLoading(false);
       }

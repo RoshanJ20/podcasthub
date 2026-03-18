@@ -23,11 +23,21 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 
+/**
+ * Renders the admin page for uploading a new podcast.
+ *
+ * Hosts the PodcastUploadWizard in create mode with a breadcrumb trail and a
+ * context-aware back button: navigates to the previous wizard step when
+ * mid-wizard, or calls router.back() when on the first step.
+ *
+ * @returns The upload new podcast page.
+ */
 export default function UploadPage() {
   const router = useRouter();
   const wizardRef = useRef<PodcastUploadWizardHandle>(null);
   const [wizardStep, setWizardStep] = useState(0);
 
+  // TODO(team): Extract shared handleBack pattern to useWizardNavigation hook — see #tech-debt
   const handleBack = () => {
     if (wizardStep > 0) {
       wizardRef.current?.goBack();

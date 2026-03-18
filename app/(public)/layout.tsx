@@ -6,10 +6,13 @@
  */
 import { headers } from 'next/headers';
 import { prisma } from '@/lib/db';
+import { createLogger } from '@/lib/logger';
 import { UnifiedSidebar } from '@/components/layout/unified-sidebar';
 import { MobileTopBar } from '@/components/layout/mobile-top-bar';
 import { MobileBottomPlayer } from '@/components/layout/mobile-bottom-player';
 import { PageTransition } from '@/components/layout/page-transition';
+
+const log = createLogger('public-layout');
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
   // Read authenticated user's data from request headers
@@ -30,8 +33,12 @@ export default async function PublicLayout({ children }: { children: React.React
       if (user?.displayName) {
         userName = user.displayName;
       }
-    } catch {
+    } catch (err) {
       // Fall back to email if fetch fails
+      log.warn(
+        { error: err instanceof Error ? err.message : String(err), userId },
+        'Failed to fetch user context for public layout'
+      );
       userName = userEmail.split('@')[0];
     }
   }

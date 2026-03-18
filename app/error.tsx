@@ -5,11 +5,14 @@
  * - Catches unhandled errors at the app root level
  * - Displays user-friendly error message
  * - Provides retry action
- * - Logs error to console (Sentry integration added later)
+ * - Logs unhandled errors via structured Pino logger
  */
 'use client';
 
 import { useEffect } from 'react';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('global-error');
 
 export default function GlobalError({
   error,
@@ -19,7 +22,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Unhandled error:', error);
+    log.error({ error: error.message, digest: error.digest }, 'Unhandled error');
   }, [error]);
 
   return (

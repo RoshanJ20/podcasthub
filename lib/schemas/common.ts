@@ -21,20 +21,21 @@ export const LEARNING_SERIES_DOMAINS = ['Auditing', 'Accounting and Reporting'] 
 /**
  * All valid knowledge domains in Podcast Hub.
  *
- * Manually maintained union of PODCAST_DOMAINS and LEARNING_SERIES_DOMAINS
- * with duplicates removed. Keep in sync when adding new domains.
+ * Deduplicated union of PODCAST_DOMAINS and LEARNING_SERIES_DOMAINS.
+ * Uses a Set at runtime to remove overlapping values (e.g. "Accounting and
+ * Reporting" appears in both source arrays).  Cast to the non-empty tuple type
+ * required by `z.enum()`.
  */
 export const DOMAINS = [
-  'Audit Methodology',
-  'Accounting and Reporting',
-  'Audit Technology',
-  'Quality and Risk',
-  'LEAP',
-  'Auditing',
-] as const;
+  ...new Set([...PODCAST_DOMAINS, ...LEARNING_SERIES_DOMAINS]),
+] as unknown as Readonly<[string, ...string[]]>;
 
-/** TypeScript type for a valid domain value. */
-export type Domain = (typeof DOMAINS)[number];
+/**
+ * TypeScript type for a valid domain value.
+ * Derived directly from the two source arrays so that it stays in sync
+ * without depending on the runtime deduplication.
+ */
+export type Domain = (typeof PODCAST_DOMAINS)[number] | (typeof LEARNING_SERIES_DOMAINS)[number];
 
 /** Zod schema for validating domain values against the DOMAINS enum. */
 export const domainSchema = z.enum(DOMAINS);

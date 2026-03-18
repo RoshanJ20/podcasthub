@@ -75,7 +75,8 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
 
     const podcast = await prisma.podcast.update({
       where: { id },
-      // WORKAROUND: Prisma create returns broader type than our schema output — safe to cast
+      // WORKAROUND(team): Prisma type inference requires explicit cast for multi-table upsert payload — see TODO #tech-debt
+      // TODO(team): Replace with proper Prisma input type once schema types are exported
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: result.data as any,
     });

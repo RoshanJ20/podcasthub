@@ -115,7 +115,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const podcast = await prisma.podcast.create({
-      // WORKAROUND: Prisma create returns broader type than our schema output — safe to cast
+      // WORKAROUND(team): Prisma type inference requires explicit cast for multi-table upsert payload — see TODO #tech-debt
+      // TODO(team): Replace with proper Prisma input type once schema types are exported
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: result.data as any,
     });

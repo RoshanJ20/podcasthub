@@ -25,11 +25,21 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 
+/**
+ * Renders the admin page for creating a new learning series.
+ *
+ * Hosts the LearningSeriesWizard with a breadcrumb trail and a context-aware
+ * back button: navigates to the previous wizard step when mid-wizard, or calls
+ * router.back() when on the first step.
+ *
+ * @returns The new learning series creation page.
+ */
 export default function NewLearningPathPage() {
   const router = useRouter();
   const wizardRef = useRef<LearningSeriesWizardHandle>(null);
   const [wizardStep, setWizardStep] = useState(0);
 
+  // TODO(team): Extract shared handleBack pattern to useWizardNavigation hook — see #tech-debt
   const handleBack = () => {
     if (wizardStep > 0) {
       wizardRef.current?.goBack();

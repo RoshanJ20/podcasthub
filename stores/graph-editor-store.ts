@@ -3,9 +3,29 @@
  *
  * Manages nodes (episodes), edges (connections), selection, dirty state,
  * dagre auto-layout, and API persistence for the learning graph editor.
+ *
+ * Key responsibilities:
+ * - CRUD operations for nodes and edges with dirty-state tracking
+ * - Dagre-based automatic layout computation
+ * - Debounced auto-save to the PUT /api/learning-graphs/:id/data endpoint
+ * - Reconciling server-returned IDs back into client state after save
+ *
+ * Dependencies:
+ * - dagre (layout engine)
+ * - graph-editor-helpers (pure payload/reconcile utilities)
+ * - @/lib/logger (structured logging)
  */
 import { create } from 'zustand';
 import dagre from 'dagre';
+import { createLogger } from '@/lib/logger';
+import {
+  buildSavePayload,
+  reconcileServerResponse,
+  type ApiEpisode,
+  type ApiEdge,
+} from './graph-editor-helpers';
+
+const log = createLogger('graph-editor-store');
 
 /** A node (episode) in the graph editor. */
 export interface GraphNode {
@@ -26,34 +46,6 @@ export interface GraphEdge {
   id: string;
   source: string;
   target: string;
-}
-
-/**
- * Shape of a single episode returned by the save API response.
- *
- * The server may include a `tempId` field that maps back to the client-side
- * temporary ID, allowing reconciliation with real DB-assigned IDs.
- */
-interface ApiEpisode {
-  id: string;
-  tempId?: string;
-  title: string;
-  podcastId: string;
-  positionX: number;
-  positionY: number;
-  nodeType: string;
-  sortOrder: number;
-  description?: string;
-  audioUrl?: string;
-  thumbnailUrl?: string;
-  transcript?: string;
-}
-
-/** Shape of a single edge returned by the save API response. */
-interface ApiEdge {
-  id: string;
-  sourceEpisodeId: string;
-  targetEpisodeId: string;
 }
 
 /** State and actions for the graph editor store. */
@@ -105,92 +97,6 @@ export function scheduleAutoSave(): void {
   }, AUTO_SAVE_DELAY_MS);
 }
 
-/**
- * Builds the save payload from the current editor state, transforming client
- * nodes and edges into the API-expected format with positional sort orders.
- *
- * @param nodes - The current graph nodes from the editor store
- * @param edges - The current graph edges from the editor store
- * @returns An object with `episodes` and `edges` arrays ready for the PUT API
- */
-function buildSavePayload(
-  nodes: GraphNode[],
-  edges: GraphEdge[]
-): {
-  episodes: Array<{
-    id: string;
-    title: string;
-    podcastId: string;
-    positionX: number;
-    positionY: number;
-    nodeType: string;
-    sortOrder: number;
-    description: string;
-    audioUrl: string;
-    thumbnailUrl: string;
-    transcript: string;
-  }>;
-  edges: Array<{ sourceEpisodeId: string; targetEpisodeId: string }>;
-} {
-  return {
-    episodes: nodes.map((n, i) => ({
-      id: n.id,
-      title: n.title,
-      podcastId: n.podcastId,
-      positionX: n.positionX,
-      positionY: n.positionY,
-      nodeType: n.nodeType,
-      sortOrder: i,
-      description: n.description ?? '',
-      audioUrl: n.audioUrl ?? '',
-      thumbnailUrl: n.thumbnailUrl ?? '',
-      transcript: n.transcript ?? '',
-    })),
-    edges: edges.map((e) => ({
-      sourceEpisodeId: e.source,
-      targetEpisodeId: e.target,
-    })),
-  };
-}
-
-/**
- * Reconciles server-returned episodes with client nodes, producing updated
- * GraphNode and GraphEdge arrays with server-assigned IDs.
- *
- * @param data - The API response data containing episodes and optional edges
- * @param clientNodes - The original client-side nodes for fallback values
- * @returns An object with reconciled `nodes` and `edges` arrays
- */
-function reconcileServerResponse(
-  data: { episodes: ApiEpisode[]; edges?: ApiEdge[] },
-  clientNodes: GraphNode[]
-): { nodes: GraphNode[]; edges: GraphEdge[] } {
-  const nodes: GraphNode[] = (data.episodes ?? []).map((ep) => {
-    const clientNode = clientNodes.find((n) => (ep.tempId && n.id === ep.tempId) || n.id === ep.id);
-    return {
-      id: ep.id,
-      title: ep.title,
-      podcastId: ep.podcastId,
-      positionX: ep.positionX,
-      positionY: ep.positionY,
-      nodeType: ep.nodeType as GraphNode['nodeType'],
-      sortOrder: ep.sortOrder,
-      description: clientNode?.description ?? ep.description ?? '',
-      audioUrl: clientNode?.audioUrl ?? ep.audioUrl ?? '',
-      thumbnailUrl: clientNode?.thumbnailUrl ?? ep.thumbnailUrl ?? '',
-      transcript: clientNode?.transcript ?? ep.transcript ?? '',
-    };
-  });
-
-  const edges: GraphEdge[] = (data.edges ?? []).map((e) => ({
-    id: e.id,
-    source: e.sourceEpisodeId,
-    target: e.targetEpisodeId,
-  }));
-
-  return { nodes, edges };
-}
-
 export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
   nodes: [],
   edges: [],
@@ -237,18 +143,18 @@ export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
 
   setLayout: () => {
     const { nodes, edges } = get();
-    const g = new dagre.graphlib.Graph();
-    g.setDefaultEdgeLabel(() => ({}));
-    g.setGraph({ rankdir: 'TB', nodesep: 80, ranksep: 100 });
+    const dagreGraph = new dagre.graphlib.Graph();
+    dagreGraph.setDefaultEdgeLabel(() => ({}));
+    dagreGraph.setGraph({ rankdir: 'TB', nodesep: 80, ranksep: 100 });
 
-    nodes.forEach((node) => g.setNode(node.id, { width: 200, height: 80 }));
-    edges.forEach((edge) => g.setEdge(edge.source, edge.target));
+    nodes.forEach((node) => dagreGraph.setNode(node.id, { width: 200, height: 80 }));
+    edges.forEach((edge) => dagreGraph.setEdge(edge.source, edge.target));
 
-    dagre.layout(g);
+    dagre.layout(dagreGraph);
 
     set({
       nodes: nodes.map((node) => {
-        const pos = g.node(node.id);
+        const pos = dagreGraph.node(node.id);
         return { ...node, positionX: pos.x, positionY: pos.y };
       }),
       isDirty: true,
@@ -295,12 +201,18 @@ export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
           isDirty: false,
           isSaving: false,
         });
+
+        log.info(
+          { graphId, nodeCount: reconciled.nodes.length, edgeCount: reconciled.edges.length },
+          'Graph saved successfully'
+        );
       } finally {
         clearTimeout(timeoutId);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown save error';
       set({ isSaving: false, lastSaveError: message });
+      log.error({ graphId, error: message }, 'Graph save failed');
       throw error;
     }
   },
