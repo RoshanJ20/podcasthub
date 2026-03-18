@@ -19,7 +19,7 @@
 | **UI**              | React 19 + shadcn/ui (Radix)               | Latest  | Accessible, composable components                    |
 | **Styling**         | Tailwind CSS                               | 4.x     | Utility-first, design system tokens                  |
 | **State**           | Zustand                                    | Latest  | Lightweight state management (PlayerContext, etc.)   |
-| **File Storage**    | MinIO (dev) → Azure Blob Storage (prod)    | —       | S3-compatible object storage                         |
+| **File Storage**    | Azurite (dev) → Azure Blob Storage (prod)  | —       | Azure Blob Storage object storage                    |
 | **Audio Streaming** | FFmpeg (HLS transcoding) + HLS.js (client) | —       | Adaptive bitrate streaming                           |
 | **Vector Search**   | pgvector (PostgreSQL extension)            | —       | Via Prisma raw queries                               |
 | **Embeddings**      | Azure OpenAI                               | —       | text-embedding-3-large model                         |
@@ -80,7 +80,7 @@ podcast-hub-v2/
 │   ├── schemas/                 # Zod schemas per entity
 │   ├── logger.ts                # Pino structured logger
 │   ├── embeddings.ts            # Azure OpenAI embedding generation
-│   ├── upload.ts                # File upload utilities (MinIO/Azure Blob)
+│   ├── storage.ts               # File upload utilities (Azure Blob Storage)
 │   └── utils.ts                 # General utilities (cn(), etc.)
 ├── hooks/                       # Custom React hooks
 ├── stores/                      # Zustand stores
@@ -90,7 +90,7 @@ podcast-hub-v2/
 │   ├── integration/             # API route + component tests (RTL + MSW)
 │   └── e2e/                     # Playwright browser tests
 ├── Dockerfile
-├── docker-compose.yml           # Local dev: PostgreSQL + MinIO containers
+├── docker-compose.yml           # Local dev: PostgreSQL + Azurite containers
 ├── vitest.config.ts
 ├── playwright.config.ts
 └── package.json
@@ -109,7 +109,7 @@ podcast-hub-v2/
 ## Audio Pipeline
 
 ```
-Upload → FFmpeg HLS transcoding → MinIO/Azure Blob storage → HLS.js adaptive playback
+Upload → FFmpeg HLS transcoding → Azure Blob Storage → HLS.js adaptive playback
 ```
 
 ## Auth Flow
@@ -143,7 +143,7 @@ User visits protected route
 - **Testing stack**: Vitest + RTL (unit/integration) → Playwright (E2E)
 - **Conventional Commits**: `feat:`, `fix:`, `docs:`, `chore:`, etc.
 - Husky + lint-staged pre-commit hooks (ESLint + Prettier + type check)
-- Docker Compose for local dev: PostgreSQL 16, MinIO (S3-compatible storage)
+- Docker Compose for local dev: PostgreSQL 16, Azurite (Azure Blob Storage)
 - Branch naming: `feat/FR-USER-002-audio-player`, `fix/BUG-001-playback-issue`
 
 ## Local Dev Setup
@@ -153,8 +153,8 @@ git clone <repo-url> podcast-hub-v2
 cd podcast-hub-v2
 npm install
 cp .env.example .env.local
-# Fill in DATABASE_URL, JWT_SECRET, MINIO_ENDPOINT, AZURE_OPENAI_KEY, etc.
-docker compose up -d          # Start PostgreSQL + MinIO
+# Fill in DATABASE_URL, JWT_SECRET, AZURE_BLOB_CONNECTION_STRING, AZURE_OPENAI_KEY, etc.
+docker compose up -d          # Start PostgreSQL + Azurite
 npx prisma migrate dev        # Apply database migrations
 npx prisma db seed            # Seed initial data (if available)
 npx husky install             # Set up git hooks
@@ -168,10 +168,8 @@ npm run dev                   # Start Next.js dev server
 | `DATABASE_URL`                 | PostgreSQL connection string         |
 | `JWT_SECRET`                   | Secret key for JWT signing           |
 | `JWT_REFRESH_SECRET`           | Secret key for refresh token signing |
-| `MINIO_ENDPOINT`               | MinIO/S3 endpoint URL                |
-| `MINIO_ACCESS_KEY`             | MinIO/S3 access key                  |
-| `MINIO_SECRET_KEY`             | MinIO/S3 secret key                  |
-| `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection (prod) |
+| `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection string |
+| `AZURE_BLOB_CONTAINER`         | Azure Blob container name            |
 | `AZURE_OPENAI_ENDPOINT`        | Azure OpenAI API endpoint            |
 | `AZURE_OPENAI_KEY`             | Azure OpenAI API key                 |
 | `AZURE_OPENAI_DEPLOYMENT`      | Azure OpenAI deployment name         |
