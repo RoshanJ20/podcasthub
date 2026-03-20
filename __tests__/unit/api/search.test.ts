@@ -3,7 +3,7 @@
  *
  * Tests cover:
  * - GET /api/search: basic text search with mocked Prisma
- * - POST /api/search: semantic search with mocked embeddings + $queryRawUnsafe
+ * - POST /api/search: semantic search with mocked embeddings + $queryRaw
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
@@ -14,7 +14,7 @@ vi.mock('@/lib/db', () => ({
       findMany: vi.fn(),
       count: vi.fn(),
     },
-    $queryRawUnsafe: vi.fn(),
+    $queryRaw: vi.fn(),
   },
 }));
 
@@ -157,7 +157,7 @@ describe('POST /api/search', () => {
         similarity: 0.85,
       },
     ];
-    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue(mockResults);
+    vi.mocked(prisma.$queryRaw).mockResolvedValue(mockResults);
 
     const req = createRequest('/api/search', {
       method: 'POST',
@@ -199,7 +199,7 @@ describe('POST /api/search', () => {
 
   it('calls generateEmbedding with the query text', async () => {
     vi.mocked(generateEmbedding).mockResolvedValue(Array(1536).fill(0));
-    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([]);
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
 
     const req = createRequest('/api/search', {
       method: 'POST',
