@@ -1,5 +1,5 @@
 /**
- * Custom 404 page for Podcast Hub v2.
+ * Custom 404 page for The Audit Brief.
  *
  * Key responsibilities:
  * - Displays user-friendly 404 message

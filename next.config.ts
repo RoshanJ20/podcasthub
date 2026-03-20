@@ -1,5 +1,5 @@
 /**
- * Next.js configuration for Podcast Hub v2.
+ * Next.js configuration for The Audit Brief.
  *
  * Key responsibilities:
  * - Security headers (CSP, HSTS, X-Frame-Options, etc.)

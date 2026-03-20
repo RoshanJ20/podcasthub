@@ -37,7 +37,7 @@ interface AudioPlayerProps {
 
 export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
   const {
-    currentPodcast,
+    currentAuditBrief,
     isPlaying,
     currentTime,
     duration,
@@ -71,7 +71,7 @@ export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  const hasLongVersion = currentPodcast?.audioLongUrl;
+  const hasLongVersion = currentAuditBrief?.audioLongUrl;
 
   return (
     <div data-testid="audio-player" className="w-full space-y-2">

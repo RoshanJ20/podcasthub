@@ -21,7 +21,7 @@ import type { getDomainColor } from '@/lib/domain-colors';
 
 /** Props for the AttachmentSidebar component. */
 export interface AttachmentSidebarProps {
-  /** List of attachment URLs belonging to the podcast. */
+  /** List of attachment URLs belonging to the auditBrief. */
   bulletinUrls: string[];
   /** URL of the currently open attachment, or null when no panel is open. */
   activeAttachmentUrl: string | null;

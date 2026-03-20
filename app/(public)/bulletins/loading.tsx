@@ -2,8 +2,8 @@
  * Loading skeleton for the bulletins library page.
  *
  * Key responsibilities:
- * - Render a placeholder grid while the server fetches podcast data.
- * - Match the visual layout of the loaded podcast grid (4-column responsive grid).
+ * - Render a placeholder grid while the server fetches audit brief data.
+ * - Match the visual layout of the loaded audit brief grid (4-column responsive grid).
  *
  * Dependencies:
  * - @/components/ui/skeleton — Skeleton pulse component.
@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 /**
  * Displays an 8-item skeleton grid while the bulletins page loads.
  *
- * @returns A loading placeholder matching the podcast grid layout.
+ * @returns A loading placeholder matching the audit brief grid layout.
  */
 export default function LibraryLoading() {
   return (

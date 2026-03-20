@@ -40,7 +40,7 @@ export function SearchInput({ onSearch, isLoading }: SearchInputProps) {
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search podcasts..."
+          placeholder="Search auditBriefs..."
           className="flex-1"
           aria-label="Search query"
         />

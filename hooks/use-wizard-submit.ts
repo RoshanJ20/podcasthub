@@ -1,11 +1,11 @@
 /**
- * useWizardSubmit — Custom hook that owns the final submission logic for PodcastUploadWizard.
+ * useWizardSubmit — Custom hook that owns the final submission logic for AuditBriefUploadWizard.
  *
  * Key responsibilities:
  * - Manages the `isSubmitting` loading flag for the final form submission.
  * - Orchestrates file uploads (thumbnail, audio variants, bulletins) via the provided upload handles.
- * - Submits the assembled podcast payload to the REST API (POST for create, PUT for edit).
- * - Saves short and long transcripts to their dedicated API endpoint after the podcast is persisted.
+ * - Submits the assembled audit brief payload to the REST API (POST for create, PUT for edit).
+ * - Saves short and long transcripts to their dedicated API endpoint after the audit brief is persisted.
  * - Redirects to /bulletins and invokes onSuccess on a successful save.
  *
  * @dependencies react, sonner, next/navigation
@@ -36,7 +36,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import type { UseFormReturn } from 'react-hook-form';
 
-import type { PodcastFormData } from '@/components/admin/podcast-upload-wizard';
+import type { AuditBriefFormData } from '@/components/admin/audit-brief-upload-wizard';
 import type { useFileUpload } from '@/hooks/use-file-upload';
 import type { FormValues } from './wizard-state-types';
 
@@ -46,7 +46,7 @@ type FileUploadHandle = ReturnType<typeof useFileUpload>;
 /**
  * Options accepted by useWizardSubmit.
  *
- * @property mode - Whether the wizard is creating or editing a podcast.
+ * @property mode - Whether the wizard is creating or editing a auditBrief.
  * @property form - The react-hook-form instance for reading validated metadata values.
  * @property thumbnailFile - The staged thumbnail image file, or null if unchanged.
  * @property audioShortFile - The staged short-audio file, or null if unchanged.
@@ -55,7 +55,7 @@ type FileUploadHandle = ReturnType<typeof useFileUpload>;
  * @property tags - The current tag string array.
  * @property shortTranscript - Raw text for the short transcript.
  * @property longTranscript - Raw text for the long transcript.
- * @property initialData - Pre-populated data for edit mode (provides existing URLs and the podcast ID).
+ * @property initialData - Pre-populated data for edit mode (provides existing URLs and the audit brief ID).
  * @property thumbnailUpload - useFileUpload handle for thumbnail uploads.
  * @property audioShortUpload - useFileUpload handle for short-audio uploads.
  * @property audioLongUpload - useFileUpload handle for long-audio uploads.
@@ -81,8 +81,8 @@ export interface UseWizardSubmitOptions {
   shortTranscript: string;
   /** Raw text of the long transcript. Empty string means no transcript to save. */
   longTranscript: string;
-  /** Pre-populated data used in edit mode for existing URLs and the podcast ID. */
-  initialData?: PodcastFormData;
+  /** Pre-populated data used in edit mode for existing URLs and the audit brief ID. */
+  initialData?: AuditBriefFormData;
   /** useFileUpload handle responsible for thumbnail file uploads. */
   thumbnailUpload: FileUploadHandle;
   /** useFileUpload handle responsible for short-audio file uploads. */
@@ -103,7 +103,7 @@ export interface UseWizardSubmitOptions {
  */
 export interface UseWizardSubmitReturn {
   /**
-   * Uploads all staged files, saves the podcast via the API, saves transcripts,
+   * Uploads all staged files, saves the audit brief via the API, saves transcripts,
    * and redirects to /bulletins on success.
    */
   handleFinalSubmit: () => Promise<void>;
@@ -112,7 +112,7 @@ export interface UseWizardSubmitReturn {
 }
 
 /**
- * Encapsulates the final submission flow for PodcastUploadWizard.
+ * Encapsulates the final submission flow for AuditBriefUploadWizard.
  *
  * Extracted from useWizardState to keep each hook under the 300-line limit
  * (Rule 5.4.2) and to give the submission concerns a single, dedicated home (SRP).
@@ -141,10 +141,10 @@ export function useWizardSubmit({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   /**
-   * Handles the final submission: uploads files, saves podcast via API,
+   * Handles the final submission: uploads files, saves audit brief via API,
    * and saves transcripts.
    *
-   * Mirrors the submission flow from podcast-upload-form.tsx onSubmit handler.
+   * Mirrors the submission flow from audit-brief-upload-form.tsx onSubmit handler.
    */
   const handleFinalSubmit = useCallback(async () => {
     setIsSubmitting(true);
@@ -219,7 +219,7 @@ export function useWizardSubmit({
         bulletinUrls: uploadedBulletinUrls,
       };
 
-      const url = mode === 'edit' ? `/api/podcasts/${initialData?.id}` : '/api/podcasts';
+      const url = mode === 'edit' ? `/api/audit-briefs/${initialData?.id}` : '/api/audit-briefs';
       const method = mode === 'edit' ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -230,19 +230,19 @@ export function useWizardSubmit({
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
-        throw new Error((body as { message?: string }).message || 'Failed to save podcast');
+        throw new Error((body as { message?: string }).message || 'Failed to save audit brief');
       }
 
-      const savedPodcast = await response.json();
-      const podcastId =
-        (savedPodcast as { data?: { id?: string }; id?: string }).data?.id ??
-        (savedPodcast as { id?: string }).id ??
+      const savedAuditBrief = await response.json();
+      const auditBriefId =
+        (savedAuditBrief as { data?: { id?: string }; id?: string }).data?.id ??
+        (savedAuditBrief as { id?: string }).id ??
         initialData?.id;
 
       /* Save transcripts if provided */
-      if (podcastId) {
+      if (auditBriefId) {
         if (shortTranscript.trim()) {
-          await fetch(`/api/podcasts/${podcastId}/transcript`, {
+          await fetch(`/api/audit-briefs/${auditBriefId}/transcript`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -253,7 +253,7 @@ export function useWizardSubmit({
           });
         }
         if (longTranscript.trim()) {
-          await fetch(`/api/podcasts/${podcastId}/transcript`, {
+          await fetch(`/api/audit-briefs/${auditBriefId}/transcript`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -266,7 +266,7 @@ export function useWizardSubmit({
       }
 
       toast.success(
-        mode === 'create' ? 'Podcast created successfully' : 'Podcast updated successfully'
+        mode === 'create' ? 'Audit brief created successfully' : 'Audit brief updated successfully'
       );
       onSuccess?.();
 

@@ -1,5 +1,5 @@
 /**
- * Auth cookie management utilities for Podcast Hub v2.
+ * Auth cookie management utilities for The Audit Brief.
  *
  * Key responsibilities:
  * - Sets HttpOnly JWT cookies (access and refresh tokens) on NextResponse objects

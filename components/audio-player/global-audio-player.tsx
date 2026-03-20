@@ -5,7 +5,7 @@
  *
  * - Renders a hidden audio element shared via AudioContext
  * - Syncs player store state (play/pause, volume, playback rate) to actual audio
- * - Enables seamless playback when navigating away from podcast detail page
+ * - Enables seamless playback when navigating away from audit brief detail page
  * - HLS.js handles adaptive streaming (.m3u8), native audio for standard formats
  */
 

@@ -2,7 +2,7 @@
  * Search results display components for basic and semantic search.
  *
  * Key responsibilities:
- * - Renders basic keyword search results with podcast metadata
+ * - Renders basic keyword search results with audit brief metadata
  * - Renders semantic search results with similarity scores and transcript excerpts
  */
 'use client';
@@ -23,8 +23,8 @@ export interface BasicResult {
 
 export interface SemanticResult {
   id: string;
-  podcastId: string;
-  podcastTitle: string;
+  auditBriefId: string;
+  auditBriefTitle: string;
   content: string;
   startTime: number;
   endTime: number;
@@ -32,11 +32,11 @@ export interface SemanticResult {
 }
 
 /**
- * Renders basic keyword search results as a list of podcast cards.
+ * Renders basic keyword search results as a list of audit brief cards.
  *
  * @param props - Component props
- * @param props.results - Array of podcast search results to display
- * @returns List of podcast result cards with title, domain, and description
+ * @param props.results - Array of audit brief search results to display
+ * @returns List of audit brief result cards with title, domain, and description
  */
 export function BasicResults({ results }: { results: BasicResult[] }) {
   if (results.length === 0)
@@ -46,7 +46,7 @@ export function BasicResults({ results }: { results: BasicResult[] }) {
     <StaggeredGrid className="grid-cols-1 gap-3">
       {results.map((result) => (
         <StaggeredGridItem key={result.id}>
-          <Link href={`/podcast/${result.id}`}>
+          <Link href={`/audit-brief/${result.id}`}>
             <Card className="hover:shadow-md transition-shadow">
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
@@ -82,11 +82,11 @@ export function SemanticResults({ results }: { results: SemanticResult[] }) {
     <StaggeredGrid className="grid-cols-1 gap-3">
       {results.map((result) => (
         <StaggeredGridItem key={result.id}>
-          <Link href={`/podcast/${result.podcastId}?t=${Math.floor(result.startTime)}`}>
+          <Link href={`/audit-brief/${result.auditBriefId}?t=${Math.floor(result.startTime)}`}>
             <Card className="hover:shadow-md transition-shadow">
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium">{result.podcastTitle}</h3>
+                  <h3 className="font-medium">{result.auditBriefTitle}</h3>
                   <Badge variant="outline">{Math.round(result.similarity * 100)}% match</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">&quot;{result.content}&quot;</p>

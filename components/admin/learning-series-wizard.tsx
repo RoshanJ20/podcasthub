@@ -1,7 +1,7 @@
 /**
  * LearningSeriesWizard — Two-step wizard for creating a new learning series.
  *
- * Matches the design language of PodcastUploadWizard.
+ * Matches the design language of AuditBriefUploadWizard.
  *
  * Key responsibilities:
  * - Step 0 (Details): Title, description, domain — creates the graph via API on Next
@@ -24,13 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import { WizardStepIndicator } from '@/components/admin/wizard-step-indicator';
 import { LinearEditor } from '@/components/learning-path/linear-editor';
 import { useGraphEditorStore } from '@/stores/graph-editor-store';
@@ -231,24 +225,28 @@ export const LearningSeriesWizard = forwardRef<
           </div>
 
           <div className="space-y-2">
-            <Label>
+            <Label htmlFor="ls-domain">
               Domain <span className="text-destructive">*</span>
             </Label>
-            <Select
+            <select
+              id="ls-domain"
               value={domain}
-              onValueChange={(v) => v && form.setValue('domain', v, { shouldValidate: true })}
+              onChange={(e) => form.setValue('domain', e.target.value, { shouldValidate: true })}
+              className={cn(
+                'flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm',
+                'ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                'disabled:cursor-not-allowed disabled:opacity-50'
+              )}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a domain" />
-              </SelectTrigger>
-              <SelectContent>
-                {LEARNING_SERIES_DOMAINS.map((d) => (
-                  <SelectItem key={d} value={d}>
-                    {d}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <option value="" disabled>
+                Select a domain
+              </option>
+              {LEARNING_SERIES_DOMAINS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
             {form.formState.errors.domain && (
               <p className="text-sm text-destructive">{form.formState.errors.domain.message}</p>
             )}

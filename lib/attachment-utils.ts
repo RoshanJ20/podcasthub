@@ -1,5 +1,5 @@
 /**
- * Utilities for working with podcast attachment URLs.
+ * Utilities for working with audit brief attachment URLs.
  *
  * Key responsibilities:
  * - Extract human-readable display names from storage URL paths

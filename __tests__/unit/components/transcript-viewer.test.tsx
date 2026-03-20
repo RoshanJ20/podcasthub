@@ -20,7 +20,7 @@ class MockIntersectionObserver {
 vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
 
 const mockSegments = [
-  { start: 0, end: 10, text: 'Welcome to the audit methodology podcast.' },
+  { start: 0, end: 10, text: 'Welcome to the audit methodology auditBrief.' },
   { start: 10, end: 25, text: 'Today we discuss the new framework.' },
   { start: 25, end: 40, text: 'Let us begin with the key changes.' },
 ];
@@ -28,7 +28,7 @@ const mockSegments = [
 /** Reset store state between tests. */
 function resetStore() {
   usePlayerStore.setState({
-    currentPodcast: null,
+    currentAuditBrief: null,
     isPlaying: false,
     currentTime: 0,
     duration: 0,
@@ -47,7 +47,7 @@ beforeEach(() => {
 describe('TranscriptViewer', () => {
   it('renders all transcript segments', () => {
     const { container } = render(<TranscriptViewer segments={mockSegments} />);
-    expect(container.textContent).toContain('Welcome to the audit methodology podcast.');
+    expect(container.textContent).toContain('Welcome to the audit methodology auditBrief.');
     expect(container.textContent).toContain('Today we discuss the new framework.');
     expect(container.textContent).toContain('Let us begin with the key changes.');
   });

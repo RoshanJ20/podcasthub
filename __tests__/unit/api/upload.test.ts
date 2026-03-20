@@ -169,7 +169,7 @@ describe('POST /api/upload', () => {
 
   it('returns presigned URL, key, and container on success for audio', async () => {
     const request = createUploadRequest({
-      filename: 'podcast.mp3',
+      filename: 'auditBrief.mp3',
       content_type: 'audio/mpeg',
       file_size: 1024 * 1024,
       category: 'audio',

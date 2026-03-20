@@ -95,7 +95,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
               <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-orange-500">
                 <Library className="size-4 text-white" />
               </div>
-              <span className="text-sm font-semibold tracking-tight">PodcastHub</span>
+              <span className="text-sm font-semibold tracking-tight">The Audit Brief</span>
             </div>
 
             <Separator />
@@ -178,7 +178,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
         <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-orange-500">
           <Library className="size-3.5 text-white" />
         </div>
-        <span className="text-sm font-semibold tracking-tight">PodcastHub</span>
+        <span className="text-sm font-semibold tracking-tight">The Audit Brief</span>
       </div>
 
       {/* ── Right: theme toggle ──────────────────────────────────────────── */}

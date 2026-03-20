@@ -2,7 +2,7 @@
  * Analytics charts component for the admin dashboard.
  *
  * Key responsibilities:
- * - Fetches and displays analytics data (plays, users, top podcasts)
+ * - Fetches and displays analytics data (plays, users, top auditBriefs)
  * - Renders interactive charts using Recharts
  * - Supports date range filtering via DateRangePicker
  */
@@ -31,7 +31,7 @@ const log = createLogger('analytics-charts');
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
 interface AnalyticsData {
-  totalPodcasts: number;
+  totalAuditBriefs: number;
   totalPaths: number;
   totalListens: number;
   uniqueListeners: number;
@@ -43,7 +43,7 @@ interface AnalyticsData {
 /**
  * Renders analytics charts and statistics for the admin dashboard.
  *
- * @returns Analytics dashboard with play counts, user stats, and top podcasts chart
+ * @returns Analytics dashboard with play counts, user stats, and top audit briefs chart
  */
 export function AnalyticsCharts() {
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -120,10 +120,10 @@ export function AnalyticsCharts() {
         <Card className="rounded-xl border border-border bg-card">
           <CardContent className="p-5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Total Podcasts
+              Total Audit Briefs
             </p>
             <p className="text-2xl font-semibold tracking-tight mt-1">
-              <AnimatedNumber value={data.totalPodcasts} />
+              <AnimatedNumber value={data.totalAuditBriefs} />
             </p>
           </CardContent>
         </Card>

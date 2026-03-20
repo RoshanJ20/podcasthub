@@ -2,7 +2,7 @@
  * SidebarBookmarks — compact bookmark list for the 180px attachment sidebar.
  *
  * Key responsibilities:
- * - Fetches bookmarks for the current podcast via GET /api/bookmarks.
+ * - Fetches bookmarks for the current audit brief via GET /api/bookmarks.
  * - Renders an inline add form that captures the current player timestamp.
  * - Posts new bookmarks via POST /api/bookmarks and refreshes the list.
  * - Invokes `onSeek` when a bookmark timestamp chip is clicked.
@@ -30,8 +30,8 @@ export interface SidebarBookmark {
 
 /** Props for the SidebarBookmarks component. */
 export interface SidebarBookmarksProps {
-  /** ID of the podcast whose bookmarks are displayed. */
-  podcastId: string;
+  /** ID of the audit brief whose bookmarks are displayed. */
+  auditBriefId: string;
   /** Callback invoked when the user clicks a bookmark to seek to its timestamp. */
   onSeek: (time: number) => void;
   /** Domain color tokens used to accent timestamp chips. */
@@ -41,12 +41,12 @@ export interface SidebarBookmarksProps {
 /**
  * Slim bookmark list for the 180px sidebar with inline add.
  *
- * @param props.podcastId - ID of the podcast whose bookmarks are displayed.
+ * @param props.auditBriefId - ID of the audit brief whose bookmarks are displayed.
  * @param props.onSeek - Callback to seek the player to a timestamp in seconds.
  * @param props.domainColor - Domain color tokens for timestamp accent styling.
  * @returns A compact list of bookmarks with an inline add form.
  */
-export function SidebarBookmarks({ podcastId, onSeek, domainColor }: SidebarBookmarksProps) {
+export function SidebarBookmarks({ auditBriefId, onSeek, domainColor }: SidebarBookmarksProps) {
   const [bookmarks, setBookmarks] = useState<SidebarBookmark[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [newNote, setNewNote] = useState('');
@@ -54,7 +54,7 @@ export function SidebarBookmarks({ podcastId, onSeek, domainColor }: SidebarBook
   const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchBookmarks = useCallback(() => {
-    fetch(`/api/bookmarks?podcastId=${podcastId}`)
+    fetch(`/api/bookmarks?auditBriefId=${auditBriefId}`)
       .then((r) => (r.ok ? r.json() : { data: [] }))
       .then((d) => {
         const items = (d.data ?? []) as SidebarBookmark[];
@@ -62,7 +62,7 @@ export function SidebarBookmarks({ podcastId, onSeek, domainColor }: SidebarBook
         setBookmarks(items);
       })
       .catch(() => {});
-  }, [podcastId]);
+  }, [auditBriefId]);
 
   useEffect(() => {
     fetchBookmarks();
@@ -80,7 +80,7 @@ export function SidebarBookmarks({ podcastId, onSeek, domainColor }: SidebarBook
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          podcastId,
+          auditBriefId,
           timestampSeconds: ts,
           note: newNote.trim() || undefined,
         }),

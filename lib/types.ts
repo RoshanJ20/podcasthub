@@ -1,12 +1,12 @@
 /**
- * Shared TypeScript type definitions for Podcast Hub v2.
+ * Shared TypeScript type definitions for The Audit Brief.
  *
- * Contains the client-side PodcastData interface used by admin
- * components for displaying and managing podcasts.
+ * Contains the client-side AuditBriefData interface used by admin
+ * components for displaying and managing auditBriefs.
  */
 
-/** Represents a podcast record as returned by the API. */
-export interface PodcastData {
+/** Represents an audit brief record as returned by the API. */
+export interface AuditBriefData {
   id: string;
   title: string;
   description: string;
@@ -21,6 +21,6 @@ export interface PodcastData {
   isArchived: boolean;
   createdAt: string;
   updatedAt: string;
-  /** Optional transcripts associated with this podcast (short and long form). */
+  /** Optional transcripts associated with this audit brief (short and long form). */
   transcripts?: Array<{ transcriptType: string; fullText: string }>;
 }

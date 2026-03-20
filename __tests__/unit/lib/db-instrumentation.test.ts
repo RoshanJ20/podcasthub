@@ -26,19 +26,19 @@ describe('logSlowQuery', () => {
   });
 
   it('does not log when duration is below threshold', () => {
-    logSlowQuery('Podcast', 'findMany', SLOW_QUERY_THRESHOLD_MS - 1, mockLogger);
+    logSlowQuery('AuditBrief', 'findMany', SLOW_QUERY_THRESHOLD_MS - 1, mockLogger);
 
     expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 
   it('does not log when duration equals threshold', () => {
-    logSlowQuery('Podcast', 'findMany', SLOW_QUERY_THRESHOLD_MS, mockLogger);
+    logSlowQuery('AuditBrief', 'findMany', SLOW_QUERY_THRESHOLD_MS, mockLogger);
 
     expect(mockLogger.warn).not.toHaveBeenCalled();
   });
 
   it('logs a warning when duration exceeds threshold', () => {
-    logSlowQuery('Podcast', 'findMany', SLOW_QUERY_THRESHOLD_MS + 1, mockLogger);
+    logSlowQuery('AuditBrief', 'findMany', SLOW_QUERY_THRESHOLD_MS + 1, mockLogger);
 
     expect(mockLogger.warn).toHaveBeenCalledTimes(1);
   });

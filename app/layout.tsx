@@ -1,5 +1,5 @@
 /**
- * Root layout for Podcast Hub v2.
+ * Root layout for The Audit Brief.
  *
  * Key responsibilities:
  * - Loads Geist font family
@@ -17,8 +17,8 @@ import { Toaster } from 'sonner';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Podcast Hub',
-  description: 'Internal audio podcast platform for audit professionals',
+  title: 'The Audit Brief',
+  description: 'Internal audio platform for audit professionals',
 };
 
 export default function RootLayout({

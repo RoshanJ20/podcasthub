@@ -6,7 +6,7 @@
  * Tabs:
  * - In Progress: learning paths with partial completion
  * - Completed: fully completed paths
- * - Bookmarks: all bookmarks across podcasts
+ * - Bookmarks: all bookmarks across audit briefs
  * - History: recent activity feed
  */
 import { useEffect, useState } from 'react';
@@ -30,7 +30,7 @@ interface ProgressRecord {
 
 interface Bookmark {
   id: string;
-  podcastId: string;
+  auditBriefId: string;
   timestampSeconds: number;
   note: string | null;
   createdAt: string;

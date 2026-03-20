@@ -15,7 +15,7 @@ import {
 
 describe('common schemas', () => {
   describe('PODCAST_DOMAINS', () => {
-    it('contains the correct podcast domain values', () => {
+    it('contains the correct audit brief domain values', () => {
       expect(PODCAST_DOMAINS).toEqual([
         'Audit Methodology',
         'Accounting and Reporting',
@@ -58,7 +58,7 @@ describe('common schemas', () => {
       expect(unique.size).toBe(DOMAINS.length);
     });
 
-    it('includes every podcast domain', () => {
+    it('includes every audit brief domain', () => {
       for (const domain of PODCAST_DOMAINS) {
         expect(DOMAINS).toContain(domain);
       }

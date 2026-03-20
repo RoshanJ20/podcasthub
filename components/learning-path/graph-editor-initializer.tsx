@@ -52,7 +52,7 @@ export function GraphEditorInitializer({ graphId, episodes, edges }: GraphEditor
       id: ep.id,
       title: ep.title,
       nodeType: ep.nodeType as GraphNode['nodeType'],
-      podcastId: '',
+      auditBriefId: '',
       positionX: ep.positionX,
       positionY: ep.positionY,
       audioUrl: ep.audioUrl ?? '',

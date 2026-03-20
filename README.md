@@ -1,4 +1,4 @@
-# Podcast Hub v2
+# The Audit Brief
 
 Internal enterprise audio podcast platform for managing, distributing, and tracking podcast content across an organization.
 
@@ -116,7 +116,7 @@ For detailed architecture diagrams covering frontend components, backend API rou
 
 ```bash
 # 1. Clone the repository
-git clone <repo-url> && cd podcasthub
+git clone <repo-url> && cd the-audit-brief
 
 # 2. Install dependencies
 npm install
@@ -150,7 +150,7 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 | `JWT_REFRESH_EXPIRY`           | Refresh token TTL                    | `7d`                     |
 | `BCRYPT_SALT_ROUNDS`           | bcrypt hashing cost factor           | `12`                     |
 | `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection string | See `.env.example`       |
-| `AZURE_BLOB_CONTAINER`         | Azure Blob container name            | `podcast-hub`            |
+| `AZURE_BLOB_CONTAINER`         | Azure Blob container name            | `the-audit-brief`        |
 | `AZURE_OPENAI_ENDPOINT`        | Azure OpenAI service endpoint (v2)   | (optional)               |
 | `AZURE_OPENAI_KEY`             | Azure OpenAI API key (v2)            | (optional)               |
 | `AZURE_OPENAI_DEPLOYMENT`      | Azure OpenAI deployment name (v2)    | (optional)               |
@@ -187,7 +187,7 @@ A `.env.test` file is provided for CI test environments.
 ## Project Structure
 
 ```
-podcasthub/
+the-audit-brief/
 ├── app/
 │   ├── (admin)/          # Admin dashboard routes
 │   ├── (auth)/           # Login and authentication pages
@@ -229,10 +229,10 @@ The application is containerized using a multi-stage Dockerfile that produces a 
 
 ```bash
 # Build the Docker image
-docker build -t podcast-hub-v2 .
+docker build -t the-audit-brief .
 
 # Run the container
-docker run -p 3000:3000 --env-file .env podcast-hub-v2
+docker run -p 3000:3000 --env-file .env the-audit-brief
 ```
 
 For production deployments, push the image to Azure Container Registry and deploy via Azure Container Apps. Ensure all required environment variables are configured in the deployment environment.

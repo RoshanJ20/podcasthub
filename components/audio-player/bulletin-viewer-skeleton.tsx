@@ -5,7 +5,7 @@
  * - Renders an animated skeleton UI that matches the BulletinViewer chrome
  *   (toolbar + document body) while the viewer chunk and PDF are loading.
  * - Used exclusively as the `loading` prop of the dynamic BulletinViewer import
- *   in podcast-detail-layout.tsx to prevent layout shift during lazy load.
+ *   in audit-brief-detail-layout.tsx to prevent layout shift during lazy load.
  *
  * Dependencies:
  * - Tailwind CSS utility classes only (no external runtime dependency).

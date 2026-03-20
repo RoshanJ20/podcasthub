@@ -29,9 +29,9 @@ describe('isPublicRoute', () => {
     expect(isPublicRoute('/bulletins')).toBe(true);
   });
 
-  it('returns true for /podcast/* routes', () => {
-    expect(isPublicRoute('/podcast/some-id')).toBe(true);
-    expect(isPublicRoute('/podcast/123/details')).toBe(true);
+  it('returns true for /audit-brief/* routes', () => {
+    expect(isPublicRoute('/audit-brief/some-id')).toBe(true);
+    expect(isPublicRoute('/audit-brief/123/details')).toBe(true);
   });
 
   it('returns true for /learning-path', () => {
@@ -76,8 +76,8 @@ describe('isAuthRoute', () => {
     expect(isAuthRoute('/api/auth/logout')).toBe(true);
   });
 
-  it('returns false for /api/podcasts', () => {
-    expect(isAuthRoute('/api/podcasts')).toBe(false);
+  it('returns false for /api/audit-briefs', () => {
+    expect(isAuthRoute('/api/audit-briefs')).toBe(false);
   });
 
   it('returns false for /api/health', () => {
@@ -116,8 +116,8 @@ describe('isAdminRoute', () => {
 });
 
 describe('isApiRoute', () => {
-  it('returns true for /api/podcasts', () => {
-    expect(isApiRoute('/api/podcasts')).toBe(true);
+  it('returns true for /api/audit-briefs', () => {
+    expect(isApiRoute('/api/audit-briefs')).toBe(true);
   });
 
   it('returns true for /api/bookmarks', () => {

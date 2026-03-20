@@ -10,7 +10,7 @@ import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/db', () => ({
   prisma: {
-    podcast: {
+    auditBrief: {
       findMany: vi.fn(),
       count: vi.fn(),
     },
@@ -32,7 +32,7 @@ function createRequest(url: string, options?: RequestInit): NextRequest {
   );
 }
 
-const mockPodcastResults = [
+const mockAuditBriefResults = [
   {
     id: 'pod-1',
     title: 'React Performance Tips',
@@ -55,8 +55,8 @@ describe('GET /api/search', () => {
   });
 
   it('searches by title and returns results', async () => {
-    vi.mocked(prisma.podcast.findMany).mockResolvedValue(mockPodcastResults as never);
-    vi.mocked(prisma.podcast.count).mockResolvedValue(1);
+    vi.mocked(prisma.auditBrief.findMany).mockResolvedValue(mockAuditBriefResults as never);
+    vi.mocked(prisma.auditBrief.count).mockResolvedValue(1);
 
     const req = createRequest('/api/search?q=React');
     const res = await GET(req);
@@ -69,8 +69,8 @@ describe('GET /api/search', () => {
   });
 
   it('returns empty array for no matches', async () => {
-    vi.mocked(prisma.podcast.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.podcast.count).mockResolvedValue(0);
+    vi.mocked(prisma.auditBrief.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.auditBrief.count).mockResolvedValue(0);
 
     const req = createRequest('/api/search?q=Python');
     const res = await GET(req);
@@ -95,13 +95,13 @@ describe('GET /api/search', () => {
   });
 
   it('uses case-insensitive search', async () => {
-    vi.mocked(prisma.podcast.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.podcast.count).mockResolvedValue(0);
+    vi.mocked(prisma.auditBrief.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.auditBrief.count).mockResolvedValue(0);
 
     const req = createRequest('/api/search?q=react');
     await GET(req);
 
-    expect(prisma.podcast.findMany).toHaveBeenCalledWith(
+    expect(prisma.auditBrief.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           OR: expect.arrayContaining([
@@ -114,14 +114,14 @@ describe('GET /api/search', () => {
     );
   });
 
-  it('filters out archived podcasts', async () => {
-    vi.mocked(prisma.podcast.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.podcast.count).mockResolvedValue(0);
+  it('filters out archived audit briefs', async () => {
+    vi.mocked(prisma.auditBrief.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.auditBrief.count).mockResolvedValue(0);
 
     const req = createRequest('/api/search?q=test');
     await GET(req);
 
-    expect(prisma.podcast.findMany).toHaveBeenCalledWith(
+    expect(prisma.auditBrief.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           isArchived: false,
@@ -149,8 +149,8 @@ describe('POST /api/search', () => {
     const mockResults = [
       {
         id: 'transcript-1',
-        podcastId: 'pod-1',
-        podcastTitle: 'Audit Best Practices',
+        auditBriefId: 'pod-1',
+        auditBriefTitle: 'Audit Best Practices',
         content: 'This is about optimizing database queries...',
         startTime: 120,
         endTime: 180,
@@ -169,7 +169,7 @@ describe('POST /api/search', () => {
 
     expect(res.status).toBe(200);
     expect(body.results).toHaveLength(1);
-    expect(body.results[0]).toHaveProperty('podcastTitle');
+    expect(body.results[0]).toHaveProperty('auditBriefTitle');
     expect(body.results[0]).toHaveProperty('content');
     expect(body.results[0]).toHaveProperty('similarity');
     expect(body.query).toBe('how to optimize database queries');

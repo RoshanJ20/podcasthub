@@ -7,7 +7,7 @@
 import { ProfileForm } from '@/components/profile/profile-form';
 
 export const metadata = {
-  title: 'Profile | Podcast Hub',
+  title: 'Profile | The Audit Brief',
   description: 'Manage your profile and preferences',
 };
 

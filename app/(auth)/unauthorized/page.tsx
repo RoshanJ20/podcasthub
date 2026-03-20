@@ -1,5 +1,5 @@
 /**
- * Unauthorized (403) page for Podcast Hub v2.
+ * Unauthorized (403) page for The Audit Brief.
  *
  * Key responsibilities:
  * - Displays a clear 403 forbidden message

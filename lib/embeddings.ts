@@ -1,5 +1,5 @@
 /**
- * Azure OpenAI embeddings client for Podcast Hub v2.
+ * Azure OpenAI embeddings client for The Audit Brief.
  *
  * Generates text-embedding-3-large vectors (1536 dimensions) via Azure OpenAI.
  * Includes retry logic for transient failures (429/5xx).

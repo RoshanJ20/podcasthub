@@ -2,8 +2,8 @@
  * Unit tests for the SidebarNowPlaying component.
  *
  * Verifies:
- * - Returns nothing when no podcast is loaded
- * - Renders episode title and progress bar when a podcast is loaded
+ * - Returns nothing when no audit brief is loaded
+ * - Renders episode title and progress bar when an audit brief is loaded
  * - Shows a Play button when paused, Pause button when playing
  * - In collapsed mode renders only the circular play/pause button
  * - Progress bar width reflects currentTime / duration ratio
@@ -20,7 +20,7 @@ vi.mock('next/image', () => ({
   default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }));
 
-/** Minimal podcast fixture used across tests. */
+/** Minimal audit brief fixture used across tests. */
 const TEST_PODCAST = {
   id: 'ep-1',
   title: 'Introduction to IFRS 17',
@@ -31,7 +31,7 @@ const TEST_PODCAST = {
 /** Reset the player store to a clean baseline before each test. */
 function resetStore() {
   usePlayerStore.setState({
-    currentPodcast: null,
+    currentAuditBrief: null,
     isPlaying: false,
     currentTime: 0,
     duration: 0,
@@ -82,16 +82,16 @@ describe('formatTime', () => {
 // ─── SidebarNowPlaying component ─────────────────────────────────────────────
 
 describe('SidebarNowPlaying', () => {
-  describe('when no podcast is loaded', () => {
+  describe('when no audit brief is loaded', () => {
     it('renders nothing', () => {
       const { container } = render(<SidebarNowPlaying />);
       expect(container.firstChild).toBeNull();
     });
   });
 
-  describe('when a podcast is loaded', () => {
+  describe('when an audit brief is loaded', () => {
     beforeEach(() => {
-      usePlayerStore.setState({ currentPodcast: TEST_PODCAST, duration: 300 });
+      usePlayerStore.setState({ currentAuditBrief: TEST_PODCAST, duration: 300 });
     });
 
     it('renders the episode title', () => {
@@ -133,7 +133,7 @@ describe('SidebarNowPlaying', () => {
 
   describe('collapsed mode', () => {
     beforeEach(() => {
-      usePlayerStore.setState({ currentPodcast: TEST_PODCAST, duration: 300 });
+      usePlayerStore.setState({ currentAuditBrief: TEST_PODCAST, duration: 300 });
     });
 
     it('renders a play button in collapsed mode when paused', () => {
@@ -158,8 +158,8 @@ describe('SidebarNowPlaying', () => {
       expect(container.textContent).not.toContain('Introduction to IFRS 17');
     });
 
-    it('returns null in collapsed mode when no podcast is loaded', () => {
-      usePlayerStore.setState({ currentPodcast: null });
+    it('returns null in collapsed mode when no audit brief is loaded', () => {
+      usePlayerStore.setState({ currentAuditBrief: null });
       const { container } = render(<SidebarNowPlaying collapsed />);
       expect(container.firstChild).toBeNull();
     });

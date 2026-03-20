@@ -1,5 +1,5 @@
 /**
- * Middleware route classification helpers for Podcast Hub v2.
+ * Middleware route classification helpers for The Audit Brief.
  *
  * Key responsibilities:
  * - Classifies request pathnames into public, auth, admin, and API categories
@@ -20,7 +20,7 @@
  * Routes that are accessible without any authentication.
  *
  * Includes landing page, login, unauthorized, and content browsing routes.
- * Some routes use prefix matching (e.g., /podcast/*) to cover dynamic segments.
+ * Some routes use prefix matching (e.g., /audit-brief/*) to cover dynamic segments.
  */
 const PUBLIC_EXACT_ROUTES: ReadonlySet<string> = new Set([
   '/',
@@ -37,13 +37,13 @@ const PUBLIC_EXACT_ROUTES: ReadonlySet<string> = new Set([
  *
  * Any pathname starting with one of these prefixes is treated as public.
  */
-const PUBLIC_PREFIX_ROUTES: readonly string[] = ['/podcast/', '/learning-path/'];
+const PUBLIC_PREFIX_ROUTES: readonly string[] = ['/audit-brief/', '/learning-path/'];
 
 /**
  * Determines whether a pathname is a public route that requires no authentication.
  *
  * Public routes include the home page, login, unauthorized, bulletins,
- * podcast detail pages, learning paths, and search.
+ * audit brief detail pages, learning paths, and search.
  *
  * @param pathname - The URL pathname to classify.
  * @returns True if the route is publicly accessible without authentication.

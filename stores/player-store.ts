@@ -1,7 +1,7 @@
 /**
  * Zustand store for global audio player state management.
  *
- * Manages the currently playing podcast, playback controls (play/pause, seek,
+ * Manages the currently playing auditBrief, playback controls (play/pause, seek,
  * volume, playback rate), audio type toggling (short/long versions), and
  * mini player visibility. All state transitions are clamped to valid ranges.
  */
@@ -13,8 +13,8 @@ const ALLOWED_PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2];
 /** Number of seconds to skip forward/backward. */
 const SKIP_SECONDS = 10;
 
-/** Minimal podcast info needed by the player. */
-export interface PodcastInfo {
+/** Minimal audit brief info needed by the player. */
+export interface AuditBriefInfo {
   id: string;
   title: string;
   audioShortUrl: string;
@@ -24,7 +24,7 @@ export interface PodcastInfo {
 
 /** Player state shape. */
 interface PlayerState {
-  currentPodcast: PodcastInfo | null;
+  currentAuditBrief: AuditBriefInfo | null;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
@@ -36,7 +36,7 @@ interface PlayerState {
 
 /** Player action methods. */
 interface PlayerActions {
-  loadPodcast: (podcast: PodcastInfo) => void;
+  loadAuditBrief: (auditBrief: AuditBriefInfo) => void;
   play: () => void;
   pause: () => void;
   togglePlay: () => void;
@@ -53,7 +53,7 @@ interface PlayerActions {
 }
 
 const initialState: PlayerState = {
-  currentPodcast: null,
+  currentAuditBrief: null,
   isPlaying: false,
   currentTime: 0,
   duration: 0,
@@ -66,9 +66,9 @@ const initialState: PlayerState = {
 export const usePlayerStore = create<PlayerState & PlayerActions>()((set, get) => ({
   ...initialState,
 
-  loadPodcast: (podcast) =>
+  loadAuditBrief: (auditBrief) =>
     set({
-      currentPodcast: podcast,
+      currentAuditBrief: auditBrief,
       isPlaying: false,
       currentTime: 0,
       duration: 0,
@@ -114,5 +114,5 @@ export const usePlayerStore = create<PlayerState & PlayerActions>()((set, get) =
   setCurrentTime: (time) => set({ currentTime: time }),
 
   closeMiniPlayer: () =>
-    set({ isMiniPlayerVisible: false, isPlaying: false, currentPodcast: null }),
+    set({ isMiniPlayerVisible: false, isPlaying: false, currentAuditBrief: null }),
 }));

@@ -1,4 +1,4 @@
-# Podcast Hub v2 — Architecture Diagrams
+# The Audit Brief — Architecture Diagrams
 
 Each diagram is a separate `.mmd` file that can be opened in any Mermaid renderer (VS Code Mermaid extension, mermaid.live, GitHub, etc.).
 
@@ -109,7 +109,7 @@ graph TB
     User["Audit Professional\n(Listener)"]
     Admin["Admin\n(Content Manager)"]
 
-    System["Podcast Hub v2\nNext.js Application\n\nAudio podcast platform with transcripts,\nbookmarks, learning paths, and AI search"]
+    System["The Audit Brief\nNext.js Application\n\nAudio podcast platform with transcripts,\nbookmarks, learning paths, and AI search"]
 
     PG[("PostgreSQL 16\n+ pgvector\n\nPodcasts, users, transcripts,\nlearning graphs, embeddings")]
     S3["Object Storage\nMinIO dev / Azure Blob prod\n\nAudio files, images,\nPDF bulletins, HLS segments"]

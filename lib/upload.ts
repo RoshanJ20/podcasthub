@@ -1,5 +1,5 @@
 /**
- * File upload utilities for Podcast Hub v2.
+ * File upload utilities for The Audit Brief.
  *
  * Key responsibilities:
  * - Defines allowed MIME types for audio, image, and PDF uploads

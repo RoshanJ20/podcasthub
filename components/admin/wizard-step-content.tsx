@@ -1,5 +1,5 @@
 /**
- * WizardStepContent — Content upload form for the podcast upload wizard (Step 2).
+ * WizardStepContent — Content upload form for the audit brief upload wizard (Step 2).
  *
  * Renders file upload fields for audio files, attachments, and transcripts.
  * Uses hidden file inputs with square box drop-zone triggers for audio/attachments,
@@ -67,7 +67,7 @@ export interface WizardStepContentProps {
 }
 
 /**
- * Renders the content upload form fields for Step 2 of the podcast upload wizard.
+ * Renders the content upload form fields for Step 2 of the audit brief upload wizard.
  *
  * Includes five sections: Brief Summary audio, Detailed Overview audio,
  * Attachments, Brief Summary Transcript, and Detailed Overview Transcript.

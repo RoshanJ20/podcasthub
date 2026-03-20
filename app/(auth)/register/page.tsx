@@ -1,5 +1,5 @@
 /**
- * Registration page for Podcast Hub v2.
+ * Registration page for The Audit Brief.
  *
  * Renders a centered card containing the RegisterForm component. Accepts an
  * optional `redirectTo` search parameter so that users who land here after
@@ -39,7 +39,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
     <main className="flex min-h-screen items-center justify-center bg-background">
       <LoginPageCard>
         <div className="text-center">
-          <h1 className="text-lg font-semibold tracking-tight">Podcast Hub</h1>
+          <h1 className="text-lg font-semibold tracking-tight">The Audit Brief</h1>
           <p className="mt-1 text-sm text-muted-foreground">Create your account</p>
         </div>
         <RegisterForm redirectTo={redirectTo} />

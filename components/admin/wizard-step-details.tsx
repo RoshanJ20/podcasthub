@@ -1,7 +1,7 @@
 /**
- * WizardStepDetails — Form step component for podcast metadata (Step 1).
+ * WizardStepDetails — Form step component for audit brief metadata (Step 1).
  *
- * Renders the metadata fields for the first step of the podcast upload wizard:
+ * Renders the metadata fields for the first step of the audit brief upload wizard:
  * Title, Description, Domain, Year, Tags, and Thumbnail Image.
  *
  * Key responsibilities:
@@ -35,26 +35,26 @@ import { PODCAST_DOMAINS } from '@/lib/schemas/common';
  * Domain, and Year fields. Tags and thumbnail are managed via callbacks.
  */
 export interface WizardStepDetailsProps {
-  /** Whether the wizard is creating a new podcast or editing an existing one. */
+  /** Whether the wizard is creating a new audit brief or editing an existing one. */
   mode: 'create' | 'edit';
   /** URL for the current thumbnail preview, or null if none uploaded. */
   thumbnailPreview: string | null;
   /** Callback invoked when the user selects a new thumbnail file. */
   onThumbnailChange: (file: File) => void;
-  /** Current list of tags attached to the podcast. */
+  /** Current list of tags attached to the auditBrief. */
   tags: string[];
   /** Callback invoked when the tag list changes (add or remove). */
   onTagsChange: (tags: string[]) => void;
 }
 
 /**
- * Renders the podcast metadata form fields for Step 1 of the upload wizard.
+ * Renders the audit brief metadata form fields for Step 1 of the upload wizard.
  *
  * Must be rendered inside a react-hook-form FormProvider that provides
  * register/errors for the title, description, domain, and year fields.
  *
  * @param props - Component props (see WizardStepDetailsProps).
- * @returns The rendered form fields for podcast details.
+ * @returns The rendered form fields for audit brief details.
  */
 export function WizardStepDetails({
   mode,
@@ -171,7 +171,7 @@ export function WizardStepDetails({
             <Label htmlFor="title">
               Title<span className="text-destructive"> *</span>
             </Label>
-            <Input id="title" {...register('title')} placeholder="Podcast title" />
+            <Input id="title" {...register('title')} placeholder="Audit brief title" />
             {errors.title && (
               <p className="text-sm text-destructive">{errors.title.message as string}</p>
             )}
@@ -184,7 +184,7 @@ export function WizardStepDetails({
             <Textarea
               id="description"
               {...register('description')}
-              placeholder="Podcast description"
+              placeholder="Audit brief description"
               rows={2}
             />
             {errors.description && (

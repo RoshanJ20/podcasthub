@@ -1,25 +1,25 @@
 /**
- * Admin dashboard page for podcast management.
+ * Admin dashboard page for audit brief management.
  *
- * Server Component that fetches all podcasts from the database
- * and renders them in a sortable PodcastTable. Provides a link
- * to the upload page for creating new podcasts.
+ * Server Component that fetches all audit briefs from the database
+ * and renders them in a sortable AuditBriefTable. Provides a link
+ * to the upload page for creating new auditBriefs.
  */
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
 import { prisma } from '@/lib/db';
 import { AdminDashboardClient } from '@/components/admin/admin-dashboard-client';
-import type { PodcastData } from '@/lib/types';
+import type { AuditBriefData } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminDashboardPage() {
-  const podcasts = await prisma.podcast.findMany({
+  const auditBriefs = await prisma.auditBrief.findMany({
     orderBy: { sortOrder: 'asc' },
   });
 
-  const serialized: PodcastData[] = podcasts.map((p) => ({
+  const serialized: AuditBriefData[] = auditBriefs.map((p) => ({
     id: p.id,
     title: p.title,
     description: p.description,
@@ -45,7 +45,7 @@ export default async function AdminDashboardPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Podcast Management</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Audit Brief Management</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage, reorder, and publish your audio content.
           </p>
@@ -55,7 +55,7 @@ export default async function AdminDashboardPage() {
           className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
         >
           <Plus className="size-3.5" />
-          New podcast
+          New audit brief
         </Link>
       </div>
 
@@ -63,7 +63,7 @@ export default async function AdminDashboardPage() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-xl border border-border bg-card p-4">
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            Total Podcasts
+            Total Audit Briefs
           </p>
           <p className="mt-1 text-2xl font-semibold tracking-tight">{serialized.length}</p>
           <p className="mt-0.5 text-[11px] text-muted-foreground">Across {domainCount} domains</p>
@@ -97,10 +97,10 @@ export default async function AdminDashboardPage() {
       {/* Table card */}
       <div className="rounded-xl border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
-          <h2 className="text-sm font-semibold">All Podcasts</h2>
+          <h2 className="text-sm font-semibold">All Audit Briefs</h2>
         </div>
         <AdminDashboardClient
-          podcasts={serialized}
+          auditBriefs={serialized}
           pagination={{
             page: 1,
             limit: serialized.length,

@@ -44,7 +44,7 @@ export function EpisodeSidebar() {
       id: generateTempId(),
       title: 'New Episode',
       nodeType: 'default',
-      podcastId: '',
+      auditBriefId: '',
       positionX: Math.random() * 400,
       positionY: Math.random() * 400,
     });

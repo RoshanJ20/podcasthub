@@ -1,5 +1,5 @@
 /**
- * Pagination utilities for API route handlers in Podcast Hub v2.
+ * Pagination utilities for API route handlers in The Audit Brief.
  *
  * Key responsibilities:
  * - Parses page/limit query parameters from URL with safe defaults and clamping
@@ -14,8 +14,8 @@
  *   const skip = (page - 1) * limit;
  *
  *   const [data, total] = await Promise.all([
- *     prisma.podcast.findMany({ skip, take: limit }),
- *     prisma.podcast.count(),
+ *     prisma.auditBrief.findMany({ skip, take: limit }),
+ *     prisma.auditBrief.count(),
  *   ]);
  *
  *   return NextResponse.json(createPaginatedResponse(data, { page, limit, total }));

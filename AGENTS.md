@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-- **Podcast Hub v2** — Internal enterprise web application
+- **The Audit Brief** — Internal enterprise web application
 - Audio podcast platform with transcripts, bookmarks, learning paths, AI-powered semantic search
 - Complete rebuild with enterprise-grade architecture, TDD, CI/CD, and security
 - Serves audit professionals accessing "bulletins" (audio content) covering technical topics across audit domains
@@ -149,8 +149,8 @@ User visits protected route
 ## Local Dev Setup
 
 ```bash
-git clone <repo-url> podcast-hub-v2
-cd podcast-hub-v2
+git clone <repo-url> the-audit-brief
+cd the-audit-brief
 npm install
 cp .env.example .env.local
 # Fill in DATABASE_URL, JWT_SECRET, MINIO_ENDPOINT, AZURE_OPENAI_KEY, etc.

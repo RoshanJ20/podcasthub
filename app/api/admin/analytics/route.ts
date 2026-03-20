@@ -28,18 +28,18 @@ function buildDateFilter(from: string | null, to: string | null): Record<string,
 }
 
 /**
- * Aggregates a list of podcast-bearing activities into per-domain listen counts.
+ * Aggregates a list of audit-brief-bearing activities into per-domain listen counts.
  *
  * @param activities - Array of activity objects, each containing an optional
- *                     `podcast` relation with a `domain` field
+ *                     `auditBrief` relation with a `domain` field
  * @returns An array of `{ domain, count }` objects sorted by insertion order
  */
 function aggregateDomainCounts(
-  activities: Array<{ podcast: { domain: string } | null }>
+  activities: Array<{ auditBrief: { domain: string } | null }>
 ): Array<{ domain: string; count: number }> {
   const counts: Record<string, number> = {};
   for (const activity of activities) {
-    const domain = activity.podcast?.domain ?? 'Unknown';
+    const domain = activity.auditBrief?.domain ?? 'Unknown';
     counts[domain] = (counts[domain] ?? 0) + 1;
   }
   return Object.entries(counts).map(([domain, count]) => ({ domain, count }));
@@ -67,30 +67,30 @@ function aggregateMonthlyTrends(
 }
 
 /**
- * Resolves top podcast IDs from grouped activity counts into labelled
- * `{ topic, count }` entries by fetching podcast titles from the database.
+ * Resolves top audit brief IDs from grouped activity counts into labelled
+ * `{ topic, count }` entries by fetching audit brief titles from the database.
  *
- * @param groupedTopics - Grouped activity rows with `podcastId` and `_count.id`
+ * @param groupedTopics - Grouped activity rows with `auditBriefId` and `_count.id`
  * @returns An array of `{ topic, count }` objects with human-readable titles
  */
 async function resolveTopTopics(
-  groupedTopics: Array<{ podcastId: string | null; _count: { id: number } }>
+  groupedTopics: Array<{ auditBriefId: string | null; _count: { id: number } }>
 ): Promise<Array<{ topic: string; count: number }>> {
-  const podcastIds = groupedTopics
-    .filter((t) => t.podcastId !== null)
-    .map((t) => t.podcastId as string);
+  const auditBriefIds = groupedTopics
+    .filter((t) => t.auditBriefId !== null)
+    .map((t) => t.auditBriefId as string);
 
-  const podcasts =
-    podcastIds.length > 0
-      ? await prisma.podcast.findMany({
-          where: { id: { in: podcastIds } },
+  const auditBriefs =
+    auditBriefIds.length > 0
+      ? await prisma.auditBrief.findMany({
+          where: { id: { in: auditBriefIds } },
           select: { id: true, title: true },
         })
       : [];
 
-  const titleMap = new Map(podcasts.map((p) => [p.id, p.title]));
+  const titleMap = new Map(auditBriefs.map((p) => [p.id, p.title]));
   return groupedTopics.map((t) => ({
-    topic: titleMap.get(t.podcastId as string) ?? 'Unknown',
+    topic: titleMap.get(t.auditBriefId as string) ?? 'Unknown',
     count: t._count.id,
   }));
 }
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const activityDateFilter = { activityType: 'listen' as const, ...dateFilter };
 
     const [
-      totalPodcasts,
+      totalAuditBriefs,
       totalPaths,
       totalListens,
       uniqueListeners,
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       monthlyActivities,
       topTopics,
     ] = await Promise.all([
-      prisma.podcast.count({ where: { isArchived: false, ...dateFilter } }),
+      prisma.auditBrief.count({ where: { isArchived: false, ...dateFilter } }),
       prisma.learningGraph.count({ where: { isPublished: true, ...dateFilter } }),
       prisma.userActivity.count({ where: activityDateFilter }),
       prisma.userActivity
@@ -121,15 +121,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         .then((groups) => groups.length),
       prisma.userActivity.findMany({
         where: activityDateFilter,
-        select: { podcast: { select: { domain: true } } },
+        select: { auditBrief: { select: { domain: true } } },
       }),
       prisma.userActivity.findMany({
         where: activityDateFilter,
         select: { createdAt: true },
       }),
       prisma.userActivity.groupBy({
-        by: ['podcastId'],
-        where: { ...activityDateFilter, podcastId: { not: null } },
+        by: ['auditBriefId'],
+        where: { ...activityDateFilter, auditBriefId: { not: null } },
         _count: { id: true },
         orderBy: { _count: { id: 'desc' } },
         take: 10,
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     ]);
 
     return NextResponse.json({
-      totalPodcasts,
+      totalAuditBriefs,
       totalPaths,
       totalListens,
       uniqueListeners,

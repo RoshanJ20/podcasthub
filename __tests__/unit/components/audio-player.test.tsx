@@ -26,7 +26,7 @@ vi.mock('hls.js', () => ({
 /** Reset store state between tests. */
 function resetStore() {
   usePlayerStore.setState({
-    currentPodcast: null,
+    currentAuditBrief: null,
     isPlaying: false,
     currentTime: 0,
     duration: 0,
@@ -45,7 +45,7 @@ beforeEach(() => {
 describe('AudioPlayer', () => {
   it('renders play button when paused', () => {
     usePlayerStore.setState({
-      currentPodcast: { id: '1', title: 'Test', audioShortUrl: '/test.mp3' },
+      currentAuditBrief: { id: '1', title: 'Test', audioShortUrl: '/test.mp3' },
     });
     const { container } = render(<AudioPlayer />);
     expect(container.querySelector('button[aria-label="Play"]')).not.toBeNull();
@@ -53,7 +53,7 @@ describe('AudioPlayer', () => {
 
   it('renders pause button when playing', () => {
     usePlayerStore.setState({
-      currentPodcast: { id: '1', title: 'Test', audioShortUrl: '/test.mp3' },
+      currentAuditBrief: { id: '1', title: 'Test', audioShortUrl: '/test.mp3' },
       isPlaying: true,
     });
     const { container } = render(<AudioPlayer />);
@@ -88,7 +88,7 @@ describe('AudioPlayer', () => {
 
   it('renders audio type toggle when long version available', () => {
     usePlayerStore.setState({
-      currentPodcast: {
+      currentAuditBrief: {
         id: '1',
         title: 'Test',
         audioShortUrl: '/short.mp3',
@@ -104,7 +104,7 @@ describe('AudioPlayer', () => {
 
   it('does not render audio type toggle when no long version', () => {
     usePlayerStore.setState({
-      currentPodcast: { id: '1', title: 'Test', audioShortUrl: '/short.mp3' },
+      currentAuditBrief: { id: '1', title: 'Test', audioShortUrl: '/short.mp3' },
     });
     const { container } = render(<AudioPlayer />);
     const toggleBtn = container.querySelector(

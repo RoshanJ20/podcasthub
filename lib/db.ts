@@ -1,5 +1,5 @@
 /**
- * Prisma client singleton for Podcast Hub v2.
+ * Prisma client singleton for The Audit Brief.
  *
  * Key responsibilities:
  * - Provides a single PrismaClient instance across the application
@@ -9,7 +9,7 @@
  *
  * @example
  * import { prisma } from '@/lib/db';
- * const podcasts = await prisma.podcast.findMany();
+ * const auditBriefs = await prisma.auditBrief.findMany();
  */
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';

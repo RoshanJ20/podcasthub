@@ -1,5 +1,5 @@
 /**
- * Structured logging for Podcast Hub v2 using Pino.
+ * Structured logging for The Audit Brief using Pino.
  *
  * Key responsibilities:
  * - Provides structured JSON logging for production
@@ -9,8 +9,8 @@
  *
  * @example
  * import { createLogger, createRequestLogger } from '@/lib/logger';
- * const log = createLogger('podcasts-api');
- * log.info({ podcastId: '123' }, 'Podcast created');
+ * const log = createLogger('audit-briefs-api');
+ * log.info({ auditBriefId: '123' }, 'Audit brief created');
  *
  * // In API route handlers:
  * const reqLog = createRequestLogger('api', request);
@@ -39,14 +39,14 @@ export const logger = pino({
     : {}),
   base: {
     env: process.env.NODE_ENV,
-    service_name: 'podcast-hub-v2',
+    service_name: 'the-audit-brief',
   },
 });
 
 /**
  * Creates a child logger with a context label.
  *
- * @param context - A label identifying the module or feature (e.g., 'auth', 'podcasts-api')
+ * @param context - A label identifying the module or feature (e.g., 'auth', 'audit-briefs-api')
  * @returns A Pino child logger instance with the context attached
  */
 export function createLogger(context: string): pino.Logger {

@@ -1,5 +1,5 @@
 /**
- * wizard-state-types — Shared type definitions and constants for the PodcastUploadWizard state hook.
+ * wizard-state-types — Shared type definitions and constants for the AuditBriefUploadWizard state hook.
  *
  * Key responsibilities:
  * - Defines the Zod form schema (`formSchema`) and its inferred TypeScript type (`FormValues`).
@@ -16,7 +16,7 @@ import { z } from 'zod';
 import type { useForm } from 'react-hook-form';
 import type React from 'react';
 
-import type { PodcastFormData } from '@/components/admin/podcast-upload-wizard';
+import type { AuditBriefFormData } from '@/components/admin/audit-brief-upload-wizard';
 
 /** Zod schema for the metadata fields validated by react-hook-form. */
 export const formSchema = z.object({
@@ -35,16 +35,16 @@ export const TOTAL_STEPS = 3;
 /**
  * Options accepted by useWizardState.
  *
- * @property mode - Whether the wizard is creating a new podcast or editing an existing one.
- * @property initialData - Pre-filled data when editing an existing podcast.
+ * @property mode - Whether the wizard is creating a new audit brief or editing an existing one.
+ * @property initialData - Pre-filled data when editing an existing auditBrief.
  * @property onSuccess - Callback invoked after a successful submission.
  * @property onStepChange - Callback invoked whenever the active step changes.
  */
 export interface UseWizardStateOptions {
   /** Whether the wizard is creating or editing. Defaults to 'create'. */
   mode?: 'create' | 'edit';
-  /** Pre-filled data for editing an existing podcast. */
-  initialData?: PodcastFormData;
+  /** Pre-filled data for editing an existing auditBrief. */
+  initialData?: AuditBriefFormData;
   /** Callback invoked after a successful create or update. */
   onSuccess?: () => void;
   /** Callback invoked whenever the active step changes. */
@@ -54,7 +54,7 @@ export interface UseWizardStateOptions {
 /**
  * Return value of useWizardState.
  *
- * Exposes all state values and handlers required by PodcastUploadWizard and its
+ * Exposes all state values and handlers required by AuditBriefUploadWizard and its
  * navigation/step sub-components.
  */
 export interface UseWizardStateReturn {
@@ -107,7 +107,7 @@ export interface UseWizardStateReturn {
    */
   handleNext: () => Promise<void>;
   /**
-   * Uploads all staged files, saves the podcast via the API,
+   * Uploads all staged files, saves the audit brief via the API,
    * saves transcripts, and redirects to /bulletins on success.
    */
   handleFinalSubmit: () => Promise<void>;

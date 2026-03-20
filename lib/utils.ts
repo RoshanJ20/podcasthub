@@ -1,5 +1,5 @@
 /**
- * General utility functions for Podcast Hub v2.
+ * General utility functions for The Audit Brief.
  *
  * Key responsibilities:
  * - Provides the `cn()` helper for conditional Tailwind CSS class merging

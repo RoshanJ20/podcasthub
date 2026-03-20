@@ -1,5 +1,5 @@
 /**
- * Next.js middleware for Podcast Hub v2 authentication, authorization, and request tracing.
+ * Next.js middleware for The Audit Brief authentication, authorization, and request tracing.
  *
  * Uses `jose` library for JWT verification (Edge runtime compatible).
  * `jsonwebtoken` does NOT work in Edge middleware — it requires Node.js crypto.
@@ -153,7 +153,7 @@ function handleAdminRoute(
 /**
  * Handles authorization for API routes.
  *
- * Public GET endpoints (`/api/podcasts`, `/api/learning-graphs`, `/api/search`) are
+ * Public GET endpoints (`/api/audit-briefs`, `/api/learning-graphs`, `/api/search`) are
  * accessible without authentication. All other API calls require a valid JWT.
  *
  * @param request - The incoming Next.js request.
@@ -171,7 +171,7 @@ function handleApiRoute(
   const { pathname } = request.nextUrl;
   const isPublicApi =
     request.method === 'GET' &&
-    (pathname.startsWith('/api/podcasts') ||
+    (pathname.startsWith('/api/audit-briefs') ||
       pathname.startsWith('/api/learning-graphs') ||
       pathname.startsWith('/api/search'));
 

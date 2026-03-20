@@ -16,13 +16,13 @@ import { useAudioRef } from '@/components/audio-player/audio-context';
 export function useHlsPlayer() {
   const audioRef = useAudioRef();
   const hlsRef = useRef<Hls | null>(null);
-  const { currentPodcast, audioType, isPlaying, volume, playbackRate } = usePlayerStore();
+  const { currentAuditBrief, audioType, isPlaying, volume, playbackRate } = usePlayerStore();
 
   /** Derive the active audio URL based on audio type selection. */
-  const rawUrl = currentPodcast
-    ? audioType === 'long' && currentPodcast.audioLongUrl
-      ? currentPodcast.audioLongUrl
-      : currentPodcast.audioShortUrl
+  const rawUrl = currentAuditBrief
+    ? audioType === 'long' && currentAuditBrief.audioLongUrl
+      ? currentAuditBrief.audioLongUrl
+      : currentAuditBrief.audioShortUrl
     : null;
 
   // Resolve storage keys through the media proxy to avoid private IP blocks

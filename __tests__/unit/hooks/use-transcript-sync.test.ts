@@ -18,7 +18,7 @@ const mockSegments = [
 /** Reset store state between tests. */
 function resetStore() {
   usePlayerStore.setState({
-    currentPodcast: null,
+    currentAuditBrief: null,
     isPlaying: false,
     currentTime: 0,
     duration: 0,

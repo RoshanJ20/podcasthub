@@ -1,5 +1,5 @@
 /**
- * Health check endpoint for Podcast Hub v2.
+ * Health check endpoint for The Audit Brief.
  *
  * Key responsibilities:
  * - Returns liveness status for container orchestrators and load balancers

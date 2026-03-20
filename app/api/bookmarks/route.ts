@@ -1,7 +1,7 @@
 /**
  * Bookmark API routes — list and create bookmarks.
  *
- * - GET: Paginated list of user's bookmarks, optional filter by podcastId.
+ * - GET: Paginated list of user's bookmarks, optional filter by auditBriefId.
  * - POST: Create a new bookmark. Validates with createBookmarkSchema.
  */
 import type { NextRequest } from 'next/server';
@@ -15,7 +15,7 @@ import { createBookmarkSchema } from '@/lib/schemas/bookmark';
 /**
  * Handles GET requests to retrieve the authenticated user's bookmarks.
  *
- * Returns a paginated list of bookmarks, optionally filtered by podcastId.
+ * Returns a paginated list of bookmarks, optionally filtered by auditBriefId.
  * Supports page and limit query parameters for pagination.
  *
  * @param request - The incoming Next.js request object with optional query params
@@ -29,11 +29,11 @@ export async function GET(request: NextRequest) {
     const { page, limit } = parsePaginationParams(url);
     const skip = (page - 1) * limit;
 
-    const podcastId = url.searchParams.get('podcastId');
+    const auditBriefId = url.searchParams.get('auditBriefId');
 
     const where: Record<string, unknown> = { userId: user.userId };
-    if (podcastId) {
-      where.podcastId = podcastId;
+    if (auditBriefId) {
+      where.auditBriefId = auditBriefId;
     }
 
     const [data, total] = await Promise.all([
@@ -74,12 +74,12 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(badRequest('Invalid bookmark data', parsed.error.flatten()));
     }
 
-    const { podcastId, timestampSeconds, note } = parsed.data;
+    const { auditBriefId, timestampSeconds, note } = parsed.data;
 
     const bookmark = await prisma.bookmark.create({
       data: {
         userId: user.userId,
-        podcastId,
+        auditBriefId,
         timestampSeconds,
         note,
       },

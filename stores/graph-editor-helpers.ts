@@ -24,7 +24,7 @@ export interface ApiEpisode {
   id: string;
   tempId?: string;
   title: string;
-  podcastId: string;
+  auditBriefId: string;
   positionX: number;
   positionY: number;
   nodeType: string;
@@ -46,7 +46,7 @@ export interface SavePayload {
   episodes: Array<{
     id: string;
     title: string;
-    podcastId: string;
+    auditBriefId: string;
     positionX: number;
     positionY: number;
     nodeType: string;
@@ -72,7 +72,7 @@ export function buildSavePayload(nodes: GraphNode[], edges: GraphEdge[]): SavePa
     episodes: nodes.map((n, i) => ({
       id: n.id,
       title: n.title,
-      podcastId: n.podcastId,
+      auditBriefId: n.auditBriefId,
       positionX: n.positionX,
       positionY: n.positionY,
       nodeType: n.nodeType,
@@ -106,7 +106,7 @@ export function reconcileServerResponse(
     return {
       id: ep.id,
       title: ep.title,
-      podcastId: ep.podcastId,
+      auditBriefId: ep.auditBriefId,
       positionX: ep.positionX,
       positionY: ep.positionY,
       nodeType: ep.nodeType as GraphNode['nodeType'],

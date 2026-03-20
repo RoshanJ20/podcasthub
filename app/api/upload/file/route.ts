@@ -1,5 +1,5 @@
 /**
- * Direct file upload endpoint for Podcast Hub v2.
+ * Direct file upload endpoint for The Audit Brief.
  *
  * Receives a file via multipart form data, uploads it to Azure Blob Storage server-side,
  * and returns the storage key. This avoids browser CORS issues with presigned URLs.

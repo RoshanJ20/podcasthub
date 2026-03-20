@@ -1,5 +1,5 @@
 /**
- * Current user info API endpoint for Podcast Hub v2.
+ * Current user info API endpoint for The Audit Brief.
  *
  * Key responsibilities:
  * - Reads the access_token cookie

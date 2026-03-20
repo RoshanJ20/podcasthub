@@ -32,7 +32,7 @@ export interface GraphNode {
   id: string;
   title: string;
   nodeType: 'start' | 'default' | 'milestone' | 'end';
-  podcastId: string;
+  auditBriefId: string;
   positionX: number;
   positionY: number;
   description?: string;
@@ -108,7 +108,6 @@ export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
 
   addNode: (node) => {
     set((s) => ({ nodes: [...s.nodes, node], isDirty: true }));
-    scheduleAutoSave();
   },
 
   removeNode: (id) => {
@@ -118,7 +117,6 @@ export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
       selectedNodeId: s.selectedNodeId === id ? null : s.selectedNodeId,
       isDirty: true,
     }));
-    scheduleAutoSave();
   },
 
   updateNode: (id, updates) => {
@@ -126,17 +124,14 @@ export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
       nodes: s.nodes.map((n) => (n.id === id ? { ...n, ...updates } : n)),
       isDirty: true,
     }));
-    scheduleAutoSave();
   },
 
   addEdge: (edge) => {
     set((s) => ({ edges: [...s.edges, edge], isDirty: true }));
-    scheduleAutoSave();
   },
 
   removeEdge: (id) => {
     set((s) => ({ edges: s.edges.filter((e) => e.id !== id), isDirty: true }));
-    scheduleAutoSave();
   },
 
   setSelectedNode: (id) => set({ selectedNodeId: id }),
@@ -159,7 +154,6 @@ export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
       }),
       isDirty: true,
     });
-    scheduleAutoSave();
   },
 
   save: async (graphId) => {

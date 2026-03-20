@@ -1,4 +1,4 @@
-# Podcast Hub v2 — Architecture Diagrams
+# The Audit Brief — Architecture Diagrams
 
 ## 1. Frontend Architecture
 

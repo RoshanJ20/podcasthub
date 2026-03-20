@@ -1,5 +1,5 @@
 /**
- * Home page for the public-facing Podcast Hub application.
+ * Home page for the public-facing The Audit Brief application.
  *
  * Server Component that displays a center-aligned hero section with
  * stats, a 2-column grid of recently added technical content and
@@ -10,13 +10,13 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { HomeCard } from '@/components/home/home-card';
 import { HomeCardGrid } from '@/components/home/home-card-grid';
-import { ArrowRight, Headphones, BookOpen, TrendingUp } from 'lucide-react';
+import { ArrowRight, Headphones, BookOpen } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const [recentPodcasts, recentPaths, totalPodcasts, totalPaths] = await Promise.all([
-    prisma.podcast.findMany({
+  const [recentAuditBriefs, recentPaths, totalAuditBriefs, totalPaths] = await Promise.all([
+    prisma.auditBrief.findMany({
       where: { isArchived: false },
       orderBy: { createdAt: 'desc' },
       take: 3,
@@ -28,7 +28,7 @@ export default async function HomePage() {
       take: 3,
       include: { _count: { select: { episodes: true } } },
     }),
-    prisma.podcast.count({ where: { isArchived: false } }),
+    prisma.auditBrief.count({ where: { isArchived: false } }),
     prisma.learningGraph.count({ where: { isPublished: true } }),
   ]);
 
@@ -36,11 +36,7 @@ export default async function HomePage() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       {/* Hero section — center aligned with stats */}
       <section className="flex flex-col items-center gap-4 pb-14 pt-12 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-secondary/30 px-4 py-1.5 text-xs font-medium text-muted-foreground">
-          <TrendingUp className="size-3.5" />
-          Your professional development platform
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Podcast Hub</h1>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">The Audit Brief</h1>
         <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
           Explore technical audio content across audit methodology, accounting, technology, and more
           — curated to sharpen your professional expertise.
@@ -68,7 +64,7 @@ export default async function HomePage() {
           <div className="flex items-center gap-2">
             <Headphones className="size-4" />
             <span>
-              <strong className="text-foreground">{totalPodcasts}</strong> podcasts
+              <strong className="text-foreground">{totalAuditBriefs}</strong> audit briefs
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -94,12 +90,12 @@ export default async function HomePage() {
               <ArrowRight className="size-3" />
             </Link>
           </div>
-          {recentPodcasts.length > 0 ? (
+          {recentAuditBriefs.length > 0 ? (
             <HomeCardGrid>
-              {recentPodcasts.map((p) => (
+              {recentAuditBriefs.map((p) => (
                 <HomeCard
                   key={p.id}
-                  variant="podcast"
+                  variant="auditBrief"
                   id={p.id}
                   title={p.title}
                   description={p.description}

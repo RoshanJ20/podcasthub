@@ -2,15 +2,15 @@
  * Unit tests for transcript API route handlers.
  *
  * Tests cover:
- * - GET /api/podcasts/[id]/transcript — list transcripts for a podcast
- * - PUT /api/podcasts/[id]/transcript — upsert transcript
+ * - GET /api/audit-briefs/[id]/transcript — list transcripts for an audit brief
+ * - PUT /api/audit-briefs/[id]/transcript — upsert transcript
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 vi.mock('@/lib/db', () => ({
   prisma: {
-    podcast: {
+    auditBrief: {
       findMany: vi.fn(),
       count: vi.fn(),
       findFirst: vi.fn(),
@@ -46,11 +46,11 @@ function createRequest(url: string, options?: RequestInit): NextRequest {
   );
 }
 
-const podcastId = '550e8400-e29b-41d4-a716-446655440000';
+const auditBriefId = '550e8400-e29b-41d4-a716-446655440000';
 
 const mockTranscript = {
   id: '660e8400-e29b-41d4-a716-446655440000',
-  podcastId,
+  auditBriefId,
   fullText: 'This is a transcript.',
   segments: [{ start: 0, end: 5, text: 'This is a transcript.' }],
   transcriptType: 'short',
@@ -58,22 +58,22 @@ const mockTranscript = {
   updatedAt: new Date('2025-01-01'),
 };
 
-// ─── GET /api/podcasts/[id]/transcript ───────────────────────────────────────
+// ─── GET /api/audit-briefs/[id]/transcript ───────────────────────────────────────
 
-describe('GET /api/podcasts/[id]/transcript', () => {
+describe('GET /api/audit-briefs/[id]/transcript', () => {
   let GET: (req: NextRequest, context: { params: Promise<{ id: string }> }) => Promise<Response>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const mod = await import('@/app/api/podcasts/[id]/transcript/route');
+    const mod = await import('@/app/api/audit-briefs/[id]/transcript/route');
     GET = mod.GET;
   });
 
-  it('returns transcripts for a podcast', async () => {
+  it('returns transcripts for an audit brief', async () => {
     vi.mocked(prisma.transcript.findMany).mockResolvedValue([mockTranscript] as never);
 
-    const req = createRequest(`/api/podcasts/${podcastId}/transcript`);
-    const res = await GET(req, { params: Promise.resolve({ id: podcastId }) });
+    const req = createRequest(`/api/audit-briefs/${auditBriefId}/transcript`);
+    const res = await GET(req, { params: Promise.resolve({ id: auditBriefId }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -84,8 +84,8 @@ describe('GET /api/podcasts/[id]/transcript', () => {
   it('returns empty array when no transcripts exist', async () => {
     vi.mocked(prisma.transcript.findMany).mockResolvedValue([]);
 
-    const req = createRequest(`/api/podcasts/${podcastId}/transcript`);
-    const res = await GET(req, { params: Promise.resolve({ id: podcastId }) });
+    const req = createRequest(`/api/audit-briefs/${auditBriefId}/transcript`);
+    const res = await GET(req, { params: Promise.resolve({ id: auditBriefId }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -95,16 +95,16 @@ describe('GET /api/podcasts/[id]/transcript', () => {
   it('returns 500 on unexpected error', async () => {
     vi.mocked(prisma.transcript.findMany).mockRejectedValue(new Error('DB down'));
 
-    const req = createRequest(`/api/podcasts/${podcastId}/transcript`);
-    const res = await GET(req, { params: Promise.resolve({ id: podcastId }) });
+    const req = createRequest(`/api/audit-briefs/${auditBriefId}/transcript`);
+    const res = await GET(req, { params: Promise.resolve({ id: auditBriefId }) });
 
     expect(res.status).toBe(500);
   });
 });
 
-// ─── PUT /api/podcasts/[id]/transcript ───────────────────────────────────────
+// ─── PUT /api/audit-briefs/[id]/transcript ───────────────────────────────────────
 
-describe('PUT /api/podcasts/[id]/transcript', () => {
+describe('PUT /api/audit-briefs/[id]/transcript', () => {
   let PUT: (req: NextRequest, context: { params: Promise<{ id: string }> }) => Promise<Response>;
 
   const validBody = {
@@ -121,7 +121,7 @@ describe('PUT /api/podcasts/[id]/transcript', () => {
       role: 'admin',
     });
     vi.mocked(requireRole).mockReturnValue(undefined);
-    const mod = await import('@/app/api/podcasts/[id]/transcript/route');
+    const mod = await import('@/app/api/audit-briefs/[id]/transcript/route');
     PUT = mod.PUT;
   });
 
@@ -129,12 +129,12 @@ describe('PUT /api/podcasts/[id]/transcript', () => {
     const upserted = { ...mockTranscript, ...validBody };
     vi.mocked(prisma.transcript.upsert).mockResolvedValue(upserted as never);
 
-    const req = createRequest(`/api/podcasts/${podcastId}/transcript`, {
+    const req = createRequest(`/api/audit-briefs/${auditBriefId}/transcript`, {
       method: 'PUT',
       body: JSON.stringify(validBody),
       headers: { 'Content-Type': 'application/json' },
     });
-    const res = await PUT(req, { params: Promise.resolve({ id: podcastId }) });
+    const res = await PUT(req, { params: Promise.resolve({ id: auditBriefId }) });
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -142,8 +142,8 @@ describe('PUT /api/podcasts/[id]/transcript', () => {
     expect(prisma.transcript.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          podcastId_transcriptType: {
-            podcastId,
+          auditBriefId_transcriptType: {
+            auditBriefId,
             transcriptType: 'short',
           },
         },
@@ -156,19 +156,19 @@ describe('PUT /api/podcasts/[id]/transcript', () => {
     const upserted = { ...mockTranscript, ...longBody };
     vi.mocked(prisma.transcript.upsert).mockResolvedValue(upserted as never);
 
-    const req = createRequest(`/api/podcasts/${podcastId}/transcript`, {
+    const req = createRequest(`/api/audit-briefs/${auditBriefId}/transcript`, {
       method: 'PUT',
       body: JSON.stringify(longBody),
       headers: { 'Content-Type': 'application/json' },
     });
-    const res = await PUT(req, { params: Promise.resolve({ id: podcastId }) });
+    const res = await PUT(req, { params: Promise.resolve({ id: auditBriefId }) });
 
     expect(res.status).toBe(200);
     expect(prisma.transcript.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          podcastId_transcriptType: {
-            podcastId,
+          auditBriefId_transcriptType: {
+            auditBriefId,
             transcriptType: 'long',
           },
         },
@@ -181,12 +181,12 @@ describe('PUT /api/podcasts/[id]/transcript', () => {
       throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
     });
 
-    const req = createRequest(`/api/podcasts/${podcastId}/transcript`, {
+    const req = createRequest(`/api/audit-briefs/${auditBriefId}/transcript`, {
       method: 'PUT',
       body: JSON.stringify(validBody),
       headers: { 'Content-Type': 'application/json' },
     });
-    const res = await PUT(req, { params: Promise.resolve({ id: podcastId }) });
+    const res = await PUT(req, { params: Promise.resolve({ id: auditBriefId }) });
 
     expect(res.status).toBe(401);
   });
@@ -201,40 +201,40 @@ describe('PUT /api/podcasts/[id]/transcript', () => {
       throw new ApiError(403, ErrorCode.FORBIDDEN, 'Insufficient permissions');
     });
 
-    const req = createRequest(`/api/podcasts/${podcastId}/transcript`, {
+    const req = createRequest(`/api/audit-briefs/${auditBriefId}/transcript`, {
       method: 'PUT',
       body: JSON.stringify(validBody),
       headers: { 'Content-Type': 'application/json' },
     });
-    const res = await PUT(req, { params: Promise.resolve({ id: podcastId }) });
+    const res = await PUT(req, { params: Promise.resolve({ id: auditBriefId }) });
 
     expect(res.status).toBe(403);
   });
 
   it('returns 400 for invalid body (missing fullText)', async () => {
-    const req = createRequest(`/api/podcasts/${podcastId}/transcript`, {
+    const req = createRequest(`/api/audit-briefs/${auditBriefId}/transcript`, {
       method: 'PUT',
       body: JSON.stringify({ segments: [], transcriptType: 'short' }),
       headers: { 'Content-Type': 'application/json' },
     });
-    const res = await PUT(req, { params: Promise.resolve({ id: podcastId }) });
+    const res = await PUT(req, { params: Promise.resolve({ id: auditBriefId }) });
 
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for invalid transcriptType', async () => {
-    const req = createRequest(`/api/podcasts/${podcastId}/transcript`, {
+    const req = createRequest(`/api/audit-briefs/${auditBriefId}/transcript`, {
       method: 'PUT',
       body: JSON.stringify({ ...validBody, transcriptType: 'invalid' }),
       headers: { 'Content-Type': 'application/json' },
     });
-    const res = await PUT(req, { params: Promise.resolve({ id: podcastId }) });
+    const res = await PUT(req, { params: Promise.resolve({ id: auditBriefId }) });
 
     expect(res.status).toBe(400);
   });
 
   it('returns 400 for invalid segment structure', async () => {
-    const req = createRequest(`/api/podcasts/${podcastId}/transcript`, {
+    const req = createRequest(`/api/audit-briefs/${auditBriefId}/transcript`, {
       method: 'PUT',
       body: JSON.stringify({
         fullText: 'text',
@@ -243,7 +243,7 @@ describe('PUT /api/podcasts/[id]/transcript', () => {
       }),
       headers: { 'Content-Type': 'application/json' },
     });
-    const res = await PUT(req, { params: Promise.resolve({ id: podcastId }) });
+    const res = await PUT(req, { params: Promise.resolve({ id: auditBriefId }) });
 
     expect(res.status).toBe(400);
   });

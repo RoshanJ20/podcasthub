@@ -25,16 +25,16 @@ jobs:
           NEXT_PUBLIC_APP_URL: ${{ secrets.APP_URL }}
 
       - name: Build Docker image
-        run: docker build -t podcast-hub:${{ github.sha }} .
+        run: docker build -t the-audit-brief:${{ github.sha }} .
 
       - name: Push to container registry
         run: |
-          docker tag podcast-hub:${{ github.sha }} ${{ secrets.REGISTRY_URL }}/podcast-hub:${{ github.sha }}
-          docker push ${{ secrets.REGISTRY_URL }}/podcast-hub:${{ github.sha }}
+          docker tag the-audit-brief:${{ github.sha }} ${{ secrets.REGISTRY_URL }}/the-audit-brief:${{ github.sha }}
+          docker push ${{ secrets.REGISTRY_URL }}/the-audit-brief:${{ github.sha }}
 
       - name: Deploy to Azure Container Apps
         run: |
           az containerapp update \
-            --name podcast-hub \
+            --name the-audit-brief \
             --resource-group ${{ secrets.AZURE_RG }} \
-            --image ${{ secrets.REGISTRY_URL }}/podcast-hub:${{ github.sha }}
+            --image ${{ secrets.REGISTRY_URL }}/the-audit-brief:${{ github.sha }}
