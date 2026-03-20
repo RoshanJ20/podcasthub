@@ -22,8 +22,12 @@
  *   />
  */
 
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Heart } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 /** Props consumed by AuditBriefDetailHeader. */
 export interface AuditBriefDetailHeaderProps {
@@ -37,6 +41,10 @@ export interface AuditBriefDetailHeaderProps {
   badgeBg: string;
   /** Resolved text color for the domain badge (light or dark variant). */
   badgeText: string;
+  /** Whether this audit brief is favorited by the current user. */
+  isFavorite?: boolean;
+  /** Callback to toggle the favorite state. */
+  onToggleFavorite?: () => void;
   /**
    * Additional props spread onto the wrapper element to support motion.div
    * animation variants supplied by the parent layout.
@@ -69,6 +77,8 @@ export function AuditBriefDetailHeader({
   tags,
   badgeBg,
   badgeText,
+  isFavorite,
+  onToggleFavorite,
   sectionProps,
   Section,
 }: AuditBriefDetailHeaderProps) {
@@ -76,7 +86,7 @@ export function AuditBriefDetailHeader({
     <Section {...sectionProps}>
       <Link
         href="/bulletins"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Back to library
@@ -98,7 +108,139 @@ export function AuditBriefDetailHeader({
             {tag}
           </span>
         ))}
+        {onToggleFavorite && (
+          <FavoriteToggleButton isFavorite={isFavorite ?? false} onToggle={onToggleFavorite} />
+        )}
       </div>
     </Section>
+  );
+}
+
+/**
+ * Favorite toggle button with two states:
+ * - Unfavorited: full "Add to favorites" button with burst hearts animation on click
+ * - Favorited: collapses to a small filled heart icon, expands to
+ *   "Remove from favorites" on hover
+ */
+const BURST_HEARTS = [
+  { x: -14, y: -16, delay: 0, scale: 0.5 },
+  { x: 12, y: -18, delay: 30, scale: 0.45 },
+  { x: -18, y: 4, delay: 60, scale: 0.4 },
+  { x: 16, y: 6, delay: 40, scale: 0.5 },
+  { x: -8, y: -22, delay: 20, scale: 0.35 },
+  { x: 20, y: -10, delay: 50, scale: 0.4 },
+] as const;
+
+function FavoriteToggleButton({
+  isFavorite,
+  onToggle,
+}: {
+  isFavorite: boolean;
+  onToggle: () => void;
+}) {
+  const [showSplash, setShowSplash] = useState(false);
+
+  const handleClick = () => {
+    if (!isFavorite) {
+      setShowSplash(true);
+      // Delay the toggle so the burst animation plays on the unfavorited button
+      // before it switches to the compact heart
+      setTimeout(() => onToggle(), 50);
+      setTimeout(() => setShowSplash(false), 600);
+      return;
+    }
+    onToggle();
+  };
+
+  /* ── Favorited state: compact heart that expands on hover ── */
+  // Keep showing the unfavorited button while the splash animation plays
+  if (isFavorite && !showSplash) {
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        className={cn(
+          'group/unfav relative inline-flex items-center rounded-full border px-2 py-1.5',
+          'border-transparent bg-transparent',
+          'hover:gap-2 hover:rounded-lg hover:border-red-200 hover:bg-red-50 hover:px-3',
+          'dark:hover:border-red-500/30 dark:hover:bg-red-500/10',
+          'transition-all duration-200 active:scale-95 active:duration-[100ms]'
+        )}
+        style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}
+      >
+        <Heart className="size-4 fill-red-500 text-red-500 shrink-0" />
+        <span
+          className={cn(
+            'max-w-0 overflow-hidden whitespace-nowrap text-sm font-medium text-red-600 opacity-0',
+            'group-hover/unfav:max-w-48 group-hover/unfav:opacity-100',
+            'dark:text-red-400',
+            'transition-[max-width,opacity] duration-200'
+          )}
+          style={{ transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' }}
+        >
+          Remove from favorites
+        </span>
+      </button>
+    );
+  }
+
+  /* ── Unfavorited state: full button with burst animation ── */
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={cn(
+        'group relative inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium',
+        'border-border bg-card text-muted-foreground',
+        'hover:border-red-200 hover:bg-red-50 hover:text-red-500',
+        'dark:hover:border-red-500/30 dark:hover:bg-red-500/10 dark:hover:text-red-400',
+        'transition-[color,background-color,border-color,transform] duration-150 active:scale-95 active:duration-[100ms]'
+      )}
+    >
+      <span className="relative flex items-center justify-center">
+        <Heart
+          className={cn(
+            'size-4 fill-transparent transition-[color,fill,transform] duration-200',
+            showSplash && 'fill-red-500 text-red-500 scale-[1.3]'
+          )}
+          style={
+            showSplash ? { transitionTimingFunction: 'cubic-bezier(0.23, 1, 0.32, 1)' } : undefined
+          }
+        />
+        {showSplash && (
+          <span
+            className="absolute size-8 rounded-full border-2 border-red-400/60"
+            style={{ animation: 'favorite-ring 500ms cubic-bezier(0.23, 1, 0.32, 1) forwards' }}
+          />
+        )}
+        {showSplash &&
+          BURST_HEARTS.map((h, i) => (
+            <Heart
+              key={i}
+              className="absolute size-2.5 fill-red-400 text-red-400"
+              style={
+                {
+                  animation: `favorite-burst 450ms cubic-bezier(0.23, 1, 0.32, 1) ${h.delay}ms forwards`,
+                  '--burst-x': `${h.x}px`,
+                  '--burst-y': `${h.y}px`,
+                  '--burst-scale': h.scale,
+                } as React.CSSProperties
+              }
+            />
+          ))}
+      </span>
+      Add to favorites
+      <style>{`
+        @keyframes favorite-ring {
+          0% { transform: scale(0.3); opacity: 1; }
+          100% { transform: scale(1.8); opacity: 0; }
+        }
+        @keyframes favorite-burst {
+          0% { transform: translate(0, 0) scale(0); opacity: 1; }
+          60% { opacity: 1; }
+          100% { transform: translate(var(--burst-x), var(--burst-y)) scale(var(--burst-scale)); opacity: 0; }
+        }
+      `}</style>
+    </button>
   );
 }

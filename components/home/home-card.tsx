@@ -15,6 +15,7 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { getDomainColor } from '@/lib/domain-colors';
+import { FavoriteButton } from '@/components/ui/favorite-button';
 import { useTheme } from 'next-themes';
 
 interface HomeCardBaseProps {
@@ -32,6 +33,10 @@ interface AuditBriefCardProps extends HomeCardBaseProps {
   variant: 'auditBrief';
   year: number;
   tags: string[];
+  /** Whether this audit brief is favorited by the current user. */
+  isFavorite?: boolean;
+  /** Callback to toggle the favorite state. */
+  onToggleFavorite?: () => void;
 }
 
 interface SeriesCardProps extends HomeCardBaseProps {
@@ -63,14 +68,14 @@ export function HomeCard(props: HomeCardProps) {
 
   return (
     <Link href={href as string}>
-      <div className="group flex overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md">
+      <div className="group flex overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-md">
         {/* Domain-colored strip — expands on hover to show arrow */}
         <div
-          className="relative flex w-1.5 shrink-0 items-center justify-center transition-all duration-300 ease-out group-hover:w-9"
+          className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"
           style={{ backgroundColor: color.border }}
         >
           <ChevronRight
-            className="absolute text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            className="absolute text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
             size={18}
             strokeWidth={2.5}
           />
@@ -78,7 +83,7 @@ export function HomeCard(props: HomeCardProps) {
 
         {/* Card content */}
         <div className="flex-1 p-4">
-          {/* Top row: domain badge + metadata */}
+          {/* Top row: domain badge + metadata + favorite */}
           <div className="mb-2 flex items-center justify-between">
             <span
               className="inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium"
@@ -86,9 +91,17 @@ export function HomeCard(props: HomeCardProps) {
             >
               {domain}
             </span>
-            <span className="text-[11px] text-muted-foreground">
-              {variant === 'auditBrief' ? props.year : `${props.episodeCount} episodes`}
-            </span>
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] text-muted-foreground">
+                {variant === 'auditBrief' ? props.year : `${props.episodeCount} episodes`}
+              </span>
+              {variant === 'auditBrief' && props.onToggleFavorite && (
+                <FavoriteButton
+                  isFavorite={props.isFavorite ?? false}
+                  onToggle={props.onToggleFavorite}
+                />
+              )}
+            </div>
           </div>
 
           {/* Title */}

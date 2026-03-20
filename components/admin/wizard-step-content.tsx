@@ -27,6 +27,18 @@ import { UploadProgressBar } from '@/components/admin/upload-progress-bar';
 import { cn } from '@/lib/utils';
 import { MAX_FILE_SIZES } from '@/lib/upload';
 
+/** Allowed audio file extensions (lowercase). Video formats like .mp4 are excluded. */
+const ALLOWED_AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.ogg', '.aac', '.flac', '.m4a', '.wma']);
+
+/**
+ * Returns true if the file has an allowed audio extension.
+ * Rejects video formats (.mp4, .mov, .avi, etc.) even if MIME type starts with "audio/".
+ */
+function isAllowedAudioFile(file: File): boolean {
+  const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+  return ALLOWED_AUDIO_EXTENSIONS.has(ext);
+}
+
 /**
  * Props for the WizardStepContent component.
  *
@@ -113,11 +125,18 @@ export function WizardStepContent({
               ref={audioShortRef}
               id="audioShort"
               type="file"
-              accept="audio/*"
+              accept=".mp3,.wav,.ogg,.aac,.flac,.m4a,.wma"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
+                if (!isAllowedAudioFile(file)) {
+                  toast.error(
+                    'Only audio files are allowed (.mp3, .wav, .ogg, .aac, .flac, .m4a, .wma)'
+                  );
+                  e.target.value = '';
+                  return;
+                }
                 if (file.size > MAX_FILE_SIZES.audio) {
                   toast.error('Audio file exceeds the 500 MB limit');
                   e.target.value = '';
@@ -154,11 +173,18 @@ export function WizardStepContent({
               ref={audioLongRef}
               id="audioLong"
               type="file"
-              accept="audio/*"
+              accept=".mp3,.wav,.ogg,.aac,.flac,.m4a,.wma"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
+                if (!isAllowedAudioFile(file)) {
+                  toast.error(
+                    'Only audio files are allowed (.mp3, .wav, .ogg, .aac, .flac, .m4a, .wma)'
+                  );
+                  e.target.value = '';
+                  return;
+                }
                 if (file.size > MAX_FILE_SIZES.audio) {
                   toast.error('Audio file exceeds the 500 MB limit');
                   e.target.value = '';

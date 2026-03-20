@@ -136,7 +136,7 @@ export function AuditBriefUploadFields({
       <UploadField
         id="audioShort"
         label="Brief Summary"
-        accept="audio/*"
+        accept=".mp3,.wav,.ogg,.aac,.flac,.m4a,.wma"
         isUploading={audioShortUpload.isUploading}
         uploadProgress={audioShortUpload.progress}
         onChange={onAudioShortChange}
@@ -146,7 +146,7 @@ export function AuditBriefUploadFields({
       <UploadField
         id="audioLong"
         label="Detailed Overview"
-        accept="audio/*"
+        accept=".mp3,.wav,.ogg,.aac,.flac,.m4a,.wma"
         isUploading={audioLongUpload.isUploading}
         uploadProgress={audioLongUpload.progress}
         onChange={onAudioLongChange}

@@ -88,7 +88,7 @@ export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
         <button
           onClick={togglePlay}
           aria-label={isPlaying ? 'Pause' : 'Play'}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-transform hover:scale-105 active:scale-95"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-transform duration-150 hover:scale-105 active:scale-95 active:duration-[100ms]"
           style={{
             backgroundColor: domainColor?.border ?? 'var(--primary)',
             color: 'white',

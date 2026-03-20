@@ -150,7 +150,7 @@ export function TranscriptViewer({
               data-segment-index={index}
               data-active={isActive ? 'true' : 'false'}
               className={cn(
-                'flex gap-3 p-2 rounded-md cursor-pointer transition-colors hover:bg-muted',
+                'flex gap-3 p-2 rounded-md cursor-pointer transition-colors duration-150 hover:bg-muted',
                 isActive && 'border-l-2'
               )}
               style={activeStyle(isActive)}

@@ -156,7 +156,7 @@ export function PathViewerWrapper({
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-border/40">
               <div
-                className="h-2 rounded-full transition-all"
+                className="h-2 rounded-full transition-[width] duration-200"
                 style={{
                   width: `${progress}%`,
                   backgroundColor: domainColor.border,

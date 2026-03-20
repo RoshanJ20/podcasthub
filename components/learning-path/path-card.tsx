@@ -44,14 +44,14 @@ export function PathCard({
 
   return (
     <Link href={`/learning-path/${id}` as string}>
-      <div className="group flex overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md">
+      <div className="group flex overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-md">
         {/* Domain-colored left strip — expands on hover to reveal chevron */}
         <div
-          className="relative flex w-1.5 shrink-0 items-center justify-center transition-all duration-300 ease-out group-hover:w-9"
+          className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"
           style={{ backgroundColor: color.border }}
         >
           <ChevronRight
-            className="absolute text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            className="absolute text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
             size={18}
             strokeWidth={2.5}
           />
@@ -81,7 +81,7 @@ export function PathCard({
             </div>
             <div className="h-1.5 w-full rounded-full bg-border/40">
               <div
-                className="h-1.5 rounded-full transition-all"
+                className="h-1.5 rounded-full transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)]"
                 style={{ width: `${progress}%`, backgroundColor: color.border }}
                 role="progressbar"
                 aria-valuenow={progress}

@@ -36,6 +36,7 @@ import { AttachmentSidebar } from './attachment-sidebar';
 import { BulletinViewerSkeleton } from './bulletin-viewer-skeleton';
 import { AuditBriefDetailHeader } from './audit-brief-detail-header';
 import { AuditBriefMainContent } from './audit-brief-main-content';
+import { useFavorites } from '@/hooks/use-favorites';
 
 /** Dynamically import BulletinViewer to avoid SSR issues with react-pdf (DOMMatrix). */
 const BulletinViewer = dynamic(() => import('./bulletin-viewer').then((m) => m.BulletinViewer), {
@@ -82,6 +83,7 @@ interface AuditBriefDetailLayoutProps {
 export function AuditBriefDetailLayout({ auditBrief }: AuditBriefDetailLayoutProps) {
   const { seekTo } = useHlsPlayer();
   const reducedMotion = useReducedMotion();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const domainColor = getDomainColor(auditBrief.domain);
@@ -233,6 +235,8 @@ export function AuditBriefDetailLayout({ auditBrief }: AuditBriefDetailLayoutPro
     tags: auditBrief.tags,
     badgeBg,
     badgeText,
+    isFavorite: isFavorite(auditBrief.id),
+    onToggleFavorite: () => toggleFavorite(auditBrief.id),
     sectionProps,
     Section,
   };

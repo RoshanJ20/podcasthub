@@ -74,7 +74,7 @@ export function MobileBottomPlayer() {
         className="h-0.5 w-full bg-secondary"
       >
         <div
-          className="h-full bg-primary transition-all"
+          className="h-full bg-primary transition-[width] duration-150 ease-out"
           style={{ width: `${progressPercent}%` }}
         />
       </div>

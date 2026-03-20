@@ -16,15 +16,15 @@
 
 import { useState, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { X, ImagePlus } from 'lucide-react';
+import { ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { MAX_FILE_SIZES } from '@/lib/upload';
 
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { TagInput } from '@/components/admin/tag-input';
 import { ThumbnailCropDialog } from '@/components/admin/thumbnail-crop-dialog';
 import { PODCAST_DOMAINS } from '@/lib/schemas/common';
 
@@ -231,32 +231,14 @@ export function WizardStepDetails({
         </div>
       </div>
 
-      {/* Tags */}
-      <div className="space-y-1.5">
-        <Label htmlFor="tags">Tags</Label>
-        <Input
-          id="tags"
-          value={tagInput}
-          onChange={(e) => setTagInput(e.target.value)}
-          onKeyDown={handleTagKeyDown}
-          placeholder="Type a tag and press Enter"
-        />
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-1">
-            {tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="cursor-pointer"
-                onClick={() => handleRemoveTag(tag)}
-              >
-                {tag}
-                <X className="ml-1 h-3 w-3" />
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Tags — Notion-style input with create dropdown */}
+      <TagInput
+        tags={tags}
+        tagInput={tagInput}
+        onTagInputChange={setTagInput}
+        onAddTag={handleTagKeyDown}
+        onRemoveTag={handleRemoveTag}
+      />
 
       {/* Crop dialog — opens after file selection */}
       <ThumbnailCropDialog

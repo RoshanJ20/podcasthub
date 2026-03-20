@@ -144,8 +144,10 @@ describe('WizardStepContent', () => {
   it('renders audio file inputs that accept audio files', () => {
     const { container } = render(<WizardStepContent {...buildProps()} />);
 
-    /* Both audio inputs should accept audio/* */
-    const audioInputs = container.querySelectorAll('input[accept="audio/*"]');
+    /* Both audio inputs should accept the explicit audio format list */
+    const audioInputs = container.querySelectorAll(
+      'input[accept=".mp3,.wav,.ogg,.aac,.flac,.m4a,.wma"]'
+    );
     expect(audioInputs).toHaveLength(2);
   });
 

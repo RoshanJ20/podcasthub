@@ -31,7 +31,7 @@ export function UploadProgressBar({ progress, className }: UploadProgressBarProp
   return (
     <div className={cn('w-full bg-secondary rounded-full h-2.5', className)}>
       <div
-        className="bg-primary h-2.5 rounded-full transition-all duration-300"
+        className="bg-primary h-2.5 rounded-full transition-[width] duration-200"
         style={{ width: `${progress}%` }}
       />
     </div>

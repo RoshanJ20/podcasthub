@@ -104,7 +104,7 @@ export function SidebarBookmarks({ auditBriefId, onSeek, domainColor }: SidebarB
         <button
           onClick={() => setIsAdding(!isAdding)}
           aria-label="Add bookmark"
-          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
         >
           <Plus className="h-3.5 w-3.5" />
         </button>
@@ -161,7 +161,7 @@ export function SidebarBookmarks({ auditBriefId, onSeek, domainColor }: SidebarB
             <button
               key={bm.id}
               onClick={() => onSeek(bm.timestampSeconds)}
-              className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs transition-colors hover:bg-muted"
+              className="flex w-full items-center gap-1.5 rounded px-1.5 py-1 text-left text-xs transition-colors duration-150 hover:bg-muted"
             >
               <span
                 className="shrink-0 font-mono tabular-nums"

@@ -1,12 +1,19 @@
 /**
- * Responsive grid layout for displaying audit brief cards.
+ * Responsive grid layout for displaying audit brief cards with favorites.
  *
  * Renders a grid of AuditBriefCard components with responsive column
- * counts. Shows an empty state message when no audit briefs are available.
+ * counts. Integrates the useFavorites hook so each card can display and
+ * toggle its favorite state. Shows an empty state when no briefs match.
+ *
+ * Dependencies:
+ * - hooks/use-favorites for per-user favorite state
  */
+'use client';
+
 import { FileAudio } from 'lucide-react';
 import { AuditBriefCard } from '@/components/library/audit-brief-card';
 import { StaggeredGrid, StaggeredGridItem } from '@/components/ui/staggered-grid';
+import { useFavorites } from '@/hooks/use-favorites';
 import type { AuditBriefData } from '@/lib/types';
 
 export interface AuditBriefGridProps {
@@ -14,6 +21,8 @@ export interface AuditBriefGridProps {
 }
 
 export function AuditBriefGrid({ auditBriefs }: AuditBriefGridProps) {
+  const { isFavorite, toggleFavorite } = useFavorites();
+
   if (auditBriefs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-16 text-muted-foreground">
@@ -36,6 +45,8 @@ export function AuditBriefGrid({ auditBriefs }: AuditBriefGridProps) {
             year={auditBrief.year}
             tags={auditBrief.tags}
             thumbnailUrl={auditBrief.thumbnailUrl}
+            isFavorite={isFavorite(auditBrief.id)}
+            onToggleFavorite={() => toggleFavorite(auditBrief.id)}
           />
         </StaggeredGridItem>
       ))}

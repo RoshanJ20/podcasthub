@@ -128,7 +128,7 @@ export function SidebarNowPlaying({ collapsed = false }: SidebarNowPlayingProps)
           className="h-1 w-full overflow-hidden rounded-full bg-secondary"
         >
           <div
-            className="h-full rounded-full bg-primary transition-all"
+            className="h-full rounded-full bg-primary transition-[width] duration-150 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>

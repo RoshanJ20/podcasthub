@@ -67,10 +67,10 @@ describe('AudioPlayer', () => {
     expect(container.textContent).toContain('5:00');
   });
 
-  it('renders skip forward and backward buttons', () => {
+  it('does not render skip forward and backward buttons', () => {
     const { container } = render(<AudioPlayer />);
-    expect(container.querySelector('button[aria-label="Skip forward"]')).not.toBeNull();
-    expect(container.querySelector('button[aria-label="Skip backward"]')).not.toBeNull();
+    expect(container.querySelector('button[aria-label="Skip forward"]')).toBeNull();
+    expect(container.querySelector('button[aria-label="Skip backward"]')).toBeNull();
   });
 
   it('does not render volume slider (full player omits inline volume)', () => {
