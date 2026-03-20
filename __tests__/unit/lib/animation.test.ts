@@ -13,31 +13,28 @@ describe('animation tokens', () => {
     it('should export fast transition with duration and ease', () => {
       expect(transitions.fast).toEqual({
         duration: 0.15,
-        ease: [0.25, 0.1, 0.25, 1],
+        ease: [0.23, 1, 0.32, 1],
       });
     });
 
-    it('should export spring-based normal transition', () => {
-      expect(transitions.normal).toMatchObject({
-        type: 'spring',
-        stiffness: 80,
-        damping: 10,
+    it('should export tween-based normal transition', () => {
+      expect(transitions.normal).toEqual({
+        duration: 0.2,
+        ease: [0.23, 1, 0.32, 1],
       });
     });
 
-    it('should export spring-based slow transition', () => {
-      expect(transitions.slow).toMatchObject({
-        type: 'spring',
-        stiffness: 60,
-        damping: 12,
+    it('should export tween-based slow transition', () => {
+      expect(transitions.slow).toEqual({
+        duration: 0.3,
+        ease: [0.23, 1, 0.32, 1],
       });
     });
 
-    it('should export spring-based emphasis transition', () => {
-      expect(transitions.emphasis).toMatchObject({
-        type: 'spring',
-        stiffness: 50,
-        damping: 8,
+    it('should export tween-based emphasis transition', () => {
+      expect(transitions.emphasis).toEqual({
+        duration: 0.25,
+        ease: [0.77, 0, 0.175, 1],
       });
     });
   });

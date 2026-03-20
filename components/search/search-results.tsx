@@ -47,7 +47,7 @@ export function BasicResults({ results }: { results: BasicResult[] }) {
       {results.map((result) => (
         <StaggeredGridItem key={result.id}>
           <Link href={`/audit-brief/${result.id}`}>
-            <Card className="hover:shadow-md transition-shadow">
+            <Card className="hover:shadow-md transition-[box-shadow] duration-200">
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium">{result.title}</h3>
@@ -83,7 +83,7 @@ export function SemanticResults({ results }: { results: SemanticResult[] }) {
       {results.map((result) => (
         <StaggeredGridItem key={result.id}>
           <Link href={`/audit-brief/${result.auditBriefId}?t=${Math.floor(result.startTime)}`}>
-            <Card className="hover:shadow-md transition-shadow">
+            <Card className="hover:shadow-md transition-[box-shadow] duration-200">
               <CardContent className="pt-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-medium">{result.auditBriefTitle}</h3>

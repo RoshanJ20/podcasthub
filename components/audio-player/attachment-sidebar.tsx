@@ -63,7 +63,7 @@ export function AttachmentSidebar({
             data-active={isActive ? 'true' : 'false'}
             title={url.split('/').pop() ?? `Attachment ${index + 1}`}
             onClick={() => onOpen(url)}
-            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
+            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm transition-colors duration-150 ${
               isActive ? 'font-medium' : 'hover:bg-muted'
             }`}
             style={

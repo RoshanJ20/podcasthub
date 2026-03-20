@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { HomeCard } from '@/components/home/home-card';
 import { HomeCardGrid } from '@/components/home/home-card-grid';
+import { HomeAuditBriefList } from '@/components/home/home-audit-brief-list';
 import { ArrowRight, Headphones, BookOpen } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -47,16 +48,16 @@ export default async function HomePage() {
             className="group relative inline-flex items-center gap-1.5 overflow-hidden rounded-lg border border-orange-400 bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
           >
             Browse technical content
-            <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-10 group-hover:opacity-0" />
-            <ArrowRight className="absolute right-4 size-3.5 -translate-x-10 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
+            <ArrowRight className="size-3.5 transition-[transform,opacity] duration-200 group-hover:translate-x-10 group-hover:opacity-0" />
+            <ArrowRight className="absolute right-4 size-3.5 -translate-x-10 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
           </Link>
           <Link
             href="/learning-path"
             className="group relative inline-flex items-center gap-1.5 overflow-hidden rounded-lg border border-orange-400 bg-orange-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-orange-600"
           >
             Browse learning series
-            <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-10 group-hover:opacity-0" />
-            <ArrowRight className="absolute right-4 size-3.5 -translate-x-10 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
+            <ArrowRight className="size-3.5 transition-[transform,opacity] duration-200 group-hover:translate-x-10 group-hover:opacity-0" />
+            <ArrowRight className="absolute right-4 size-3.5 -translate-x-10 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
           </Link>
         </div>
         {/* Quick stats */}
@@ -90,26 +91,7 @@ export default async function HomePage() {
               <ArrowRight className="size-3" />
             </Link>
           </div>
-          {recentAuditBriefs.length > 0 ? (
-            <HomeCardGrid>
-              {recentAuditBriefs.map((p) => (
-                <HomeCard
-                  key={p.id}
-                  variant="auditBrief"
-                  id={p.id}
-                  title={p.title}
-                  description={p.description}
-                  domain={p.domain}
-                  year={p.year}
-                  tags={p.tags}
-                />
-              ))}
-            </HomeCardGrid>
-          ) : (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              No technical content yet.
-            </p>
-          )}
+          <HomeAuditBriefList auditBriefs={recentAuditBriefs} />
         </section>
 
         {/* Recent Learning Series */}

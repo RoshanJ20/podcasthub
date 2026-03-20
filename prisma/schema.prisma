@@ -21,6 +21,7 @@ model User {
 
   role           UserRole?
   bookmarks      Bookmark[]
+  favorites      Favorite[]
   progress       UserProgress[]
   activity       UserActivity[]
   learningGraphs LearningGraph[] @relation("CreatedBy")
@@ -46,6 +47,7 @@ model AuditBrief {
 
   transcripts Transcript[]
   bookmarks   Bookmark[]
+  favorites   Favorite[]
   activity    UserActivity[] @relation("ActivityAuditBrief")
 
   @@map("audit_briefs")
@@ -127,6 +129,21 @@ model LearningPathEdge {
 
   @@index([graphId])
   @@map("learning_path_edges")
+}
+
+model Favorite {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  auditBriefId String   @map("audit_brief_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  auditBrief AuditBrief @relation(fields: [auditBriefId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, auditBriefId])
+  @@index([userId])
+  @@index([auditBriefId])
+  @@map("favorites")
 }
 
 model Bookmark {

@@ -6,6 +6,7 @@
  * UI with filters, audit brief grid, and pagination controls.
  */
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { prisma } from '@/lib/db';
 import { LibraryFilters } from '@/components/library/library-filters';
 import { AuditBriefGrid } from '@/components/library/audit-brief-grid';
@@ -28,6 +29,7 @@ interface LibraryPageProps {
     sort?: string;
     page?: string;
     q?: string;
+    favorites?: string;
   }>;
 }
 
@@ -37,16 +39,46 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   const sort = params.sort ?? 'newest';
   const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1);
   const searchQuery = params.q?.trim() ?? '';
+  const showFavorites = params.favorites === 'true';
+
+  // When favorites filter is active, get the user's favorited audit brief IDs
+  let favoriteIds: string[] = [];
+  if (showFavorites) {
+    const headerList = await headers();
+    const userId = headerList.get('x-user-id');
+    if (userId) {
+      const favorites = await prisma.favorite.findMany({
+        where: { userId },
+        select: { auditBriefId: true },
+      });
+      favoriteIds = favorites.map((f) => f.auditBriefId);
+    }
+  }
+
+  // When searching, find IDs of audit briefs with tags containing the query
+  // substring. Prisma's `hasSome` only matches exact strings, so we use a raw
+  // query with array_to_string for partial/case-insensitive tag matching.
+  let tagMatchIds: string[] = [];
+  if (searchQuery) {
+    const tagMatches = await prisma.$queryRaw<{ id: string }[]>`
+      SELECT id FROM audit_briefs
+      WHERE NOT is_archived
+        AND array_to_string(tags, ' ') ILIKE ${'%' + searchQuery + '%'}
+    `;
+    tagMatchIds = tagMatches.map((r) => r.id);
+  }
 
   const where = {
     isArchived: false,
+    ...(showFavorites ? { id: { in: favoriteIds } } : {}),
     ...(domain && (DOMAINS as readonly string[]).includes(domain) ? { domain } : {}),
     ...(searchQuery
       ? {
           OR: [
             { title: { contains: searchQuery, mode: 'insensitive' as const } },
             { description: { contains: searchQuery, mode: 'insensitive' as const } },
-            { tags: { hasSome: [searchQuery] } },
+            { domain: { contains: searchQuery, mode: 'insensitive' as const } },
+            ...(tagMatchIds.length > 0 ? [{ id: { in: tagMatchIds } }] : []),
           ],
         }
       : {}),

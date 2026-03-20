@@ -20,6 +20,7 @@ import { ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import { getDomainColor } from '@/lib/domain-colors';
+import { FavoriteButton } from '@/components/ui/favorite-button';
 
 export interface AuditBriefCardProps {
   id: string;
@@ -30,6 +31,10 @@ export interface AuditBriefCardProps {
   /** Retained in interface for callers — not rendered on the card. */
   tags: string[];
   thumbnailUrl: string;
+  /** Whether this audit brief is favorited by the current user. */
+  isFavorite?: boolean;
+  /** Callback to toggle the favorite state. */
+  onToggleFavorite?: () => void;
 }
 
 export function AuditBriefCard({
@@ -39,6 +44,8 @@ export function AuditBriefCard({
   domain,
   year,
   thumbnailUrl,
+  isFavorite,
+  onToggleFavorite,
 }: AuditBriefCardProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -54,14 +61,14 @@ export function AuditBriefCard({
       className="group block"
       data-testid="audit-brief-card-link"
     >
-      <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card transition-shadow hover:shadow-md">
+      <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-md">
         {/* Domain-colored left strip — expands on hover to reveal arrow */}
         <div
-          className="relative flex w-1.5 shrink-0 items-center justify-center transition-all duration-300 ease-out group-hover:w-9"
+          className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"
           style={{ backgroundColor: color.border }}
         >
           <ChevronRight
-            className="absolute text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+            className="absolute text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
             size={18}
             strokeWidth={2.5}
           />
@@ -80,14 +87,19 @@ export function AuditBriefCard({
 
         {/* Text content */}
         <div className="flex min-w-0 flex-1 flex-col justify-center p-3">
-          <div className="mb-1.5 flex items-center gap-2">
-            <span
-              className="inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium"
-              style={{ backgroundColor: badgeBg, color: badgeText }}
-            >
-              {domain}
-            </span>
-            <span className="text-[11px] text-muted-foreground">{year}</span>
+          <div className="mb-1.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium"
+                style={{ backgroundColor: badgeBg, color: badgeText }}
+              >
+                {domain}
+              </span>
+              <span className="text-[11px] text-muted-foreground">{year}</span>
+            </div>
+            {onToggleFavorite && (
+              <FavoriteButton isFavorite={isFavorite ?? false} onToggle={onToggleFavorite} />
+            )}
           </div>
           <p className="line-clamp-1 text-sm font-medium leading-snug">{title}</p>
           <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{description}</p>

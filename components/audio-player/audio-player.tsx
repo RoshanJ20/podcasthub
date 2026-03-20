@@ -21,7 +21,7 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { transitions } from '@/lib/animation';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, SkipForward, SkipBack } from 'lucide-react';
+import { Play, Pause } from 'lucide-react';
 import { formatTime } from '@/lib/format-time';
 import type { DomainColor } from '@/lib/domain-colors';
 
@@ -44,8 +44,6 @@ export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
     playbackRate,
     audioType,
     togglePlay,
-    skipForward,
-    skipBackward,
     setPlaybackRate,
     toggleAudioType,
   } = usePlayerStore();
@@ -93,16 +91,12 @@ export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
       </div>
 
       {/* Main controls */}
-      <div className="flex items-center justify-center gap-2">
-        <Button variant="ghost" size="icon" onClick={skipBackward} aria-label="Skip backward">
-          <SkipBack className="h-4 w-4" />
-        </Button>
-
+      <div className="flex items-center justify-center">
         {/* Play / Pause — domain-colored filled circle */}
         <button
           onClick={togglePlay}
           aria-label={isPlaying ? 'Pause' : 'Play'}
-          className="flex h-12 w-12 items-center justify-center rounded-full transition-transform hover:scale-105 active:scale-95"
+          className="flex h-12 w-12 items-center justify-center rounded-full transition-transform duration-150 hover:scale-105 active:scale-95 active:duration-[100ms]"
           style={{
             backgroundColor: domainColor?.border ?? 'var(--primary)',
             color: 'white',
@@ -124,10 +118,6 @@ export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
             </motion.span>
           </AnimatePresence>
         </button>
-
-        <Button variant="ghost" size="icon" onClick={skipForward} aria-label="Skip forward">
-          <SkipForward className="h-4 w-4" />
-        </Button>
       </div>
 
       {/* Secondary controls row */}

@@ -156,7 +156,7 @@ export function BulletinViewer({
           <a
             href={resolvedUrl}
             download
-            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm hover:bg-muted"
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-sm transition-colors duration-150 hover:bg-muted"
             aria-label="Download PDF"
           >
             <Download className="h-4 w-4" />

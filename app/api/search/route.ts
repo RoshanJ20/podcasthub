@@ -6,6 +6,7 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { generateEmbedding } from '@/lib/embeddings';
 import { createErrorResponse, badRequest } from '@/lib/api/errors';
@@ -78,7 +79,9 @@ export const POST = withRequestLogging(async (request: NextRequest): Promise<Nex
   const embedding = await generateEmbedding(query);
   const embeddingStr = `[${embedding.join(',')}]`;
 
-  const results = await prisma.$queryRawUnsafe<
+  // Use $queryRaw tagged template literal for proper parameterization.
+  // The embedding string is interpolated safely by Prisma's template engine.
+  const results = await prisma.$queryRaw<
     Array<{
       id: string;
       auditBriefId: string;
@@ -89,16 +92,15 @@ export const POST = withRequestLogging(async (request: NextRequest): Promise<Nex
       similarity: number;
     }>
   >(
-    `SELECT t.id, t.audit_brief_id AS "auditBriefId", p.title AS "auditBriefTitle",
+    Prisma.sql`SELECT t.id, t.audit_brief_id AS "auditBriefId", p.title AS "auditBriefTitle",
             t.full_text AS content, 0 AS "startTime", 0 AS "endTime",
-            1 - (t.embedding <=> $1::vector) AS similarity
+            1 - (t.embedding <=> ${embeddingStr}::vector) AS similarity
      FROM transcripts t
      JOIN audit_briefs p ON p.id = t.audit_brief_id
      WHERE t.embedding IS NOT NULL
-       AND 1 - (t.embedding <=> $1::vector) > 0.7
-     ORDER BY t.embedding <=> $1::vector
-     LIMIT 10`,
-    embeddingStr
+       AND 1 - (t.embedding <=> ${embeddingStr}::vector) > 0.7
+     ORDER BY t.embedding <=> ${embeddingStr}::vector
+     LIMIT 10`
   );
 
   return NextResponse.json({ results, query });

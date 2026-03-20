@@ -9,12 +9,13 @@
  *
  * Key responsibilities:
  * - Register global keyboard shortcut (⌘K / Ctrl+K) to open/close the palette
- * - Display navigable sections: Pages, Actions, Admin (conditional on isAdmin prop)
+ * - Mirror the sidebar navigation structure for the current user's role
  * - Navigate to selected routes via Next.js router
  * - Toggle light/dark theme via next-themes
  *
  * Dependencies:
  * - @/components/ui/command — shadcn cmdk wrapper
+ * - @/lib/navigation-config — shared nav link arrays
  * - next/navigation — client-side routing
  * - next-themes — theme toggling
  * - lucide-react — icons
@@ -24,19 +25,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import {
-  Home,
-  Library,
-  Route,
-  Search,
-  User,
-  BarChart3,
-  Sun,
-  Moon,
-  LayoutDashboard,
-  Upload,
-  Users,
-} from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import {
   CommandDialog,
   CommandEmpty,
@@ -46,6 +35,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
+import { mainLinks, libraryLinks, adminLinks } from '@/lib/navigation-config';
 
 /** Props for the CommandPalette component. */
 interface CommandPaletteProps {
@@ -99,35 +89,30 @@ export function CommandPalette({ isAdmin = false }: CommandPaletteProps) {
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Search pages, episodes, actions..." />
+      <CommandInput placeholder="Search pages, actions..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
 
-        <CommandGroup heading="Pages">
-          <CommandItem onSelect={() => navigate('/')}>
-            <Home className="mr-2 size-4" />
-            Home
-          </CommandItem>
-          <CommandItem onSelect={() => navigate('/bulletins')}>
-            <Library className="mr-2 size-4" />
-            Library
-          </CommandItem>
-          <CommandItem onSelect={() => navigate('/learning-path')}>
-            <Route className="mr-2 size-4" />
-            Learning Series
-          </CommandItem>
-          <CommandItem onSelect={() => navigate('/search')}>
-            <Search className="mr-2 size-4" />
-            Search
-          </CommandItem>
-          <CommandItem onSelect={() => navigate('/profile')}>
-            <User className="mr-2 size-4" />
-            Profile
-          </CommandItem>
-          <CommandItem onSelect={() => navigate('/progress')}>
-            <BarChart3 className="mr-2 size-4" />
-            Progress
-          </CommandItem>
+        {/* Main — mirrors sidebar main section */}
+        <CommandGroup heading="Main">
+          {mainLinks.map((link) => (
+            <CommandItem key={link.href} onSelect={() => navigate(link.href)}>
+              <link.icon className="mr-2 size-4" />
+              {link.label}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        {/* Library — mirrors sidebar library section */}
+        <CommandGroup heading="Library">
+          {libraryLinks.map((link) => (
+            <CommandItem key={link.href} onSelect={() => navigate(link.href)}>
+              <link.icon className="mr-2 size-4" />
+              {link.label}
+            </CommandItem>
+          ))}
         </CommandGroup>
 
         <CommandSeparator />
@@ -148,18 +133,12 @@ export function CommandPalette({ isAdmin = false }: CommandPaletteProps) {
           <>
             <CommandSeparator />
             <CommandGroup heading="Admin">
-              <CommandItem onSelect={() => navigate('/admin')}>
-                <LayoutDashboard className="mr-2 size-4" />
-                Dashboard
-              </CommandItem>
-              <CommandItem onSelect={() => navigate('/admin/upload')}>
-                <Upload className="mr-2 size-4" />
-                Upload
-              </CommandItem>
-              <CommandItem onSelect={() => navigate('/admin/users')}>
-                <Users className="mr-2 size-4" />
-                Users
-              </CommandItem>
+              {adminLinks.map((link) => (
+                <CommandItem key={link.href} onSelect={() => navigate(link.href)}>
+                  <link.icon className="mr-2 size-4" />
+                  {link.label}
+                </CommandItem>
+              ))}
             </CommandGroup>
           </>
         )}

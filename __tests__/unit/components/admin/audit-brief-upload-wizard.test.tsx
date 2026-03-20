@@ -158,7 +158,7 @@ async function fillAndAdvanceTo(
       /* If we need to advance past Content, provide a required audio file */
       if (targetStep > 1) {
         const audioInput = document.querySelector(
-          'input[type="file"][accept="audio/*"]'
+          'input[type="file"][accept=".mp3,.wav,.ogg,.aac,.flac,.m4a,.wma"]'
         ) as HTMLInputElement;
         const audioFile = new File(['audio'], 'test.mp3', { type: 'audio/mpeg' });
         await user.upload(audioInput, audioFile);

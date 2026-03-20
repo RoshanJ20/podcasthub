@@ -9,7 +9,8 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useCallback, useState, useEffect, useRef } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Heart } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -32,6 +33,7 @@ export function LibraryFilters() {
   const currentDomain = searchParams.get('domain') ?? 'all';
   const currentSort = searchParams.get('sort') ?? 'newest';
   const currentSearch = searchParams.get('q') ?? '';
+  const showFavorites = searchParams.get('favorites') === 'true';
   const [searchValue, setSearchValue] = useState(currentSearch);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
@@ -63,8 +65,33 @@ export function LibraryFilters() {
     };
   }, [searchValue, currentSearch, updateParams]);
 
+  const toggleFavorites = useCallback(() => {
+    updateParams('favorites', showFavorites ? '' : 'true');
+  }, [showFavorites, updateParams]);
+
   return (
     <div className="flex flex-wrap items-center gap-3">
+      {/* Favorites filter toggle */}
+      <button
+        type="button"
+        onClick={toggleFavorites}
+        aria-label={showFavorites ? 'Show all' : 'Show favorites only'}
+        className={cn(
+          'inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-[color,background-color,border-color] duration-150',
+          showFavorites
+            ? 'border-red-200 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400'
+            : 'border-border bg-background text-muted-foreground hover:border-red-200 hover:text-red-500 dark:hover:border-red-500/30'
+        )}
+      >
+        <Heart
+          className={cn(
+            'size-3.5',
+            showFavorites ? 'fill-red-500 text-red-500' : 'fill-transparent'
+          )}
+        />
+        Favorites
+      </button>
+
       {/* Search input */}
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
