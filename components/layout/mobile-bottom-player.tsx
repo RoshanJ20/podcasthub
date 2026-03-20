@@ -5,14 +5,14 @@
  * - Render a fixed bottom bar when an episode is loaded in the player store
  * - Show a slim progress bar at the top of the bar
  * - Display the episode thumbnail, truncated title, and a play/pause toggle
- * - Navigate to the podcast detail page on tap (excluding the play/pause button)
+ * - Navigate to the audit brief detail page on tap (excluding the play/pause button)
  * - Hidden on md+ viewports where the sidebar now-playing widget is used instead
  *
  * Dependencies:
  * - usePlayerStore (Zustand) for playback state and controls
  * - resolveStorageUrl for converting storage keys to browser-loadable URLs
  * - Next.js Image for optimised thumbnail rendering
- * - Next.js Link for navigating to the podcast detail page
+ * - Next.js Link for navigating to the audit brief detail page
  */
 'use client';
 
@@ -25,15 +25,15 @@ import { resolveStorageUrl } from '@/lib/storage-url';
 /**
  * Fixed bottom mini-player bar for mobile viewports.
  *
- * Returns null when no podcast is loaded so that no space is reserved at the
+ * Returns null when no audit brief is loaded so that no space is reserved at the
  * bottom of the page when the player is idle.
  *
  * The progress bar sits flush at the very top of the bar and fills from left
  * to right as the episode plays. Tapping anywhere on the bar (except the
- * play/pause button) navigates to the full podcast page.
+ * play/pause button) navigates to the full audit brief page.
  */
 export function MobileBottomPlayer() {
-  const currentPodcast = usePlayerStore((s) => s.currentPodcast);
+  const currentAuditBrief = usePlayerStore((s) => s.currentAuditBrief);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const currentTime = usePlayerStore((s) => s.currentTime);
   const duration = usePlayerStore((s) => s.duration);
@@ -41,12 +41,12 @@ export function MobileBottomPlayer() {
   const pause = usePlayerStore((s) => s.pause);
 
   // Nothing to render when no episode is loaded in the player.
-  if (!currentPodcast) return null;
+  if (!currentAuditBrief) return null;
 
   // Progress percentage clamped to [0, 100].
   const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
 
-  const thumbnailUrl = resolveStorageUrl(currentPodcast.thumbnailUrl);
+  const thumbnailUrl = resolveStorageUrl(currentAuditBrief.thumbnailUrl);
 
   const handleTogglePlay = (event: React.MouseEvent) => {
     // Prevent the Link wrapper from navigating when toggling playback.
@@ -81,15 +81,15 @@ export function MobileBottomPlayer() {
 
       {/* ── Player row ────────────────────────────────────────────────── */}
       <Link
-        href={`/podcast/${currentPodcast.id}`}
+        href={`/audit-brief/${currentAuditBrief.id}`}
         className="flex h-14 items-center gap-3 px-3"
-        aria-label={`Now playing: ${currentPodcast.title}. Tap to open.`}
+        aria-label={`Now playing: ${currentAuditBrief.title}. Tap to open.`}
       >
         {/* Thumbnail */}
         <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
           <Image
             src={thumbnailUrl}
-            alt={currentPodcast.title}
+            alt={currentAuditBrief.title}
             fill
             className="object-cover"
             sizes="40px"
@@ -97,7 +97,7 @@ export function MobileBottomPlayer() {
         </div>
 
         {/* Title — truncated to one line */}
-        <p className="min-w-0 flex-1 truncate text-sm font-medium">{currentPodcast.title}</p>
+        <p className="min-w-0 flex-1 truncate text-sm font-medium">{currentAuditBrief.title}</p>
 
         {/* Play / Pause toggle */}
         <button

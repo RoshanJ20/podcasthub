@@ -1,12 +1,12 @@
 /**
- * Shared schema definitions for Podcast Hub v2.
+ * Shared schema definitions for The Audit Brief.
  *
  * Contains domain constants, the domain enum schema, and reusable
  * pagination query parameter schemas.
  */
 import { z } from 'zod';
 
-/** Knowledge domains specific to podcast content. */
+/** Knowledge domains specific to audit brief content. */
 export const PODCAST_DOMAINS = [
   'Audit Methodology',
   'Accounting and Reporting',
@@ -19,7 +19,7 @@ export const PODCAST_DOMAINS = [
 export const LEARNING_SERIES_DOMAINS = ['Auditing', 'Accounting and Reporting'] as const;
 
 /**
- * All valid knowledge domains in Podcast Hub.
+ * All valid knowledge domains in The Audit Brief.
  *
  * Deduplicated union of PODCAST_DOMAINS and LEARNING_SERIES_DOMAINS.
  * Uses a Set at runtime to remove overlapping values (e.g. "Accounting and

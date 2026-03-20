@@ -1,12 +1,12 @@
 services:
   postgres:
     image: pgvector/pgvector:pg16
-    container_name: podcasthub-postgres
+    container_name: auditbrief-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: podcasthub
-      POSTGRES_PASSWORD: podcasthub_dev
-      POSTGRES_DB: podcasthub
+      POSTGRES_USER: auditbrief
+      POSTGRES_PASSWORD: auditbrief_dev
+      POSTGRES_DB: auditbrief
     ports:
       - '5432:5432'
     volumes:
@@ -14,7 +14,7 @@ services:
 
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite
-    container_name: podcasthub-azurite
+    container_name: auditbrief-azurite
     restart: unless-stopped
     command: azurite-blob --blobHost 0.0.0.0 --blobPort 10000 --skipApiVersionCheck
     ports:

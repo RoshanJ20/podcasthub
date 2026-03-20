@@ -1,4 +1,4 @@
-// Podcast Hub v2 — Database Schema
+// The Audit Brief — Database Schema
 // PostgreSQL 16 with pgvector extension for vector similarity search
 
 generator client {
@@ -28,7 +28,7 @@ model User {
   @@map("users")
 }
 
-model Podcast {
+model AuditBrief {
   id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   title         String
   description   String
@@ -46,14 +46,14 @@ model Podcast {
 
   transcripts Transcript[]
   bookmarks   Bookmark[]
-  activity    UserActivity[] @relation("ActivityPodcast")
+  activity    UserActivity[] @relation("ActivityAuditBrief")
 
-  @@map("podcasts")
+  @@map("audit_briefs")
 }
 
 model Transcript {
   id             String                          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  podcastId      String                          @map("podcast_id") @db.Uuid
+  auditBriefId      String                          @map("audit_brief_id") @db.Uuid
   fullText       String                          @map("full_text")
   segments       Json                            @default("[]")
   embedding      Unsupported("vector(1536)")?
@@ -61,9 +61,9 @@ model Transcript {
   createdAt      DateTime                        @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime                        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  podcast Podcast @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+  auditBrief AuditBrief @relation(fields: [auditBriefId], references: [id], onDelete: Cascade)
 
-  @@unique([podcastId, transcriptType])
+  @@unique([auditBriefId, transcriptType])
   @@map("transcripts")
 }
 
@@ -132,17 +132,17 @@ model LearningPathEdge {
 model Bookmark {
   id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   userId           String   @map("user_id") @db.Uuid
-  podcastId        String   @map("podcast_id") @db.Uuid
+  auditBriefId        String   @map("audit_brief_id") @db.Uuid
   timestampSeconds Float    @map("timestamp_seconds") @db.Real
   note             String?
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  podcast Podcast @relation(fields: [podcastId], references: [id], onDelete: Cascade)
+  auditBrief AuditBrief @relation(fields: [auditBriefId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@index([podcastId])
+  @@index([auditBriefId])
   @@map("bookmarks")
 }
 
@@ -179,14 +179,14 @@ model UserActivity {
   id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   userId       String   @map("user_id") @db.Uuid
   activityType String   @map("activity_type")
-  podcastId    String?  @map("podcast_id") @db.Uuid
+  auditBriefId    String?  @map("audit_brief_id") @db.Uuid
   episodeId    String?  @map("episode_id") @db.Uuid
   graphId      String?  @map("graph_id") @db.Uuid
   metadata     Json     @default("{}")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  podcast Podcast?       @relation("ActivityPodcast", fields: [podcastId], references: [id], onDelete: SetNull)
+  auditBrief AuditBrief?    @relation("ActivityAuditBrief", fields: [auditBriefId], references: [id], onDelete: SetNull)
   episode Episode?       @relation("ActivityEpisode", fields: [episodeId], references: [id], onDelete: SetNull)
   graph   LearningGraph? @relation("ActivityGraph", fields: [graphId], references: [id], onDelete: SetNull)
 

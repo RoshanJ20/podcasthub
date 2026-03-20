@@ -1,5 +1,5 @@
 /**
- * User login API endpoint for Podcast Hub v2.
+ * User login API endpoint for The Audit Brief.
  *
  * Key responsibilities:
  * - Validates login input using Zod schema

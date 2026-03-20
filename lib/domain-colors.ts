@@ -1,5 +1,5 @@
 /**
- * Domain color palette for Podcast Hub v2.
+ * Domain color palette for The Audit Brief.
  *
  * Maps each knowledge domain to a consistent set of color tokens used for
  * accent theming across cards, badges, and progress indicators.

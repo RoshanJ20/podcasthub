@@ -1,5 +1,5 @@
 /**
- * File upload API endpoint for Podcast Hub v2.
+ * File upload API endpoint for The Audit Brief.
  *
  * Key responsibilities:
  * - Requires admin or superadmin authentication

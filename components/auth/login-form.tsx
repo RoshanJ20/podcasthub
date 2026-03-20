@@ -1,5 +1,5 @@
 /**
- * Login form client component for Podcast Hub v2.
+ * Login form client component for The Audit Brief.
  *
  * Key responsibilities:
  * - Renders email and password inputs with validation

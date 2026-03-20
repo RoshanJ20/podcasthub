@@ -1,7 +1,7 @@
 /**
  * Unit tests for HomeCard component.
  *
- * Verifies both podcast and series variants render correct structure,
+ * Verifies both audit brief and series variants render correct structure,
  * links, domain badges, and variant-specific metadata.
  */
 import { describe, it, expect, vi } from 'vitest';
@@ -17,11 +17,11 @@ vi.mock('next/link', () => ({
 }));
 
 describe('HomeCard', () => {
-  describe('podcast variant', () => {
+  describe('audit brief variant', () => {
     it('renders title, description, domain badge, and year', () => {
       render(
         <HomeCard
-          variant="podcast"
+          variant="auditBrief"
           id="p1"
           title="Analytics Intro"
           description="Overview of tools"
@@ -37,10 +37,10 @@ describe('HomeCard', () => {
       expect(screen.getByText('2026')).toBeDefined();
     });
 
-    it('links to /podcast/[id]', () => {
+    it('links to /audit-brief/[id]', () => {
       const { container } = render(
         <HomeCard
-          variant="podcast"
+          variant="auditBrief"
           id="p1"
           title="Test"
           description={null}
@@ -51,13 +51,13 @@ describe('HomeCard', () => {
       );
 
       const link = container.querySelector('a');
-      expect(link?.getAttribute('href')).toBe('/podcast/p1');
+      expect(link?.getAttribute('href')).toBe('/audit-brief/p1');
     });
 
     it('accepts tags prop without rendering them on the card', () => {
       render(
         <HomeCard
-          variant="podcast"
+          variant="auditBrief"
           id="p1"
           title="Test"
           description={null}
@@ -74,7 +74,7 @@ describe('HomeCard', () => {
     it('handles null description', () => {
       const { container } = render(
         <HomeCard
-          variant="podcast"
+          variant="auditBrief"
           id="p1"
           title="No Description Card"
           description={null}

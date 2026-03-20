@@ -2,7 +2,7 @@
  * Unit tests for bookmark API route handlers.
  *
  * Tests cover:
- * - GET /api/bookmarks — paginated list with optional podcastId filter
+ * - GET /api/bookmarks — paginated list with optional auditBriefId filter
  * - POST /api/bookmarks — create bookmark
  * - PUT /api/bookmarks/[id] — update bookmark note
  * - DELETE /api/bookmarks/[id] — delete bookmark
@@ -45,7 +45,7 @@ const mockUser = { userId: 'user-1', email: 'test@test.com', role: 'public' };
 const mockBookmark = {
   id: 'bm-1',
   userId: 'user-1',
-  podcastId: '550e8400-e29b-41d4-a716-446655440000',
+  auditBriefId: '550e8400-e29b-41d4-a716-446655440000',
   timestampSeconds: 120.5,
   note: 'Great point here',
   createdAt: new Date('2025-01-01'),
@@ -89,19 +89,19 @@ describe('GET /api/bookmarks', () => {
     );
   });
 
-  it('filters by podcastId when query param is provided', async () => {
+  it('filters by auditBriefId when query param is provided', async () => {
     vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
     vi.mocked(prisma.bookmark.count).mockResolvedValue(0);
 
-    const podcastId = '550e8400-e29b-41d4-a716-446655440000';
-    const req = createRequest(`/api/bookmarks?podcastId=${podcastId}`);
+    const auditBriefId = '550e8400-e29b-41d4-a716-446655440000';
+    const req = createRequest(`/api/bookmarks?auditBriefId=${auditBriefId}`);
     await GET(req);
 
     expect(prisma.bookmark.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           userId: 'user-1',
-          podcastId,
+          auditBriefId,
         }),
       })
     );
@@ -125,7 +125,7 @@ describe('POST /api/bookmarks', () => {
   let POST: (req: NextRequest) => Promise<Response>;
 
   const validBody = {
-    podcastId: '550e8400-e29b-41d4-a716-446655440000',
+    auditBriefId: '550e8400-e29b-41d4-a716-446655440000',
     timestampSeconds: 60,
     note: 'Interesting topic',
   };
@@ -150,11 +150,11 @@ describe('POST /api/bookmarks', () => {
     const body = await res.json();
 
     expect(res.status).toBe(201);
-    expect(body.data.podcastId).toBe(validBody.podcastId);
+    expect(body.data.auditBriefId).toBe(validBody.auditBriefId);
     expect(prisma.bookmark.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         userId: 'user-1',
-        podcastId: validBody.podcastId,
+        auditBriefId: validBody.auditBriefId,
         timestampSeconds: validBody.timestampSeconds,
         note: validBody.note,
       }),
@@ -179,7 +179,7 @@ describe('POST /api/bookmarks', () => {
   it('returns 400 for invalid body', async () => {
     const req = createRequest('/api/bookmarks', {
       method: 'POST',
-      body: JSON.stringify({ podcastId: 'not-a-uuid' }),
+      body: JSON.stringify({ auditBriefId: 'not-a-uuid' }),
       headers: { 'Content-Type': 'application/json' },
     });
     const res = await POST(req);

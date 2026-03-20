@@ -17,7 +17,7 @@
  *     isLoading={isPending}
  *     skeleton={<Skeleton className="h-24 w-full" />}
  *   >
- *     <PodcastCard podcast={data} />
+ *     <AuditBriefCard auditBrief={data} />
  *   </AnimatedSkeleton>
  */
 'use client';

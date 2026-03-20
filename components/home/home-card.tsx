@@ -1,5 +1,5 @@
 /**
- * Unified home page card for both podcast and learning series content.
+ * Unified home page card for both audit brief and learning series content.
  *
  * Renders a text-based card with a domain-colored left strip that expands
  * on hover to reveal an arrow, pushing the card content to the right.
@@ -28,8 +28,8 @@ interface HomeCardBaseProps {
   domain: string;
 }
 
-interface PodcastCardProps extends HomeCardBaseProps {
-  variant: 'podcast';
+interface AuditBriefCardProps extends HomeCardBaseProps {
+  variant: 'auditBrief';
   year: number;
   tags: string[];
 }
@@ -40,7 +40,7 @@ interface SeriesCardProps extends HomeCardBaseProps {
   completedCount: number;
 }
 
-export type HomeCardProps = PodcastCardProps | SeriesCardProps;
+export type HomeCardProps = AuditBriefCardProps | SeriesCardProps;
 
 /**
  * Renders a unified home page card with domain-colored left strip.
@@ -56,7 +56,7 @@ export function HomeCard(props: HomeCardProps) {
   const color = getDomainColor(domain);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
-  const href = variant === 'podcast' ? `/podcast/${id}` : `/learning-path/${id}`;
+  const href = variant === 'auditBrief' ? `/audit-brief/${id}` : `/learning-path/${id}`;
 
   const badgeBg = isDark ? color.darkBg : color.bg;
   const badgeText = isDark ? color.darkText : color.text;
@@ -87,7 +87,7 @@ export function HomeCard(props: HomeCardProps) {
               {domain}
             </span>
             <span className="text-[11px] text-muted-foreground">
-              {variant === 'podcast' ? props.year : `${props.episodeCount} episodes`}
+              {variant === 'auditBrief' ? props.year : `${props.episodeCount} episodes`}
             </span>
           </div>
 

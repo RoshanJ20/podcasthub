@@ -1,5 +1,5 @@
 /**
- * User registration API endpoint for Podcast Hub v2.
+ * User registration API endpoint for The Audit Brief.
  *
  * Key responsibilities:
  * - Validates registration input using Zod schema

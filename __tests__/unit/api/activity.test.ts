@@ -53,7 +53,7 @@ describe('POST /api/activity', () => {
       method: 'POST',
       body: JSON.stringify({
         activityType: 'listen',
-        podcastId: '550e8400-e29b-41d4-a716-446655440000',
+        auditBriefId: '550e8400-e29b-41d4-a716-446655440000',
       }),
       headers: { 'Content-Type': 'application/json' },
     });
@@ -64,7 +64,7 @@ describe('POST /api/activity', () => {
       data: expect.objectContaining({
         userId: 'user-1',
         activityType: 'listen',
-        podcastId: '550e8400-e29b-41d4-a716-446655440000',
+        auditBriefId: '550e8400-e29b-41d4-a716-446655440000',
       }),
     });
   });
@@ -76,7 +76,7 @@ describe('POST /api/activity', () => {
       method: 'POST',
       body: JSON.stringify({
         activityType: 'complete_episode',
-        podcastId: '550e8400-e29b-41d4-a716-446655440000',
+        auditBriefId: '550e8400-e29b-41d4-a716-446655440000',
         episodeId: 'ep-1',
         graphId: 'graph-1',
         metadata: { duration: 300 },
@@ -90,7 +90,7 @@ describe('POST /api/activity', () => {
       data: expect.objectContaining({
         userId: 'user-1',
         activityType: 'complete_episode',
-        podcastId: '550e8400-e29b-41d4-a716-446655440000',
+        auditBriefId: '550e8400-e29b-41d4-a716-446655440000',
         episodeId: 'ep-1',
         graphId: 'graph-1',
         metadata: { duration: 300 },

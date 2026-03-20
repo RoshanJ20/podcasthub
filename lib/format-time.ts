@@ -1,5 +1,5 @@
 /**
- * Time formatting utility for Podcast Hub v2.
+ * Time formatting utility for The Audit Brief.
  *
  * Key responsibilities:
  * - Converts seconds to human-readable time strings (MM:SS or HH:MM:SS)

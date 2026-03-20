@@ -1,7 +1,7 @@
 /**
  * Learning path viewer with Mercury-inspired styling.
  *
- * Layout mirrors the podcast detail page:
+ * Layout mirrors the audit brief detail page:
  * - Back link + domain badge
  * - Hero card with domain-colored left edge, title, description, progress
  * - Staggered episode list below with expand/collapse players

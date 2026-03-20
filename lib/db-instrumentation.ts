@@ -32,7 +32,7 @@ export const SLOW_QUERY_THRESHOLD_MS = parseInt(process.env.SLOW_QUERY_THRESHOLD
  * Prisma model name, operation type, actual duration, and threshold in
  * the structured log entry for easy filtering and alerting.
  *
- * @param model - The Prisma model name (e.g., 'Podcast', 'User')
+ * @param model - The Prisma model name (e.g., 'AuditBrief', 'User')
  * @param operation - The Prisma operation (e.g., 'findMany', 'create')
  * @param durationMs - The actual query duration in milliseconds
  * @param logger - A Pino logger instance to write the warning to

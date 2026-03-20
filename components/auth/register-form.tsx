@@ -1,5 +1,5 @@
 /**
- * Registration form client component for Podcast Hub v2.
+ * Registration form client component for The Audit Brief.
  *
  * Key responsibilities:
  * - Renders email, password, and display name inputs

@@ -14,7 +14,7 @@ import type { PaginatedResponse } from '@/lib/api/pagination';
 
 describe('parsePaginationParams', () => {
   it('returns default page=1 and limit=20 when no params provided', () => {
-    const url = new URL('https://example.com/api/podcasts');
+    const url = new URL('https://example.com/api/audit-briefs');
     const params = parsePaginationParams(url);
 
     expect(params.page).toBe(1);
@@ -22,7 +22,7 @@ describe('parsePaginationParams', () => {
   });
 
   it('parses valid page and limit from URL params', () => {
-    const url = new URL('https://example.com/api/podcasts?page=3&limit=50');
+    const url = new URL('https://example.com/api/audit-briefs?page=3&limit=50');
     const params = parsePaginationParams(url);
 
     expect(params.page).toBe(3);
@@ -30,49 +30,49 @@ describe('parsePaginationParams', () => {
   });
 
   it('clamps negative page to 1', () => {
-    const url = new URL('https://example.com/api/podcasts?page=-5&limit=10');
+    const url = new URL('https://example.com/api/audit-briefs?page=-5&limit=10');
     const params = parsePaginationParams(url);
 
     expect(params.page).toBe(1);
   });
 
   it('clamps page=0 to 1', () => {
-    const url = new URL('https://example.com/api/podcasts?page=0');
+    const url = new URL('https://example.com/api/audit-briefs?page=0');
     const params = parsePaginationParams(url);
 
     expect(params.page).toBe(1);
   });
 
   it('clamps limit below 1 to 1', () => {
-    const url = new URL('https://example.com/api/podcasts?limit=0');
+    const url = new URL('https://example.com/api/audit-briefs?limit=0');
     const params = parsePaginationParams(url);
 
     expect(params.limit).toBe(1);
   });
 
   it('clamps limit above 100 to 100', () => {
-    const url = new URL('https://example.com/api/podcasts?limit=500');
+    const url = new URL('https://example.com/api/audit-briefs?limit=500');
     const params = parsePaginationParams(url);
 
     expect(params.limit).toBe(100);
   });
 
   it('handles non-numeric page gracefully by defaulting to 1', () => {
-    const url = new URL('https://example.com/api/podcasts?page=abc');
+    const url = new URL('https://example.com/api/audit-briefs?page=abc');
     const params = parsePaginationParams(url);
 
     expect(params.page).toBe(1);
   });
 
   it('handles non-numeric limit gracefully by defaulting to 20', () => {
-    const url = new URL('https://example.com/api/podcasts?limit=xyz');
+    const url = new URL('https://example.com/api/audit-briefs?limit=xyz');
     const params = parsePaginationParams(url);
 
     expect(params.limit).toBe(20);
   });
 
   it('handles empty string params by using defaults', () => {
-    const url = new URL('https://example.com/api/podcasts?page=&limit=');
+    const url = new URL('https://example.com/api/audit-briefs?page=&limit=');
     const params = parsePaginationParams(url);
 
     expect(params.page).toBe(1);
@@ -138,17 +138,17 @@ describe('createPaginatedResponse', () => {
   });
 
   it('preserves generic type in data array', () => {
-    interface Podcast {
+    interface AuditBrief {
       id: string;
       title: string;
     }
 
-    const data: Podcast[] = [
+    const data: AuditBrief[] = [
       { id: '1', title: 'Episode 1' },
       { id: '2', title: 'Episode 2' },
     ];
 
-    const response: PaginatedResponse<Podcast> = createPaginatedResponse(data, {
+    const response: PaginatedResponse<AuditBrief> = createPaginatedResponse(data, {
       page: 2,
       limit: 2,
       total: 10,

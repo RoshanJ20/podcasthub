@@ -1,7 +1,7 @@
 /**
  * Admin page for creating a new learning series.
  *
- * Renders the LearningSeriesWizard in a layout matching the upload podcast page:
+ * Renders the LearningSeriesWizard in a layout matching the upload audit brief page:
  * breadcrumb navigation, back button that respects wizard step, max-w-3xl centered.
  */
 'use client';

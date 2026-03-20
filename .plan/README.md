@@ -1,4 +1,4 @@
-# Podcast Hub v2 — Implementation Plan
+# The Audit Brief — Implementation Plan
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement each stage. Steps use checkbox (`- [ ]`) syntax for tracking.
 

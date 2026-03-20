@@ -17,7 +17,7 @@ describe('extractAttachmentName', () => {
     expect(extractAttachmentName('/bulletins/standards_update.pdf')).toBe('Standards Update');
   });
   it('handles deeply nested paths', () => {
-    expect(extractAttachmentName('/storage/podcasts/123/reference-guide.pdf')).toBe(
+    expect(extractAttachmentName('/storage/audit-briefs/123/reference-guide.pdf')).toBe(
       'Reference Guide'
     );
   });

@@ -1,7 +1,7 @@
 /**
- * Admin upload page for creating new podcasts.
+ * Admin upload page for creating new auditBriefs.
  *
- * Renders the PodcastUploadWizard in create mode with a breadcrumb
+ * Renders the AuditBriefUploadWizard in create mode with a breadcrumb
  * navigation trail showing Dashboard > Upload.
  */
 'use client';
@@ -11,8 +11,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
-import { PodcastUploadWizard } from '@/components/admin/podcast-upload-wizard';
-import type { PodcastUploadWizardHandle } from '@/components/admin/podcast-upload-wizard';
+import { AuditBriefUploadWizard } from '@/components/admin/audit-brief-upload-wizard';
+import type { AuditBriefUploadWizardHandle } from '@/components/admin/audit-brief-upload-wizard';
 import { Button } from '@/components/ui/button';
 import {
   Breadcrumb,
@@ -24,17 +24,17 @@ import {
 } from '@/components/ui/breadcrumb';
 
 /**
- * Renders the admin page for uploading a new podcast.
+ * Renders the admin page for uploading a new auditBrief.
  *
- * Hosts the PodcastUploadWizard in create mode with a breadcrumb trail and a
+ * Hosts the AuditBriefUploadWizard in create mode with a breadcrumb trail and a
  * context-aware back button: navigates to the previous wizard step when
  * mid-wizard, or calls router.back() when on the first step.
  *
- * @returns The upload new podcast page.
+ * @returns The upload new audit brief page.
  */
 export default function UploadPage() {
   const router = useRouter();
-  const wizardRef = useRef<PodcastUploadWizardHandle>(null);
+  const wizardRef = useRef<AuditBriefUploadWizardHandle>(null);
   const [wizardStep, setWizardStep] = useState(0);
 
   // TODO(team): Extract shared handleBack pattern to useWizardNavigation hook — see #tech-debt
@@ -64,10 +64,10 @@ export default function UploadPage() {
         <Button variant="ghost" size="icon" onClick={handleBack} aria-label="Go back">
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-xl font-semibold tracking-tight">Upload New Podcast</h1>
+        <h1 className="text-xl font-semibold tracking-tight">Upload New Audit Brief</h1>
       </div>
 
-      <PodcastUploadWizard
+      <AuditBriefUploadWizard
         ref={wizardRef}
         mode="create"
         onSuccess={() => router.push('/admin')}

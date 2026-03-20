@@ -1,5 +1,5 @@
 /**
- * Readiness check endpoint for Podcast Hub v2.
+ * Readiness check endpoint for The Audit Brief.
  *
  * Key responsibilities:
  * - Verifies database connectivity by executing a lightweight query

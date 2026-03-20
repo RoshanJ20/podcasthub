@@ -1,5 +1,5 @@
 /**
- * Media proxy endpoint for Podcast Hub v2.
+ * Media proxy endpoint for The Audit Brief.
  *
  * Proxies file requests from Azure Blob Storage to avoid browser security restrictions
  * on loading media from private/localhost IPs. Supports range requests for

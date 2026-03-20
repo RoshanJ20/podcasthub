@@ -107,7 +107,7 @@ vi.mock('@/components/admin/date-range-picker', () => ({
 }));
 
 const MOCK_ANALYTICS_DATA = {
-  totalPodcasts: 42,
+  totalAuditBriefs: 42,
   totalPaths: 7,
   listensByDomain: [
     { domain: 'Auditing', count: 150 },

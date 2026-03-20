@@ -1,5 +1,5 @@
 /**
- * API route authentication helpers for Podcast Hub v2.
+ * API route authentication helpers for The Audit Brief.
  *
  * Key responsibilities:
  * - Extracts and verifies JWT from request cookies or headers

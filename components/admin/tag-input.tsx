@@ -1,5 +1,5 @@
 /**
- * Controlled tag input component used in the admin podcast upload/edit form.
+ * Controlled tag input component used in the admin audit brief upload/edit form.
  *
  * Key responsibilities:
  * - Renders a text input where pressing Enter adds a new tag to a list.
@@ -44,7 +44,7 @@ interface TagInputProps {
 /**
  * Renders a labelled tag entry field with chip display and one-click removal.
  *
- * @param tags - Array of tag strings currently applied to the podcast.
+ * @param tags - Array of tag strings currently applied to the auditBrief.
  * @param tagInput - Controlled value for the new-tag text input.
  * @param onTagInputChange - Handler to update the controlled input value.
  * @param onAddTag - Keydown handler (parent detects Enter and commits the tag).

@@ -23,7 +23,7 @@ function makeNode(overrides: Partial<GraphNode> = {}): GraphNode {
     id: 'temp-1',
     title: 'Episode 1',
     nodeType: 'default' as const,
-    podcastId: 'p1',
+    auditBriefId: 'p1',
     positionX: 0,
     positionY: 0,
     ...overrides,
@@ -41,7 +41,7 @@ function makeSuccessResponse(
     id: string;
     tempId?: string;
     title: string;
-    podcastId: string;
+    auditBriefId: string;
     positionX: number;
     positionY: number;
     nodeType: string;
@@ -88,7 +88,7 @@ describe('GraphEditorStore', () => {
   it('removes a node and its connected edges', () => {
     const store = useGraphEditorStore.getState();
     store.addNode(makeNode({ id: 'n1', title: 'A' }));
-    store.addNode(makeNode({ id: 'n2', title: 'B', podcastId: 'p2', positionX: 100 }));
+    store.addNode(makeNode({ id: 'n2', title: 'B', auditBriefId: 'p2', positionX: 100 }));
     store.addEdge({ id: 'e1', source: 'n1', target: 'n2' });
     store.removeNode('n1');
     const state = useGraphEditorStore.getState();
@@ -132,7 +132,7 @@ describe('GraphEditorStore', () => {
   it('applies dagre layout via setLayout', () => {
     const store = useGraphEditorStore.getState();
     store.addNode(makeNode({ id: 'n1', title: 'A', nodeType: 'start' }));
-    store.addNode(makeNode({ id: 'n2', title: 'B', nodeType: 'end', podcastId: 'p2' }));
+    store.addNode(makeNode({ id: 'n2', title: 'B', nodeType: 'end', auditBriefId: 'p2' }));
     store.addEdge({ id: 'e1', source: 'n1', target: 'n2' });
     store.setLayout();
     const state = useGraphEditorStore.getState();
@@ -147,7 +147,7 @@ describe('GraphEditorStore', () => {
           {
             id: 'db-1',
             title: 'A',
-            podcastId: 'p1',
+            auditBriefId: 'p1',
             positionX: 0,
             positionY: 0,
             nodeType: 'default',
@@ -174,7 +174,7 @@ describe('GraphEditorStore', () => {
           {
             id: 'db-1',
             title: 'A',
-            podcastId: 'p1',
+            auditBriefId: 'p1',
             positionX: 10,
             positionY: 20,
             nodeType: 'default',
@@ -224,7 +224,7 @@ describe('GraphEditorStore', () => {
           {
             id: 'db-1',
             title: 'A',
-            podcastId: 'p1',
+            auditBriefId: 'p1',
             positionX: 0,
             positionY: 0,
             nodeType: 'default',
@@ -259,7 +259,7 @@ describe('GraphEditorStore', () => {
           {
             id: 'db-1',
             title: 'A',
-            podcastId: 'p1',
+            auditBriefId: 'p1',
             positionX: 0,
             positionY: 0,
             nodeType: 'default',
@@ -320,7 +320,7 @@ describe('GraphEditorStore', () => {
           {
             id: 'db-1',
             title: 'A',
-            podcastId: 'p1',
+            auditBriefId: 'p1',
             positionX: 0,
             positionY: 0,
             nodeType: 'default',
@@ -341,7 +341,7 @@ describe('GraphEditorStore', () => {
               id: 'db-100',
               tempId: 'temp-1',
               title: 'A',
-              podcastId: 'p1',
+              auditBriefId: 'p1',
               positionX: 0,
               positionY: 0,
               nodeType: 'start',
@@ -351,7 +351,7 @@ describe('GraphEditorStore', () => {
               id: 'db-200',
               tempId: 'temp-2',
               title: 'B',
-              podcastId: 'p2',
+              auditBriefId: 'p2',
               positionX: 100,
               positionY: 100,
               nodeType: 'end',
@@ -369,7 +369,7 @@ describe('GraphEditorStore', () => {
           id: 'temp-2',
           title: 'B',
           nodeType: 'end',
-          podcastId: 'p2',
+          auditBriefId: 'p2',
           positionX: 100,
           positionY: 100,
         })
@@ -395,7 +395,7 @@ describe('GraphEditorStore', () => {
             id: 'db-100',
             tempId: 'temp-1',
             title: 'A',
-            podcastId: 'p1',
+            auditBriefId: 'p1',
             positionX: 50,
             positionY: 75,
             nodeType: 'milestone',
@@ -436,7 +436,7 @@ describe('GraphEditorStore', () => {
         id: 'ep-2',
         title: 'Episode 2',
         nodeType: 'end',
-        podcastId: 'p2',
+        auditBriefId: 'p2',
         positionX: 100,
         positionY: 100,
       }),
@@ -480,66 +480,17 @@ describe('GraphEditorStore', () => {
       expect(useGraphEditorStore.getState().autoSaveGraphId).toBeNull();
     });
 
-    it('mutating methods trigger auto-save after delay', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(
-        makeSuccessResponse([
-          {
-            id: 'db-1',
-            title: 'A',
-            podcastId: 'p1',
-            positionX: 0,
-            positionY: 0,
-            nodeType: 'default',
-            sortOrder: 0,
-          },
-        ])
-      );
-
+    it('mutating methods do not trigger auto-save (manual save only)', async () => {
       const store = useGraphEditorStore.getState();
       store.setAutoSaveGraphId('graph-123');
       store.addNode(makeNode({ id: 'temp-1', title: 'A' }));
 
-      // Before timer fires, save should not have been called
+      // Advance past the old debounce window
+      await vi.advanceTimersByTimeAsync(3000);
+
+      // No auto-save should fire — save is manual now
       expect(global.fetch).not.toHaveBeenCalled();
-
-      // Advance past the 2s debounce
-      await vi.advanceTimersByTimeAsync(2500);
-
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/learning-graphs/graph-123/data',
-        expect.objectContaining({ method: 'PUT' })
-      );
-    });
-
-    it('debounces multiple rapid changes into a single save', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(
-        makeSuccessResponse([
-          {
-            id: 'db-1',
-            title: 'Final',
-            podcastId: 'p1',
-            positionX: 0,
-            positionY: 0,
-            nodeType: 'default',
-            sortOrder: 0,
-          },
-        ])
-      );
-
-      const store = useGraphEditorStore.getState();
-      store.setAutoSaveGraphId('graph-123');
-      store.addNode(makeNode({ id: 'temp-1', title: 'First' }));
-      await vi.advanceTimersByTimeAsync(500);
-      store.updateNode('temp-1', { title: 'Second' });
-      await vi.advanceTimersByTimeAsync(500);
-      store.updateNode('temp-1', { title: 'Final' });
-
-      // Advance past debounce from last change
-      await vi.advanceTimersByTimeAsync(2500);
-
-      // Only one save call should have been made
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(useGraphEditorStore.getState().isDirty).toBe(true);
     });
 
     it('does not auto-save when autoSaveGraphId is null', async () => {

@@ -1,5 +1,5 @@
 /**
- * Layout for all public-facing pages in Podcast Hub.
+ * Layout for all public-facing pages in The Audit Brief.
  *
  * Renders the unified sidebar on desktop, mobile top bar + bottom player
  * on mobile, and page content in the main area with page transitions.

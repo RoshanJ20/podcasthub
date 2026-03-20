@@ -1,5 +1,5 @@
 /**
- * Vitest configuration for Podcast Hub v2.
+ * Vitest configuration for The Audit Brief.
  *
  * - Uses jsdom environment for React component testing
  * - Path alias @/ maps to project root

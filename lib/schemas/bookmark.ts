@@ -1,20 +1,20 @@
 /**
  * Zod schemas for bookmark validation.
  *
- * Provides schemas for creating and updating podcast bookmarks.
+ * Provides schemas for creating and updating audit brief bookmarks.
  */
 import { z } from 'zod';
 
 /**
  * Schema for creating a new bookmark.
  *
- * Required: podcastId (UUID), timestampSeconds (non-negative number).
+ * Required: auditBriefId (UUID), timestampSeconds (non-negative number).
  * Optional: note (max 1000 characters).
  */
 export const createBookmarkSchema = z.object({
-  /** UUID of the podcast being bookmarked. */
-  podcastId: z.uuid(),
-  /** Timestamp in seconds within the podcast audio (non-negative). */
+  /** UUID of the audit brief being bookmarked. */
+  auditBriefId: z.uuid(),
+  /** Timestamp in seconds within the audit brief audio (non-negative). */
   timestampSeconds: z.number().min(0),
   /** Optional note associated with the bookmark (max 1000 characters). */
   note: z.string().max(1000).optional(),

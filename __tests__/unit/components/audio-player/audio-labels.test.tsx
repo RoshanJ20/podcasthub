@@ -25,7 +25,7 @@ vi.mock('hls.js', () => ({
 /** Reset the Zustand player store to a clean state between tests. */
 function resetStore() {
   usePlayerStore.setState({
-    currentPodcast: null,
+    currentAuditBrief: null,
     isPlaying: false,
     currentTime: 0,
     duration: 0,
@@ -44,9 +44,9 @@ beforeEach(() => {
 describe('AudioPlayer audio labels', () => {
   it('displays "Brief Summary" text when audioType is short', () => {
     usePlayerStore.setState({
-      currentPodcast: {
+      currentAuditBrief: {
         id: '1',
-        title: 'Test Podcast',
+        title: 'Test Audit Brief',
         audioShortUrl: '/short.mp3',
         audioLongUrl: '/long.mp3',
       },
@@ -62,9 +62,9 @@ describe('AudioPlayer audio labels', () => {
 
   it('displays "Detailed Overview" text when audioType is long', () => {
     usePlayerStore.setState({
-      currentPodcast: {
+      currentAuditBrief: {
         id: '1',
-        title: 'Test Podcast',
+        title: 'Test Audit Brief',
         audioShortUrl: '/short.mp3',
         audioLongUrl: '/long.mp3',
       },
@@ -80,9 +80,9 @@ describe('AudioPlayer audio labels', () => {
 
   it('has aria-label "Brief Summary version" when audioType is short', () => {
     usePlayerStore.setState({
-      currentPodcast: {
+      currentAuditBrief: {
         id: '1',
-        title: 'Test Podcast',
+        title: 'Test Audit Brief',
         audioShortUrl: '/short.mp3',
         audioLongUrl: '/long.mp3',
       },
@@ -96,9 +96,9 @@ describe('AudioPlayer audio labels', () => {
 
   it('has aria-label "Detailed Overview version" when audioType is long', () => {
     usePlayerStore.setState({
-      currentPodcast: {
+      currentAuditBrief: {
         id: '1',
-        title: 'Test Podcast',
+        title: 'Test Audit Brief',
         audioShortUrl: '/short.mp3',
         audioLongUrl: '/long.mp3',
       },
@@ -112,9 +112,9 @@ describe('AudioPlayer audio labels', () => {
 
   it('does not display legacy "Short" or "Long" labels', () => {
     usePlayerStore.setState({
-      currentPodcast: {
+      currentAuditBrief: {
         id: '1',
-        title: 'Test Podcast',
+        title: 'Test Audit Brief',
         audioShortUrl: '/short.mp3',
         audioLongUrl: '/long.mp3',
       },

@@ -27,7 +27,7 @@ import type { DomainColor } from '@/lib/domain-colors';
 /** Shape of a single bookmark record returned from the API. */
 export interface Bookmark {
   id: string;
-  podcastId: string;
+  auditBriefId: string;
   timestampSeconds: number;
   note: string | null;
   createdAt: string;

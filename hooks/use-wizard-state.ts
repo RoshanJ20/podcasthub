@@ -1,5 +1,5 @@
 /**
- * useWizardState — Custom hook encapsulating all state and logic for the PodcastUploadWizard.
+ * useWizardState — Custom hook encapsulating all state and logic for the AuditBriefUploadWizard.
  *
  * Key responsibilities:
  * - Manages current step index and exposes goToStep navigation helper.
@@ -28,7 +28,7 @@ import { formSchema, TOTAL_STEPS } from './wizard-state-types';
 import type { FormValues, UseWizardStateOptions, UseWizardStateReturn } from './wizard-state-types';
 
 /**
- * Encapsulates all stateful wizard logic for PodcastUploadWizard.
+ * Encapsulates all stateful wizard logic for AuditBriefUploadWizard.
  *
  * Separates business/upload logic from the presentational component tree so that
  * the wizard component itself can focus purely on rendering.

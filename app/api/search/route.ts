@@ -1,7 +1,7 @@
 /**
- * Search API routes for Podcast Hub v2.
+ * Search API routes for The Audit Brief.
  *
- * @route GET  /api/search — Basic text search across podcasts
+ * @route GET  /api/search — Basic text search across audit briefs
  * @route POST /api/search — Semantic search using pgvector embeddings
  */
 import type { NextRequest } from 'next/server';
@@ -13,7 +13,7 @@ import { parsePaginationParams } from '@/lib/api/pagination';
 import { withRequestLogging } from '@/lib/api/request-logging-middleware';
 
 /**
- * Basic text search across podcast title, description, and tags.
+ * Basic text search across audit brief title, description, and tags.
  * Wrapped with request logging for operation tracking.
  *
  * Query params:
@@ -41,7 +41,7 @@ export const GET = withRequestLogging(async (request: NextRequest): Promise<Next
   };
 
   const [results, total] = await Promise.all([
-    prisma.podcast.findMany({
+    prisma.auditBrief.findMany({
       where,
       select: {
         id: true,
@@ -54,7 +54,7 @@ export const GET = withRequestLogging(async (request: NextRequest): Promise<Next
       skip,
       take: limit,
     }),
-    prisma.podcast.count({ where }),
+    prisma.auditBrief.count({ where }),
   ]);
 
   return NextResponse.json({ results, query: searchQuery, total, page, limit });
@@ -81,19 +81,19 @@ export const POST = withRequestLogging(async (request: NextRequest): Promise<Nex
   const results = await prisma.$queryRawUnsafe<
     Array<{
       id: string;
-      podcastId: string;
-      podcastTitle: string;
+      auditBriefId: string;
+      auditBriefTitle: string;
       content: string;
       startTime: number;
       endTime: number;
       similarity: number;
     }>
   >(
-    `SELECT t.id, t.podcast_id AS "podcastId", p.title AS "podcastTitle",
+    `SELECT t.id, t.audit_brief_id AS "auditBriefId", p.title AS "auditBriefTitle",
             t.full_text AS content, 0 AS "startTime", 0 AS "endTime",
             1 - (t.embedding <=> $1::vector) AS similarity
      FROM transcripts t
-     JOIN podcasts p ON p.id = t.podcast_id
+     JOIN audit_briefs p ON p.id = t.audit_brief_id
      WHERE t.embedding IS NOT NULL
        AND 1 - (t.embedding <=> $1::vector) > 0.7
      ORDER BY t.embedding <=> $1::vector

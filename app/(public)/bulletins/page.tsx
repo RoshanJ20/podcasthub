@@ -1,22 +1,22 @@
 /**
- * Public library page displaying all non-archived podcasts.
+ * Public library page displaying all non-archived auditBriefs.
  *
  * Server Component that reads domain, sort, and page filters from
  * URL search params, queries the database, and renders the library
- * UI with filters, podcast grid, and pagination controls.
+ * UI with filters, audit brief grid, and pagination controls.
  */
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 import { LibraryFilters } from '@/components/library/library-filters';
-import { PodcastGrid } from '@/components/library/podcast-grid';
+import { AuditBriefGrid } from '@/components/library/audit-brief-grid';
 import { PaginationControls } from '@/components/library/pagination-controls';
 import { DOMAINS } from '@/lib/schemas/common';
-import type { PodcastData } from '@/lib/types';
+import type { AuditBriefData } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Technical Content | Podcast Hub',
+  title: 'Technical Content | The Audit Brief',
   description: 'Browse the full library of technical audio content.',
 };
 
@@ -63,19 +63,19 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
     }
   })();
 
-  const [podcasts, totalCount] = await Promise.all([
-    prisma.podcast.findMany({
+  const [auditBriefs, totalCount] = await Promise.all([
+    prisma.auditBrief.findMany({
       where,
       orderBy,
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.podcast.count({ where }),
+    prisma.auditBrief.count({ where }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  const podcastData: PodcastData[] = podcasts.map((p) => ({
+  const auditBriefData: AuditBriefData[] = auditBriefs.map((p) => ({
     id: p.id,
     title: p.title,
     description: p.description,
@@ -99,7 +99,7 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
         <LibraryFilters />
       </div>
 
-      <PodcastGrid podcasts={podcastData} />
+      <AuditBriefGrid auditBriefs={auditBriefData} />
 
       <PaginationControls page={page} totalPages={totalPages} />
     </div>

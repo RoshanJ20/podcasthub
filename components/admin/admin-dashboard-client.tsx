@@ -1,18 +1,18 @@
 /**
- * Client wrapper for the admin dashboard podcast table.
+ * Client wrapper for the admin dashboard audit brief table.
  *
- * Wraps PodcastTable in a client component so the Server Component
+ * Wraps AuditBriefTable in a client component so the Server Component
  * admin page can pass serialized data as props while supporting
  * client-side interactions like refresh via router.
  */
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { PodcastTable } from '@/components/admin/podcast-table';
-import type { PodcastData } from '@/lib/types';
+import { AuditBriefTable } from '@/components/admin/audit-brief-table';
+import type { AuditBriefData } from '@/lib/types';
 
 interface AdminDashboardClientProps {
-  podcasts: PodcastData[];
+  auditBriefs: AuditBriefData[];
   pagination: {
     page: number;
     limit: number;
@@ -22,14 +22,16 @@ interface AdminDashboardClientProps {
 }
 
 /**
- * Renders PodcastTable with a refresh handler that revalidates the page.
+ * Renders AuditBriefTable with a refresh handler that revalidates the page.
  */
-export function AdminDashboardClient({ podcasts, pagination }: AdminDashboardClientProps) {
+export function AdminDashboardClient({ auditBriefs, pagination }: AdminDashboardClientProps) {
   const router = useRouter();
 
   const handleRefresh = () => {
     router.refresh();
   };
 
-  return <PodcastTable podcasts={podcasts} pagination={pagination} onRefresh={handleRefresh} />;
+  return (
+    <AuditBriefTable auditBriefs={auditBriefs} pagination={pagination} onRefresh={handleRefresh} />
+  );
 }

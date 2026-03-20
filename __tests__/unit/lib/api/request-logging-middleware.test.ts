@@ -68,7 +68,7 @@ describe('withRequestLogging', () => {
     const handler = vi.fn().mockResolvedValue(NextResponse.json({ ok: true }));
     const wrapped = withRequestLogging(handler);
 
-    await wrapped(createRequest('POST', '/api/podcasts'));
+    await wrapped(createRequest('POST', '/api/audit-briefs'));
 
     expect(mockInfo).toHaveBeenCalledWith('Request received');
   });
@@ -92,7 +92,7 @@ describe('withRequestLogging', () => {
   it('handles thrown ApiError with WARN log and error response with request_id', async () => {
     const handler = vi
       .fn()
-      .mockRejectedValue(new ApiError(404, ErrorCode.NOT_FOUND, 'Podcast not found'));
+      .mockRejectedValue(new ApiError(404, ErrorCode.NOT_FOUND, 'Audit brief not found'));
     const wrapped = withRequestLogging(handler);
 
     const response = await wrapped(createRequest());

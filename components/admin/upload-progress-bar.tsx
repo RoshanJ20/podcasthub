@@ -1,5 +1,5 @@
 /**
- * Reusable upload progress bar component for the admin podcast upload form.
+ * Reusable upload progress bar component for the admin audit brief upload form.
  *
  * Key responsibilities:
  * - Renders a horizontal progress bar that reflects the current upload percentage.

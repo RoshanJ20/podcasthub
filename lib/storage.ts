@@ -1,5 +1,5 @@
 /**
- * Azure Blob Storage client for Podcast Hub v2.
+ * Azure Blob Storage client for The Audit Brief.
  *
  * Key responsibilities:
  * - Configures a BlobServiceClient from AZURE_BLOB_CONNECTION_STRING
@@ -12,7 +12,7 @@
  *
  * Environment variables:
  * - AZURE_BLOB_CONNECTION_STRING: Connection string for Azure Blob / Azurite
- * - AZURE_BLOB_CONTAINER: Container name (defaults to 'podcast-hub-uploads')
+ * - AZURE_BLOB_CONTAINER: Container name (defaults to 'the-audit-brief-uploads')
  *
  * Dependencies:
  * - @azure/storage-blob
@@ -25,7 +25,7 @@ import {
 } from '@azure/storage-blob';
 
 /** Container name from environment, with a sensible default. */
-export const CONTAINER = process.env.AZURE_BLOB_CONTAINER ?? 'podcast-hub-uploads';
+export const CONTAINER = process.env.AZURE_BLOB_CONTAINER ?? 'the-audit-brief-uploads';
 
 /** SAS URL expiry in milliseconds (1 hour). */
 const SAS_EXPIRY_MS = 3600 * 1000;

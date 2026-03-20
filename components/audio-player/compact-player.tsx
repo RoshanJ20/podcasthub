@@ -55,7 +55,7 @@ interface CompactPlayerProps {
  */
 export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
   const {
-    currentPodcast,
+    currentAuditBrief,
     isPlaying,
     currentTime,
     duration,
@@ -80,8 +80,8 @@ export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
       data-testid="compact-player"
       className="space-y-2 rounded-xl border border-border bg-card p-3"
     >
-      {/* Podcast title — truncated to a single line */}
-      <p className="truncate text-sm font-semibold">{currentPodcast?.title ?? 'Untitled'}</p>
+      {/* Audit brief title — truncated to a single line */}
+      <p className="truncate text-sm font-semibold">{currentAuditBrief?.title ?? 'Untitled'}</p>
 
       {/* Playback controls row: play/pause + seek slider + time */}
       <div className="flex items-center gap-2">
@@ -141,7 +141,7 @@ export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
         >
           {playbackRate}x
         </Button>
-        {currentPodcast?.audioLongUrl && (
+        {currentAuditBrief?.audioLongUrl && (
           <Button
             variant="ghost"
             size="sm"

@@ -20,22 +20,19 @@
  * - components/learning-path/auto-save-status — save-state indicator in the toolbar
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { useGraphEditorStore } from '@/stores/graph-editor-store';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { scheduleAutoSave } from '@/stores/graph-editor-store';
-import { AutoSaveStatus } from '@/components/learning-path/auto-save-status';
 import { SortableEpisode } from '@/components/learning-path/sortable-episode';
 
 interface LinearEditorProps {
   graphId: string;
 }
 
-export function LinearEditor({ graphId: _graphId }: LinearEditorProps) {
+export function LinearEditor({ graphId }: LinearEditorProps) {
   const { nodes, isDirty, addNode, removeNode, updateNode } = useGraphEditorStore();
   const store = useGraphEditorStore;
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -61,17 +58,6 @@ export function LinearEditor({ graphId: _graphId }: LinearEditorProps) {
 
   useUnsavedChangesWarning(isDirty);
 
-  /* Show toast when auto-save encounters an error */
-  const lastSaveError = useGraphEditorStore((s) => s.lastSaveError);
-  const prevErrorRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (lastSaveError && lastSaveError !== prevErrorRef.current) {
-      toast.error(lastSaveError);
-    }
-    prevErrorRef.current = lastSaveError;
-  }, [lastSaveError]);
-
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
@@ -80,7 +66,6 @@ export function LinearEditor({ graphId: _graphId }: LinearEditorProps) {
         const oldIndex = state.nodes.findIndex((n) => n.id === active.id);
         const newIndex = state.nodes.findIndex((n) => n.id === over.id);
         store.setState({ nodes: arrayMove(state.nodes, oldIndex, newIndex), isDirty: true });
-        scheduleAutoSave();
       }
     },
     [store]
@@ -92,7 +77,7 @@ export function LinearEditor({ graphId: _graphId }: LinearEditorProps) {
       id,
       title: 'New Episode',
       nodeType: 'default',
-      podcastId: '',
+      auditBriefId: '',
       positionX: 0,
       positionY: 0,
     });
@@ -107,7 +92,6 @@ export function LinearEditor({ graphId: _graphId }: LinearEditorProps) {
           <Button variant="outline" size="sm" onClick={handleAddEpisode}>
             <Plus className="h-4 w-4 mr-1" /> Add Episode
           </Button>
-          <AutoSaveStatus />
         </div>
       </div>
 
@@ -118,6 +102,7 @@ export function LinearEditor({ graphId: _graphId }: LinearEditorProps) {
               key={node.id}
               node={node}
               index={index}
+              graphId={graphId}
               isExpanded={expandedId === node.id}
               onToggle={() => setExpanded(expandedId === node.id ? null : node.id)}
               onRemove={() => {

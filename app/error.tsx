@@ -1,5 +1,5 @@
 /**
- * Root error boundary for Podcast Hub v2.
+ * Root error boundary for The Audit Brief.
  *
  * Key responsibilities:
  * - Catches unhandled errors at the app root level

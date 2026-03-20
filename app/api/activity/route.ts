@@ -20,7 +20,7 @@ const VALID_ACTIVITY_TYPES = [
 
 const activitySchema = z.object({
   activityType: z.enum(VALID_ACTIVITY_TYPES),
-  podcastId: z.string().optional(),
+  auditBriefId: z.string().optional(),
   episodeId: z.string().optional(),
   graphId: z.string().optional(),
   metadata: z.record(z.string(), z.any()).optional(),
@@ -48,14 +48,14 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(badRequest('Invalid activity data', parsed.error.flatten()));
     }
 
-    const { activityType, podcastId, episodeId, graphId, metadata } = parsed.data;
+    const { activityType, auditBriefId, episodeId, graphId, metadata } = parsed.data;
 
     // Fire-and-forget: we don't await this in production, but for testability we do
     await prisma.userActivity.create({
       data: {
         userId: user.userId,
         activityType,
-        podcastId: podcastId ?? null,
+        auditBriefId: auditBriefId ?? null,
         episodeId: episodeId ?? null,
         graphId: graphId ?? null,
         metadata: metadata ?? {},

@@ -32,7 +32,7 @@ export interface RequestContext {
   userRole: string | null;
   /** HTTP method (GET, POST, etc.) */
   method: string;
-  /** Request pathname (e.g., /api/podcasts) */
+  /** Request pathname (e.g., /api/auditBriefs) */
   path: string;
   /** Client IP address from proxy headers, or 'unknown' */
   ip: string;

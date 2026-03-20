@@ -31,9 +31,9 @@ vi.mock('hls.js', () => ({
 /** Reset the Zustand player store to a known state between tests. */
 function resetStore() {
   usePlayerStore.setState({
-    currentPodcast: {
+    currentAuditBrief: {
       id: '1',
-      title: 'Test Podcast Title',
+      title: 'Test Audit Brief Title',
       audioShortUrl: '/short.mp3',
       audioLongUrl: '/long.mp3',
     },
@@ -53,9 +53,9 @@ beforeEach(() => {
 });
 
 describe('CompactPlayer', () => {
-  it('renders the podcast title', () => {
+  it('renders the audit brief title', () => {
     const { container } = render(<CompactPlayer />);
-    expect(container.textContent).toContain('Test Podcast Title');
+    expect(container.textContent).toContain('Test Audit Brief Title');
   });
 
   it('renders play/pause button', () => {

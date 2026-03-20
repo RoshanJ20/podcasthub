@@ -1,5 +1,5 @@
 /**
- * WizardNavigationControls — Bottom navigation bar for the PodcastUploadWizard.
+ * WizardNavigationControls — Bottom navigation bar for the AuditBriefUploadWizard.
  *
  * Key responsibilities:
  * - Renders the Back button (hidden on step 0).
@@ -44,7 +44,7 @@ export interface WizardNavigationControlsProps {
 
 /**
  * Renders the Back / Next / Submit navigation buttons and per-step hint text
- * for PodcastUploadWizard.
+ * for AuditBriefUploadWizard.
  *
  * @param props - Navigation control props (see WizardNavigationControlsProps).
  * @returns A flex row with Back on the left and Next/Submit on the right, plus hint text above.

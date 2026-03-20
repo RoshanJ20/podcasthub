@@ -12,13 +12,13 @@
  */
 import { Check } from 'lucide-react';
 
-/** Default step labels for the podcast upload wizard. */
+/** Default step labels for the audit brief upload wizard. */
 const DEFAULT_STEPS = ['Details', 'Content', 'Review'] as const;
 
 /**
  * Props for WizardStepIndicator.
  *
- * @property steps - Ordered step labels. Defaults to the podcast upload steps.
+ * @property steps - Ordered step labels. Defaults to the audit brief upload steps.
  * @property currentStep - Zero-indexed active step number.
  * @property onStepClick - Called when the user clicks a completed step to navigate back.
  */

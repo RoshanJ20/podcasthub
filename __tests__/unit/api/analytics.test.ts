@@ -13,7 +13,7 @@ import { ApiError, ErrorCode } from '@/lib/api/errors';
 
 vi.mock('@/lib/db', () => ({
   prisma: {
-    podcast: {
+    auditBrief: {
       count: vi.fn(),
       findMany: vi.fn(),
     },
@@ -83,19 +83,19 @@ describe('GET /api/admin/analytics', () => {
     });
     vi.mocked(requireRole).mockReturnValue(undefined);
 
-    vi.mocked(prisma.podcast.count).mockResolvedValue(10);
+    vi.mocked(prisma.auditBrief.count).mockResolvedValue(10);
     vi.mocked(prisma.learningGraph.count).mockResolvedValue(3);
     vi.mocked(prisma.userActivity.count).mockResolvedValue(3);
     vi.mocked(prisma.userActivity.findMany).mockResolvedValue([
-      { podcast: { domain: 'Auditing' }, createdAt: new Date('2026-01-15') },
-      { podcast: { domain: 'Auditing' }, createdAt: new Date('2026-01-20') },
-      { podcast: { domain: 'LEAP' }, createdAt: new Date('2026-02-10') },
+      { auditBrief: { domain: 'Auditing' }, createdAt: new Date('2026-01-15') },
+      { auditBrief: { domain: 'Auditing' }, createdAt: new Date('2026-01-20') },
+      { auditBrief: { domain: 'LEAP' }, createdAt: new Date('2026-02-10') },
     ] as never);
     vi.mocked(prisma.userActivity.groupBy).mockResolvedValue([
-      { podcastId: 'pod-1', _count: { id: 5 } },
-      { podcastId: 'pod-2', _count: { id: 3 } },
+      { auditBriefId: 'pod-1', _count: { id: 5 } },
+      { auditBriefId: 'pod-2', _count: { id: 3 } },
     ] as never);
-    vi.mocked(prisma.podcast.findMany).mockResolvedValue([
+    vi.mocked(prisma.auditBrief.findMany).mockResolvedValue([
       { id: 'pod-1', title: 'Audit Basics' },
       { id: 'pod-2', title: 'LEAP Overview' },
     ] as never);
@@ -105,7 +105,7 @@ describe('GET /api/admin/analytics', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body).toHaveProperty('totalPodcasts', 10);
+    expect(body).toHaveProperty('totalAuditBriefs', 10);
     expect(body).toHaveProperty('totalPaths', 3);
     expect(body).toHaveProperty('listensByDomain');
     expect(body).toHaveProperty('monthlyTrends');
@@ -123,11 +123,11 @@ describe('GET /api/admin/analytics', () => {
     });
     vi.mocked(requireRole).mockReturnValue(undefined);
 
-    vi.mocked(prisma.podcast.count).mockResolvedValue(5);
+    vi.mocked(prisma.auditBrief.count).mockResolvedValue(5);
     vi.mocked(prisma.learningGraph.count).mockResolvedValue(1);
     vi.mocked(prisma.userActivity.count).mockResolvedValue(1);
     vi.mocked(prisma.userActivity.findMany).mockResolvedValue([
-      { podcast: { domain: 'Auditing' }, createdAt: new Date('2026-01-15') },
+      { auditBrief: { domain: 'Auditing' }, createdAt: new Date('2026-01-15') },
     ] as never);
     vi.mocked(prisma.userActivity.groupBy).mockResolvedValue([] as never);
 
@@ -136,10 +136,10 @@ describe('GET /api/admin/analytics', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.totalPodcasts).toBe(5);
+    expect(body.totalAuditBriefs).toBe(5);
 
-    // Verify date filter was passed to podcast.count
-    expect(prisma.podcast.count).toHaveBeenCalledWith(
+    // Verify date filter was passed to auditBrief.count
+    expect(prisma.auditBrief.count).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           createdAt: expect.objectContaining({
@@ -159,16 +159,16 @@ describe('GET /api/admin/analytics', () => {
     });
     vi.mocked(requireRole).mockReturnValue(undefined);
 
-    vi.mocked(prisma.podcast.count).mockResolvedValue(0);
+    vi.mocked(prisma.auditBrief.count).mockResolvedValue(0);
     vi.mocked(prisma.learningGraph.count).mockResolvedValue(0);
     vi.mocked(prisma.userActivity.count).mockResolvedValue(3);
 
     // First findMany call returns listen activities, second returns monthly trends
     // Since both calls use the same mock, we use mockResolvedValue
     const activities = [
-      { podcast: { domain: 'Auditing' }, createdAt: new Date('2026-01-15') },
-      { podcast: { domain: 'Auditing' }, createdAt: new Date('2026-01-20') },
-      { podcast: { domain: 'LEAP' }, createdAt: new Date('2026-02-10') },
+      { auditBrief: { domain: 'Auditing' }, createdAt: new Date('2026-01-15') },
+      { auditBrief: { domain: 'Auditing' }, createdAt: new Date('2026-01-20') },
+      { auditBrief: { domain: 'LEAP' }, createdAt: new Date('2026-02-10') },
     ];
     vi.mocked(prisma.userActivity.findMany).mockResolvedValue(activities as never);
     vi.mocked(prisma.userActivity.groupBy).mockResolvedValue([] as never);

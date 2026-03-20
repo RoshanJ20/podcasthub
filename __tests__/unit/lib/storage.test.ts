@@ -28,7 +28,7 @@ const {
   const mockGetBlockBlobClient = vi.fn().mockReturnValue({
     upload: mockUpload,
     delete: mockDeleteBlob,
-    url: 'https://devstoreaccount1.blob.core.windows.net/podcast-hub-uploads/audio/test.mp3',
+    url: 'https://devstoreaccount1.blob.core.windows.net/the-audit-brief-uploads/audio/test.mp3',
     download: mockDownload,
   });
   const mockGetContainerClient = vi.fn().mockReturnValue({

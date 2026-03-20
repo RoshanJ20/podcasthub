@@ -20,16 +20,25 @@
  */
 'use client';
 
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { GraphNode } from '@/stores/graph-editor-store';
+import { useGraphEditorStore, type GraphNode } from '@/stores/graph-editor-store';
 import { useFileUpload } from '@/hooks/use-file-upload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ChevronDown, ChevronRight, GripVertical, Trash2, Upload } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  GripVertical,
+  Loader2,
+  Save,
+  Trash2,
+  Upload,
+} from 'lucide-react';
 import { ThumbnailCropDialog } from '@/components/admin/thumbnail-crop-dialog';
 
 interface SortableEpisodeProps {
@@ -37,6 +46,8 @@ interface SortableEpisodeProps {
   node: GraphNode;
   /** 0-based position in the list, used for the "N. Title" display. */
   index: number;
+  /** The learning graph ID, needed to save episode data. */
+  graphId: string;
   /** Whether the edit fields below the header are visible. */
   isExpanded: boolean;
   /** Called when the user clicks the header to toggle expanded state. */
@@ -56,6 +67,7 @@ interface SortableEpisodeProps {
 export function SortableEpisode({
   node,
   index,
+  graphId,
   isExpanded,
   onToggle,
   onRemove,
@@ -69,6 +81,24 @@ export function SortableEpisode({
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** Saves all episodes via the store's save method, shows a toast, and collapses the card. */
+  const handleSave = useCallback(async () => {
+    setSaveState('saving');
+    try {
+      await useGraphEditorStore.getState().save(graphId);
+      setSaveState('idle');
+      toast.success(`"${node.title}" saved`);
+      onToggle();
+    } catch {
+      setSaveState('error');
+      toast.error('Failed to save episode');
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => setSaveState('idle'), 4000);
+    }
+  }, [graphId, node.title, onToggle]);
 
   /**
    * Uploads the selected audio file and stores the returned storage key on the node.
@@ -249,6 +279,23 @@ export function SortableEpisode({
             {node.transcript && (
               <p className="text-xs text-muted-foreground">{node.transcript.length} chars</p>
             )}
+          </div>
+
+          {/* Save button */}
+          <div className="pt-2 border-t flex justify-end">
+            <Button size="sm" onClick={handleSave} disabled={saveState === 'saving'}>
+              {saveState === 'saving' ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-3.5 w-3.5 mr-1.5" />
+                  Save Episode
+                </>
+              )}
+            </Button>
           </div>
         </div>
       )}

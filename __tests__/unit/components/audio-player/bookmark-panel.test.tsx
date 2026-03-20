@@ -20,12 +20,12 @@ import { usePlayerStore } from '@/stores/player-store';
 const mockBookmarks = [
   {
     id: '1',
-    podcastId: 'pod-1',
+    auditBriefId: 'pod-1',
     timestampSeconds: 30,
     note: 'First note',
     createdAt: '2025-01-01',
   },
-  { id: '2', podcastId: 'pod-1', timestampSeconds: 90, note: null, createdAt: '2025-01-01' },
+  { id: '2', auditBriefId: 'pod-1', timestampSeconds: 90, note: null, createdAt: '2025-01-01' },
 ];
 
 global.fetch = vi.fn().mockResolvedValue({
@@ -34,11 +34,11 @@ global.fetch = vi.fn().mockResolvedValue({
 }) as unknown as typeof fetch;
 
 /**
- * Reset the player store to a known state with a test podcast loaded.
+ * Reset the player store to a known state with a test audit brief loaded.
  */
 function resetStore() {
   usePlayerStore.setState({
-    currentPodcast: { id: 'pod-1', title: 'Test', audioShortUrl: '/s.mp3', audioLongUrl: null },
+    currentAuditBrief: { id: 'pod-1', title: 'Test', audioShortUrl: '/s.mp3', audioLongUrl: null },
     isPlaying: false,
     currentTime: 0,
     duration: 120,
@@ -61,7 +61,7 @@ beforeEach(() => {
 
 describe('BookmarkPanel compact mode', () => {
   it('renders collapsed header with count in compact mode', async () => {
-    const { container } = render(<BookmarkPanel podcastId="pod-1" compact />);
+    const { container } = render(<BookmarkPanel auditBriefId="pod-1" compact />);
     await waitFor(() => {
       expect(container.textContent).toContain('Bookmarks');
       expect(container.textContent).toContain('2');
@@ -69,7 +69,7 @@ describe('BookmarkPanel compact mode', () => {
   });
 
   it('does not show bookmark list when compact and collapsed', async () => {
-    const { container } = render(<BookmarkPanel podcastId="pod-1" compact />);
+    const { container } = render(<BookmarkPanel auditBriefId="pod-1" compact />);
     await waitFor(() => {
       expect(container.textContent).toContain('2');
     });
@@ -77,7 +77,7 @@ describe('BookmarkPanel compact mode', () => {
   });
 
   it('expands to show bookmarks on toggle click in compact mode', async () => {
-    const { container } = render(<BookmarkPanel podcastId="pod-1" compact />);
+    const { container } = render(<BookmarkPanel auditBriefId="pod-1" compact />);
     const user = userEvent.setup();
     await waitFor(() => {
       expect(container.textContent).toContain('2');
@@ -90,7 +90,7 @@ describe('BookmarkPanel compact mode', () => {
   });
 
   it('renders full panel when compact is false', async () => {
-    const { container } = render(<BookmarkPanel podcastId="pod-1" />);
+    const { container } = render(<BookmarkPanel auditBriefId="pod-1" />);
     await waitFor(() => {
       expect(container.textContent).toContain('First note');
     });

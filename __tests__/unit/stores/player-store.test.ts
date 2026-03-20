@@ -1,7 +1,7 @@
 /**
  * Unit tests for the Zustand player store.
  *
- * Covers all state transitions: initial state, loadPodcast, play/pause/toggle,
+ * Covers all state transitions: initial state, loadAuditBrief, play/pause/toggle,
  * seek (with clamping), volume (with clamping), playback rate validation,
  * audio type toggling, skip forward/backward, and mini player lifecycle.
  */
@@ -11,7 +11,7 @@ import { usePlayerStore } from '@/stores/player-store';
 /** Helper to reset the store to initial state between tests. */
 function resetStore() {
   usePlayerStore.setState({
-    currentPodcast: null,
+    currentAuditBrief: null,
     isPlaying: false,
     currentTime: 0,
     duration: 0,
@@ -26,18 +26,18 @@ beforeEach(() => {
   resetStore();
 });
 
-const mockPodcast = {
+const mockAuditBrief = {
   id: '1',
-  title: 'Test Podcast',
+  title: 'Test Audit Brief',
   audioShortUrl: '/audio/short.mp3',
   audioLongUrl: '/audio/long.mp3',
 };
 
 describe('player-store', () => {
   describe('initial state', () => {
-    it('starts with no podcast loaded', () => {
+    it('starts with no audit brief loaded', () => {
       const state = usePlayerStore.getState();
-      expect(state.currentPodcast).toBeNull();
+      expect(state.currentAuditBrief).toBeNull();
       expect(state.isPlaying).toBe(false);
       expect(state.currentTime).toBe(0);
       expect(state.duration).toBe(0);
@@ -48,11 +48,11 @@ describe('player-store', () => {
     });
   });
 
-  describe('loadPodcast', () => {
-    it('sets the current podcast and resets playback state', () => {
-      usePlayerStore.getState().loadPodcast(mockPodcast);
+  describe('loadAuditBrief', () => {
+    it('sets the current audit brief and resets playback state', () => {
+      usePlayerStore.getState().loadAuditBrief(mockAuditBrief);
       const state = usePlayerStore.getState();
-      expect(state.currentPodcast).toEqual(mockPodcast);
+      expect(state.currentAuditBrief).toEqual(mockAuditBrief);
       expect(state.isPlaying).toBe(false);
       expect(state.currentTime).toBe(0);
       expect(state.duration).toBe(0);
@@ -60,19 +60,19 @@ describe('player-store', () => {
       expect(state.isMiniPlayerVisible).toBe(true);
     });
 
-    it('replaces a previously loaded podcast', () => {
-      usePlayerStore.getState().loadPodcast(mockPodcast);
-      const newPodcast = { id: '2', title: 'New', audioShortUrl: '/new.mp3' };
-      usePlayerStore.getState().loadPodcast(newPodcast);
-      expect(usePlayerStore.getState().currentPodcast).toEqual(newPodcast);
+    it('replaces a previously loaded audit brief', () => {
+      usePlayerStore.getState().loadAuditBrief(mockAuditBrief);
+      const newAuditBrief = { id: '2', title: 'New', audioShortUrl: '/new.mp3' };
+      usePlayerStore.getState().loadAuditBrief(newAuditBrief);
+      expect(usePlayerStore.getState().currentAuditBrief).toEqual(newAuditBrief);
     });
 
-    it('resets currentTime when loading a new podcast after seeking', () => {
-      usePlayerStore.getState().loadPodcast(mockPodcast);
+    it('resets currentTime when loading a new audit brief after seeking', () => {
+      usePlayerStore.getState().loadAuditBrief(mockAuditBrief);
       usePlayerStore.getState().setDuration(100);
       usePlayerStore.getState().seek(50);
-      const newPodcast = { id: '2', title: 'New', audioShortUrl: '/new.mp3' };
-      usePlayerStore.getState().loadPodcast(newPodcast);
+      const newAuditBrief = { id: '2', title: 'New', audioShortUrl: '/new.mp3' };
+      usePlayerStore.getState().loadAuditBrief(newAuditBrief);
       expect(usePlayerStore.getState().currentTime).toBe(0);
     });
   });
@@ -265,14 +265,14 @@ describe('player-store', () => {
   });
 
   describe('closeMiniPlayer', () => {
-    it('hides mini player, stops playback, and clears podcast', () => {
-      usePlayerStore.getState().loadPodcast(mockPodcast);
+    it('hides mini player, stops playback, and clears audit brief', () => {
+      usePlayerStore.getState().loadAuditBrief(mockAuditBrief);
       usePlayerStore.getState().play();
       usePlayerStore.getState().closeMiniPlayer();
       const state = usePlayerStore.getState();
       expect(state.isMiniPlayerVisible).toBe(false);
       expect(state.isPlaying).toBe(false);
-      expect(state.currentPodcast).toBeNull();
+      expect(state.currentAuditBrief).toBeNull();
     });
   });
 

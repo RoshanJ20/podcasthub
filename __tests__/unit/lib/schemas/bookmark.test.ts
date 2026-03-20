@@ -12,7 +12,7 @@ const validUuid = '550e8400-e29b-41d4-a716-446655440000';
 describe('createBookmarkSchema', () => {
   it('accepts valid input with all required fields', () => {
     const result = createBookmarkSchema.safeParse({
-      podcastId: validUuid,
+      auditBriefId: validUuid,
       timestampSeconds: 120.5,
     });
     expect(result.success).toBe(true);
@@ -20,23 +20,23 @@ describe('createBookmarkSchema', () => {
 
   it('accepts valid input with optional note', () => {
     const result = createBookmarkSchema.safeParse({
-      podcastId: validUuid,
+      auditBriefId: validUuid,
       timestampSeconds: 0,
       note: 'Important section about audit risk',
     });
     expect(result.success).toBe(true);
   });
 
-  it('rejects missing podcastId', () => {
+  it('rejects missing auditBriefId', () => {
     const result = createBookmarkSchema.safeParse({
       timestampSeconds: 120,
     });
     expect(result.success).toBe(false);
   });
 
-  it('rejects invalid podcastId (not uuid)', () => {
+  it('rejects invalid auditBriefId (not uuid)', () => {
     const result = createBookmarkSchema.safeParse({
-      podcastId: 'not-a-uuid',
+      auditBriefId: 'not-a-uuid',
       timestampSeconds: 120,
     });
     expect(result.success).toBe(false);
@@ -44,14 +44,14 @@ describe('createBookmarkSchema', () => {
 
   it('rejects missing timestampSeconds', () => {
     const result = createBookmarkSchema.safeParse({
-      podcastId: validUuid,
+      auditBriefId: validUuid,
     });
     expect(result.success).toBe(false);
   });
 
   it('rejects negative timestampSeconds', () => {
     const result = createBookmarkSchema.safeParse({
-      podcastId: validUuid,
+      auditBriefId: validUuid,
       timestampSeconds: -1,
     });
     expect(result.success).toBe(false);
@@ -59,7 +59,7 @@ describe('createBookmarkSchema', () => {
 
   it('accepts timestampSeconds at boundary of 0', () => {
     const result = createBookmarkSchema.safeParse({
-      podcastId: validUuid,
+      auditBriefId: validUuid,
       timestampSeconds: 0,
     });
     expect(result.success).toBe(true);
@@ -67,7 +67,7 @@ describe('createBookmarkSchema', () => {
 
   it('accepts float timestampSeconds', () => {
     const result = createBookmarkSchema.safeParse({
-      podcastId: validUuid,
+      auditBriefId: validUuid,
       timestampSeconds: 45.75,
     });
     expect(result.success).toBe(true);
@@ -75,7 +75,7 @@ describe('createBookmarkSchema', () => {
 
   it('rejects note exceeding 1000 characters', () => {
     const result = createBookmarkSchema.safeParse({
-      podcastId: validUuid,
+      auditBriefId: validUuid,
       timestampSeconds: 120,
       note: 'a'.repeat(1001),
     });
@@ -84,7 +84,7 @@ describe('createBookmarkSchema', () => {
 
   it('accepts note at boundary of 1000 characters', () => {
     const result = createBookmarkSchema.safeParse({
-      podcastId: validUuid,
+      auditBriefId: validUuid,
       timestampSeconds: 120,
       note: 'a'.repeat(1000),
     });
@@ -93,7 +93,7 @@ describe('createBookmarkSchema', () => {
 
   it('accepts empty note (treated as optional)', () => {
     const result = createBookmarkSchema.safeParse({
-      podcastId: validUuid,
+      auditBriefId: validUuid,
       timestampSeconds: 120,
       note: '',
     });

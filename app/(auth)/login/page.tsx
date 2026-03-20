@@ -1,5 +1,5 @@
 /**
- * Login page for Podcast Hub v2.
+ * Login page for The Audit Brief.
  *
  * Key responsibilities:
  * - Server Component that renders the login form client component
@@ -38,7 +38,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <main className="flex min-h-screen items-center justify-center bg-background">
       <LoginPageCard>
         <div className="text-center">
-          <h1 className="text-lg font-semibold tracking-tight">Podcast Hub</h1>
+          <h1 className="text-lg font-semibold tracking-tight">The Audit Brief</h1>
           <p className="mt-1 text-sm text-muted-foreground">Sign in to your account</p>
         </div>
         <LoginForm redirectTo={redirectTo} />

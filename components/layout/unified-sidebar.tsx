@@ -128,7 +128,7 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
 
         {!collapsed && (
           <div className="flex min-w-0 flex-1 items-center justify-between">
-            <span className="text-sm font-semibold tracking-tight">PodcastHub</span>
+            <span className="text-sm font-semibold tracking-tight">The Audit Brief</span>
           </div>
         )}
       </div>

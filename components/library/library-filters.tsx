@@ -1,5 +1,5 @@
 /**
- * Client-side filter controls for the public podcast library.
+ * Client-side filter controls for the public audit brief library.
  *
  * Provides domain and sort filters that sync with URL search params.
  * When a filter changes, the URL is updated which triggers a Server
@@ -91,7 +91,7 @@ export function LibraryFilters() {
       </Select>
 
       <Select value={currentSort} onValueChange={(val) => updateParams('sort', val ?? 'newest')}>
-        <SelectTrigger className="w-36" aria-label="Sort podcasts">
+        <SelectTrigger className="w-36" aria-label="Sort audit briefs">
           <SelectValue>
             {SORT_OPTIONS.find((o) => o.value === currentSort)?.label ?? 'Newest'}
           </SelectValue>

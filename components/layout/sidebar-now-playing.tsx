@@ -41,7 +41,7 @@ interface SidebarNowPlayingProps {
  * @param props - See {@link SidebarNowPlayingProps}.
  */
 export function SidebarNowPlaying({ collapsed = false }: SidebarNowPlayingProps) {
-  const currentPodcast = usePlayerStore((s) => s.currentPodcast);
+  const currentAuditBrief = usePlayerStore((s) => s.currentAuditBrief);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
   const currentTime = usePlayerStore((s) => s.currentTime);
   const duration = usePlayerStore((s) => s.duration);
@@ -49,7 +49,7 @@ export function SidebarNowPlaying({ collapsed = false }: SidebarNowPlayingProps)
   const pause = usePlayerStore((s) => s.pause);
 
   // Nothing to show when no episode is loaded.
-  if (!currentPodcast) return null;
+  if (!currentAuditBrief) return null;
 
   const handleTogglePlay = () => {
     if (isPlaying) {
@@ -62,7 +62,7 @@ export function SidebarNowPlaying({ collapsed = false }: SidebarNowPlayingProps)
   // Progress percentage clamped to [0, 100] to guard against NaN.
   const progressPercent = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
 
-  const thumbnailUrl = resolveStorageUrl(currentPodcast.thumbnailUrl);
+  const thumbnailUrl = resolveStorageUrl(currentAuditBrief.thumbnailUrl);
 
   if (collapsed) {
     return (
@@ -95,7 +95,7 @@ export function SidebarNowPlaying({ collapsed = false }: SidebarNowPlayingProps)
         <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
           <Image
             src={thumbnailUrl}
-            alt={currentPodcast.title}
+            alt={currentAuditBrief.title}
             fill
             className="object-cover"
             sizes="40px"
@@ -103,7 +103,7 @@ export function SidebarNowPlaying({ collapsed = false }: SidebarNowPlayingProps)
         </div>
 
         <p className="line-clamp-2 flex-1 text-xs font-medium leading-snug">
-          {currentPodcast.title}
+          {currentAuditBrief.title}
         </p>
 
         {/* Play / Pause toggle */}

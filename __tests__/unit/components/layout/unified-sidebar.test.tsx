@@ -2,7 +2,7 @@
  * Unit tests for the UnifiedSidebar component.
  *
  * Verifies:
- * - The app logo and name "PodcastHub" are rendered
+ * - The app logo and name "The Audit Brief" are rendered
  * - Main nav links (Home) and Library section (Technical Content, Learning Series) render
  * - The Admin section renders when isAdmin={true}
  * - The Admin section does NOT render when isAdmin is false or undefined
@@ -55,9 +55,9 @@ beforeEach(() => {
 
 describe('UnifiedSidebar', () => {
   describe('branding', () => {
-    it('renders the app name "PodcastHub"', () => {
+    it('renders the app name "The Audit Brief"', () => {
       const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} />);
-      expect(container.textContent).toContain('PodcastHub');
+      expect(container.textContent).toContain('The Audit Brief');
     });
   });
 

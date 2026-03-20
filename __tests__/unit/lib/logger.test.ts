@@ -56,7 +56,7 @@ describe('createRequestLogger', () => {
   });
 
   it('includes method and path in bindings', () => {
-    const request = new NextRequest('http://localhost:3000/api/podcasts', {
+    const request = new NextRequest('http://localhost:3000/api/audit-briefs', {
       method: 'POST',
       headers: { 'x-request-id': 'req-123' },
     });
@@ -64,7 +64,7 @@ describe('createRequestLogger', () => {
     const bindings = log.bindings();
 
     expect(bindings.method).toBe('POST');
-    expect(bindings.path).toBe('/api/podcasts');
+    expect(bindings.path).toBe('/api/audit-briefs');
   });
 
   it('generates a fallback request_id when header is missing', () => {

@@ -1,5 +1,5 @@
 /**
- * Generic labelled file-input field used across the podcast upload/edit form.
+ * Generic labelled file-input field used across the audit brief upload/edit form.
  *
  * Key responsibilities:
  * - Renders a labelled <input type="file"> with optional "required" indicator.

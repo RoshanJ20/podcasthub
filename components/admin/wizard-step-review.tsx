@@ -1,11 +1,11 @@
 /**
- * WizardStepReview — Read-only review component for the podcast upload wizard (Step 3).
+ * WizardStepReview — Read-only review component for the audit brief upload wizard (Step 3).
  *
  * Displays all form data in a single compact card before final submission.
  * Layout: thumbnail + title header strip, 2-column field grid, files pill row.
  *
  * Key responsibilities:
- * - Renders a single summary card with all podcast metadata and content info
+ * - Renders a single summary card with all audit brief metadata and content info
  * - Shows "Not provided" / "None" placeholders for missing optional fields
  *
  * @dependencies shadcn Card, Badge components; next/image for thumbnail preview
@@ -22,15 +22,15 @@ import { Card, CardContent } from '@/components/ui/card';
  * All values are read-only snapshots from the wizard form state.
  */
 export interface WizardStepReviewProps {
-  /** Podcast title */
+  /** Audit brief title */
   title: string;
-  /** Podcast description (may be multi-line) */
+  /** Audit brief description (may be multi-line) */
   description: string;
   /** Domain category */
   domain: string;
   /** Publication year */
   year: number;
-  /** Tag labels associated with the podcast */
+  /** Tag labels associated with the audit brief */
   tags: string[];
   /** Object URL or storage URL for the uploaded thumbnail image */
   thumbnailUrl: string | null;
@@ -53,7 +53,7 @@ export interface WizardStepReviewProps {
 }
 
 /**
- * Read-only review component that displays all podcast form data
+ * Read-only review component that displays all audit brief form data
  * in a single compact card before final submission.
  *
  * @param props - All form field values to display.

@@ -1,5 +1,5 @@
 /**
- * API error handling utilities for Podcast Hub v2.
+ * API error handling utilities for The Audit Brief.
  *
  * Key responsibilities:
  * - Defines a structured ApiError class for consistent error representation
@@ -14,9 +14,9 @@
  * import { notFound, createErrorResponse } from '@/lib/api/errors';
  *
  * export async function GET() {
- *   const podcast = await findPodcast(id);
- *   if (!podcast) {
- *     return createErrorResponse(notFound('Podcast'));
+ *   const auditBrief = await findAuditBrief(id);
+ *   if (!auditBrief) {
+ *     return createErrorResponse(notFound('AuditBrief'));
  *   }
  * }
  */
@@ -64,7 +64,7 @@ export interface ApiErrorResponse {
  * machine-readable error codes alongside the human-readable message.
  *
  * @example
- * throw new ApiError(404, ErrorCode.NOT_FOUND, 'Podcast not found');
+ * throw new ApiError(404, ErrorCode.NOT_FOUND, 'Audit brief not found');
  */
 export class ApiError extends Error {
   /** HTTP status code (e.g., 400, 401, 404, 500) */
@@ -158,7 +158,7 @@ export function forbidden(message: string = 'Forbidden'): ApiError {
 /**
  * Creates a 404 Not Found error for a specific resource type.
  *
- * @param resource - The type of resource that was not found (e.g., "Podcast", "User")
+ * @param resource - The type of resource that was not found (e.g., "AuditBrief", "User")
  * @returns An ApiError with status 404 and NOT_FOUND error code
  */
 export function notFound(resource: string): ApiError {

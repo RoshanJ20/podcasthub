@@ -1,5 +1,5 @@
 /**
- * Playwright E2E test configuration for Podcast Hub v2.
+ * Playwright E2E test configuration for The Audit Brief.
  *
  * - Tests run against local dev server on port 3000
  * - Only Chromium browser for development speed

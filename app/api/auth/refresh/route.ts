@@ -1,5 +1,5 @@
 /**
- * Token refresh API endpoint for Podcast Hub v2.
+ * Token refresh API endpoint for The Audit Brief.
  *
  * Key responsibilities:
  * - Reads the refresh_token cookie

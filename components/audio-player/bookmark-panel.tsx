@@ -1,5 +1,5 @@
 /**
- * Bookmark panel for the podcast detail page.
+ * Bookmark panel for the audit brief detail page.
  *
  * Displays a staggered-animated list of user bookmarks sorted by timestamp.
  * Supports adding, editing, deleting, and seeking to bookmarks.
@@ -30,7 +30,7 @@ import { BookmarkListItem, type Bookmark } from './bookmark-list-item';
 const log = createLogger('bookmark-panel');
 
 interface BookmarkPanelProps {
-  podcastId: string;
+  auditBriefId: string;
   onSeek?: (time: number) => void;
   /** Domain color for accent theming. */
   domainColor?: DomainColor;
@@ -39,7 +39,7 @@ interface BookmarkPanelProps {
 }
 
 export function BookmarkPanel({
-  podcastId,
+  auditBriefId,
   onSeek,
   domainColor,
   compact = false,
@@ -57,7 +57,7 @@ export function BookmarkPanel({
 
   const fetchBookmarks = useCallback(async () => {
     try {
-      const response = await fetch(`/api/bookmarks?podcastId=${podcastId}`);
+      const response = await fetch(`/api/bookmarks?auditBriefId=${auditBriefId}`);
       if (!response.ok) return;
       const bookmarksResponse = await response.json();
       const items: Bookmark[] = bookmarksResponse.data ?? [];
@@ -71,7 +71,7 @@ export function BookmarkPanel({
     } finally {
       setLoading(false);
     }
-  }, [podcastId]);
+  }, [auditBriefId]);
 
   useEffect(() => {
     fetchBookmarks();
@@ -90,7 +90,7 @@ export function BookmarkPanel({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          podcastId,
+          auditBriefId,
           timestampSeconds,
           note: newNote.trim() || undefined,
         }),

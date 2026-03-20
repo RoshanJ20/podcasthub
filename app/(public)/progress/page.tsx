@@ -7,7 +7,7 @@
 import { ProgressDashboard } from '@/components/progress/progress-dashboard';
 
 export const metadata = {
-  title: 'Progress | Podcast Hub',
+  title: 'Progress | The Audit Brief',
   description: 'Track your learning progress',
 };
 

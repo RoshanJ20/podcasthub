@@ -16,14 +16,14 @@ import Link from 'next/link';
 import { StaggeredGrid, StaggeredGridItem } from '@/components/ui/staggered-grid';
 
 interface CategoryGridProps {
-  /** Domain names paired with their podcast counts. */
+  /** Domain names paired with their audit brief counts. */
   domains: { name: string; count: number }[];
 }
 
 /**
  * Renders domain category cards with a staggered entrance animation.
  *
- * @param domains - Array of domain objects with name and podcast count.
+ * @param domains - Array of domain objects with name and audit brief count.
  * @returns An animated grid of domain cards linking to filtered bulletin pages.
  */
 export function CategoryGrid({ domains }: CategoryGridProps) {
@@ -37,7 +37,7 @@ export function CategoryGrid({ domains }: CategoryGridProps) {
             <div className="rounded-xl border border-border bg-card p-4 transition-colors hover:bg-secondary/30">
               <p className="text-sm font-medium">{name}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {`${count} ${count === 1 ? 'podcast' : 'podcasts'}`}
+                {`${count} ${count === 1 ? 'auditBrief' : 'auditBriefs'}`}
               </p>
             </div>
           </Link>

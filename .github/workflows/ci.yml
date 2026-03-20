@@ -17,9 +17,9 @@ jobs:
       postgres:
         image: pgvector/pgvector:pg16
         env:
-          POSTGRES_USER: podcasthub
-          POSTGRES_PASSWORD: podcasthub_dev
-          POSTGRES_DB: podcasthub
+          POSTGRES_USER: auditbrief
+          POSTGRES_PASSWORD: auditbrief_dev
+          POSTGRES_DB: auditbrief
         ports:
           - 5432:5432
         options: >-
@@ -56,13 +56,13 @@ jobs:
       - name: Prisma migrate
         run: npx prisma migrate deploy
         env:
-          DATABASE_URL: postgresql://podcasthub:podcasthub_dev@localhost:5432/podcasthub
+          DATABASE_URL: postgresql://auditbrief:auditbrief_dev@localhost:5432/auditbrief
 
       # Step 6: Unit + Integration tests with coverage
       - name: Tests
         run: npm run test:coverage
         env:
-          DATABASE_URL: postgresql://podcasthub:podcasthub_dev@localhost:5432/podcasthub
+          DATABASE_URL: postgresql://auditbrief:auditbrief_dev@localhost:5432/auditbrief
           JWT_ACCESS_SECRET: ci-test-access-secret-min-32-chars!!
           JWT_REFRESH_SECRET: ci-test-refresh-secret-min-32-chars!!
           NEXT_PUBLIC_APP_URL: http://localhost:3000
@@ -71,7 +71,7 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          DATABASE_URL: postgresql://podcasthub:podcasthub_dev@localhost:5432/podcasthub
+          DATABASE_URL: postgresql://auditbrief:auditbrief_dev@localhost:5432/auditbrief
           JWT_ACCESS_SECRET: ci-test-access-secret-min-32-chars!!
           JWT_REFRESH_SECRET: ci-test-refresh-secret-min-32-chars!!
           NEXT_PUBLIC_APP_URL: http://localhost:3000

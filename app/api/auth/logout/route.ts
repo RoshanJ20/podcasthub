@@ -1,5 +1,5 @@
 /**
- * Logout API endpoint for Podcast Hub v2.
+ * Logout API endpoint for The Audit Brief.
  *
  * Key responsibilities:
  * - Clears access_token and refresh_token HttpOnly cookies

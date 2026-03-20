@@ -2,8 +2,8 @@
 
 ## Project Overview
 
-- **Podcast Hub v2** — Internal enterprise web application
-- Audio podcast platform with transcripts, bookmarks, learning paths, AI-powered semantic search
+- **The Audit Brief** — Internal enterprise web application
+- Audio platform with transcripts, bookmarks, learning paths, AI-powered semantic search
 - Complete rebuild with enterprise-grade architecture, TDD, CI/CD, and security
 - Serves audit professionals accessing "bulletins" (audio content) covering technical topics across audit domains
 
@@ -28,20 +28,20 @@
 
 ## Key Libraries
 
-| Category        | Library                           | Purpose                           |
-| --------------- | --------------------------------- | --------------------------------- |
-| **Forms**       | React Hook Form + Zod             | Form state + runtime validation   |
-| **Charts**      | Recharts                          | Analytics visualizations          |
-| **PDF**         | react-pdf                         | In-app bulletin viewer            |
-| **Drag & Drop** | @dnd-kit                          | Sortable lists (podcast ordering) |
-| **Graph Viz**   | @xyflow/react + Dagre             | Learning path graph rendering     |
-| **Toast**       | Sonner                            | Notifications                     |
-| **Theming**     | next-themes                       | Dark/light mode                   |
-| **Logging**     | Pino                              | Structured JSON logging           |
-| **Monitoring**  | Sentry                            | Error tracking + performance      |
-| **Testing**     | Vitest + RTL + Playwright         | Unit/integration/E2E              |
-| **Linting**     | ESLint 9 (flat config) + Prettier | Code quality                      |
-| **Git Hooks**   | Husky + lint-staged               | Pre-commit checks                 |
+| Category        | Library                           | Purpose                               |
+| --------------- | --------------------------------- | ------------------------------------- |
+| **Forms**       | React Hook Form + Zod             | Form state + runtime validation       |
+| **Charts**      | Recharts                          | Analytics visualizations              |
+| **PDF**         | react-pdf                         | In-app bulletin viewer                |
+| **Drag & Drop** | @dnd-kit                          | Sortable lists (audit brief ordering) |
+| **Graph Viz**   | @xyflow/react + Dagre             | Learning path graph rendering         |
+| **Toast**       | Sonner                            | Notifications                         |
+| **Theming**     | next-themes                       | Dark/light mode                       |
+| **Logging**     | Pino                              | Structured JSON logging               |
+| **Monitoring**  | Sentry                            | Error tracking + performance          |
+| **Testing**     | Vitest + RTL + Playwright         | Unit/integration/E2E                  |
+| **Linting**     | ESLint 9 (flat config) + Prettier | Code quality                          |
+| **Git Hooks**   | Husky + lint-staged               | Pre-commit checks                     |
 
 ## Styling Rules
 
@@ -54,7 +54,7 @@
 ## Architecture
 
 ```
-podcast-hub-v2/
+the-audit-brief/
 ├── .github/workflows/           # CI/CD (ci.yml, cd.yml, e2e.yml)
 ├── .husky/                      # Git hooks (pre-commit)
 ├── prisma/
@@ -63,15 +63,15 @@ podcast-hub-v2/
 ├── app/
 │   ├── layout.tsx               # Root layout (providers, fonts, error boundary)
 │   ├── (auth)/                  # Login, callback, unauthorized
-│   ├── (public)/                # Home, bulletins, podcast, learning paths, search, profile
+│   ├── (public)/                # Home, bulletins, audit-brief, learning paths, search, profile
 │   ├── (admin)/                 # Admin dashboard, upload, edit, users, analytics
-│   └── api/                     # API routes (podcasts, learning-graphs, bookmarks, etc.)
+│   └── api/                     # API routes (audit-briefs, learning-graphs, bookmarks, etc.)
 ├── components/
 │   ├── ui/                      # shadcn base components
 │   ├── audio-player/            # Player, transcript, bulletin viewer
 │   ├── admin/                   # Admin-specific components
 │   ├── learning-path/           # Path viewer, graph renderer
-│   ├── library/                 # Podcast cards, grid
+│   ├── library/                 # Audit brief cards, grid
 │   └── error-boundary.tsx       # React error boundary wrapper
 ├── lib/
 │   ├── prisma.ts                # Prisma client singleton
@@ -149,8 +149,8 @@ User visits protected route
 ## Local Dev Setup
 
 ```bash
-git clone <repo-url> podcast-hub-v2
-cd podcast-hub-v2
+git clone <repo-url> the-audit-brief
+cd the-audit-brief
 npm install
 cp .env.example .env.local
 # Fill in DATABASE_URL, JWT_SECRET, MINIO_ENDPOINT, AZURE_OPENAI_KEY, etc.

@@ -62,7 +62,7 @@ describe('ErrorCode', () => {
 
 describe('createErrorResponse', () => {
   it('returns a NextResponse with correct status and JSON body', async () => {
-    const error = new ApiError(404, ErrorCode.NOT_FOUND, 'Podcast not found');
+    const error = new ApiError(404, ErrorCode.NOT_FOUND, 'Audit brief not found');
     const response = createErrorResponse(error);
 
     expect(response.status).toBe(404);
@@ -71,7 +71,7 @@ describe('createErrorResponse', () => {
     expect(body).toEqual({
       status: 404,
       error_code: 'NOT_FOUND',
-      message: 'Podcast not found',
+      message: 'Audit brief not found',
     });
   });
 
@@ -148,10 +148,10 @@ describe('factory functions', () => {
   });
 
   it('notFound returns status 404 with NOT_FOUND error code', () => {
-    const error = notFound('Podcast');
+    const error = notFound('Audit brief');
     expect(error.status).toBe(404);
     expect(error.errorCode).toBe(ErrorCode.NOT_FOUND);
-    expect(error.message).toBe('Podcast not found');
+    expect(error.message).toBe('Audit brief not found');
   });
 
   it('validationFailed returns status 422 with VALIDATION_FAILED error code', () => {

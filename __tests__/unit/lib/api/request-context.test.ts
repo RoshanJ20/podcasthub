@@ -30,7 +30,7 @@ describe('extractRequestContext', () => {
           'x-forwarded-for': '192.168.1.1',
         },
         'POST',
-        '/api/podcasts'
+        '/api/audit-briefs'
       )
     );
 
@@ -38,7 +38,7 @@ describe('extractRequestContext', () => {
     expect(ctx.userId).toBe('user-456');
     expect(ctx.userRole).toBe('admin');
     expect(ctx.method).toBe('POST');
-    expect(ctx.path).toBe('/api/podcasts');
+    expect(ctx.path).toBe('/api/audit-briefs');
     expect(ctx.ip).toBe('192.168.1.1');
     expect(ctx.requestStart).toBe(1710000000000);
   });
