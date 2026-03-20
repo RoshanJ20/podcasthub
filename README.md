@@ -1,6 +1,6 @@
 # The Audit Brief
 
-Internal enterprise audio podcast platform for managing, distributing, and tracking podcast content across an organization.
+Internal enterprise audio platform for managing, distributing, and tracking audit brief content across an organization.
 
 ## Table of Contents
 
@@ -24,7 +24,7 @@ Internal enterprise audio podcast platform for managing, distributing, and track
 | Forms         | React Hook Form + Zod                     | Form state management and validation                  |
 | Charts        | Recharts                                  | Analytics dashboard visualizations                    |
 | Graph Editor  | @xyflow/react, Dagre                      | Visual learning path editor with auto-layout          |
-| Drag & Drop   | @dnd-kit                                  | Sortable lists (podcast ordering, linear editor)      |
+| Drag & Drop   | @dnd-kit                                  | Sortable lists (audit brief ordering, linear editor)  |
 | PDF Viewer    | react-pdf (pdfjs-dist)                    | In-app attachment/document viewing                    |
 | Audio         | HLS.js                                    | Adaptive audio streaming with native fallback         |
 | Database      | PostgreSQL 16, Prisma ORM (v7)            | Data persistence, migrations, pgvector search         |
@@ -198,7 +198,7 @@ the-audit-brief/
 │       ├── bookmarks/    # Bookmark endpoints
 │       ├── health/       # Health check
 │       ├── learning-graphs/
-│       ├── podcasts/     # Podcast CRUD
+│       ├── audit-briefs/ # Audit Brief CRUD
 │       ├── progress/     # Listening progress
 │       ├── search/       # Search endpoints
 │       ├── upload/       # File upload
@@ -252,7 +252,7 @@ chore/short-description
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-feat: add podcast search endpoint
+feat: add audit brief search endpoint
 fix: correct token expiry calculation
 chore: update dependencies
 ```
