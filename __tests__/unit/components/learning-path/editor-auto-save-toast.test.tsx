@@ -73,72 +73,7 @@ vi.mock('@/components/learning-path/auto-save-status', () => ({
   AutoSaveStatus: () => <span>AutoSaveStatus</span>,
 }));
 
-describe('LinearEditor auto-save error toast', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    useGraphEditorStore.setState({
-      nodes: [],
-      edges: [],
-      isDirty: false,
-      isSaving: false,
-      lastSaveError: null,
-      autoSaveGraphId: null,
-    });
-  });
-
-  afterEach(() => {
-    cleanup();
-  });
-
-  it('shows error toast when lastSaveError is set', async () => {
-    const { LinearEditor } = await import('@/components/learning-path/linear-editor');
-
-    render(<LinearEditor graphId="graph-1" />);
-
-    act(() => {
-      useGraphEditorStore.setState({ lastSaveError: 'Save failed (500): Internal Server Error' });
-    });
-
-    expect(toast.error).toHaveBeenCalledWith('Save failed (500): Internal Server Error');
-  });
-
-  it('does not show toast when lastSaveError is cleared', async () => {
-    const { LinearEditor } = await import('@/components/learning-path/linear-editor');
-
-    /* Start with an error */
-    useGraphEditorStore.setState({ lastSaveError: 'Previous error' });
-
-    render(<LinearEditor graphId="graph-1" />);
-
-    vi.clearAllMocks();
-
-    act(() => {
-      useGraphEditorStore.setState({ lastSaveError: null });
-    });
-
-    expect(toast.error).not.toHaveBeenCalled();
-  });
-
-  it('shows toast for each new distinct error', async () => {
-    const { LinearEditor } = await import('@/components/learning-path/linear-editor');
-
-    render(<LinearEditor graphId="graph-1" />);
-
-    act(() => {
-      useGraphEditorStore.setState({ lastSaveError: 'Error one' });
-    });
-
-    expect(toast.error).toHaveBeenCalledWith('Error one');
-
-    vi.clearAllMocks();
-
-    act(() => {
-      useGraphEditorStore.setState({ lastSaveError: 'Error two' });
-    });
-
-    expect(toast.error).toHaveBeenCalledWith('Error two');
-  });
-});
+/* LinearEditor no longer watches lastSaveError — save feedback is per-episode via toast. */
 
 describe('GraphEditor auto-save error toast', () => {
   beforeEach(() => {

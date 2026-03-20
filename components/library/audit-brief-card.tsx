@@ -48,8 +48,8 @@ export function AuditBriefCard({
 
   return (
     // WORKAROUND: Next.js App Router typed routes don't support dynamic segments — safe to cast
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <Link
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       href={`/audit-brief/${id}` as any}
       className="group block"
       data-testid="audit-brief-card-link"

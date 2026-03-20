@@ -148,7 +148,7 @@ describe('factory functions', () => {
   });
 
   it('notFound returns status 404 with NOT_FOUND error code', () => {
-    const error = notFound('AuditBrief');
+    const error = notFound('Audit brief');
     expect(error.status).toBe(404);
     expect(error.errorCode).toBe(ErrorCode.NOT_FOUND);
     expect(error.message).toBe('Audit brief not found');

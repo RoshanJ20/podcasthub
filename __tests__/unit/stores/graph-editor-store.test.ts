@@ -480,66 +480,17 @@ describe('GraphEditorStore', () => {
       expect(useGraphEditorStore.getState().autoSaveGraphId).toBeNull();
     });
 
-    it('mutating methods trigger auto-save after delay', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(
-        makeSuccessResponse([
-          {
-            id: 'db-1',
-            title: 'A',
-            auditBriefId: 'p1',
-            positionX: 0,
-            positionY: 0,
-            nodeType: 'default',
-            sortOrder: 0,
-          },
-        ])
-      );
-
+    it('mutating methods do not trigger auto-save (manual save only)', async () => {
       const store = useGraphEditorStore.getState();
       store.setAutoSaveGraphId('graph-123');
       store.addNode(makeNode({ id: 'temp-1', title: 'A' }));
 
-      // Before timer fires, save should not have been called
+      // Advance past the old debounce window
+      await vi.advanceTimersByTimeAsync(3000);
+
+      // No auto-save should fire — save is manual now
       expect(global.fetch).not.toHaveBeenCalled();
-
-      // Advance past the 2s debounce
-      await vi.advanceTimersByTimeAsync(2500);
-
-      expect(global.fetch).toHaveBeenCalledTimes(1);
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/learning-graphs/graph-123/data',
-        expect.objectContaining({ method: 'PUT' })
-      );
-    });
-
-    it('debounces multiple rapid changes into a single save', async () => {
-      vi.mocked(global.fetch).mockResolvedValue(
-        makeSuccessResponse([
-          {
-            id: 'db-1',
-            title: 'Final',
-            auditBriefId: 'p1',
-            positionX: 0,
-            positionY: 0,
-            nodeType: 'default',
-            sortOrder: 0,
-          },
-        ])
-      );
-
-      const store = useGraphEditorStore.getState();
-      store.setAutoSaveGraphId('graph-123');
-      store.addNode(makeNode({ id: 'temp-1', title: 'First' }));
-      await vi.advanceTimersByTimeAsync(500);
-      store.updateNode('temp-1', { title: 'Second' });
-      await vi.advanceTimersByTimeAsync(500);
-      store.updateNode('temp-1', { title: 'Final' });
-
-      // Advance past debounce from last change
-      await vi.advanceTimersByTimeAsync(2500);
-
-      // Only one save call should have been made
-      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect(useGraphEditorStore.getState().isDirty).toBe(true);
     });
 
     it('does not auto-save when autoSaveGraphId is null', async () => {
