@@ -207,8 +207,22 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return passthrough(request, requestId, requestStart);
   }
 
-  const accessSecret = process.env.JWT_ACCESS_SECRET || '';
-  const refreshSecret = process.env.JWT_REFRESH_SECRET || '';
+  const accessSecret = process.env.JWT_ACCESS_SECRET;
+  const refreshSecret = process.env.JWT_REFRESH_SECRET;
+
+  if (!accessSecret || !refreshSecret) {
+    return stampResponse(
+      NextResponse.json(
+        {
+          status: 500,
+          error_code: 'SERVER_MISCONFIGURED',
+          message: 'Internal server error',
+        },
+        { status: 500 }
+      ),
+      requestId
+    );
+  }
 
   const { user, newAccessToken } = await resolveAuthenticatedUser(
     request,

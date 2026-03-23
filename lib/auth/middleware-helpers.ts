@@ -22,22 +22,14 @@
  * Includes landing page, login, unauthorized, and content browsing routes.
  * Some routes use prefix matching (e.g., /audit-brief/*) to cover dynamic segments.
  */
-const PUBLIC_EXACT_ROUTES: ReadonlySet<string> = new Set([
-  '/',
-  '/login',
-  '/register',
-  '/unauthorized',
-  '/bulletins',
-  '/learning-path',
-  '/search',
-]);
+const PUBLIC_EXACT_ROUTES: ReadonlySet<string> = new Set(['/login', '/register', '/unauthorized']);
 
 /**
  * Route prefixes that are publicly accessible.
  *
  * Any pathname starting with one of these prefixes is treated as public.
  */
-const PUBLIC_PREFIX_ROUTES: readonly string[] = ['/audit-brief/', '/learning-path/'];
+const PUBLIC_PREFIX_ROUTES: readonly string[] = [];
 
 /**
  * Determines whether a pathname is a public route that requires no authentication.

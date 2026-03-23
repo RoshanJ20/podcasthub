@@ -37,17 +37,23 @@ interface UserData {
 
 const ROLES = ['public', 'admin', 'superadmin'];
 
+interface UsersTableProps {
+  /** ID of the currently authenticated user, used to disable self-role-change. */
+  currentUserId: string;
+}
+
 /**
  * Renders a paginated, searchable table of users with role management.
  *
  * @returns Users management table with search, pagination, and role change controls
  */
-export function UsersTable() {
+export function UsersTable({ currentUserId }: UsersTableProps) {
   const [users, setUsers] = useState<UserData[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [pendingRoleChange, setPendingRoleChange] = useState<{
     userId: string;
     role: string;
@@ -79,6 +85,7 @@ export function UsersTable() {
 
   const confirmRoleChange = async () => {
     if (!pendingRoleChange) return;
+    setError(null);
     try {
       const res = await fetch(`/api/users/${pendingRoleChange.userId}/role`, {
         method: 'PUT',
@@ -91,6 +98,9 @@ export function UsersTable() {
             user.id === pendingRoleChange.userId ? { ...user, role: pendingRoleChange.role } : user
           )
         );
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.message ?? 'Failed to update role');
       }
     } finally {
       setPendingRoleChange(null);
@@ -120,6 +130,15 @@ export function UsersTable() {
           Search
         </Button>
       </form>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+          <button onClick={() => setError(null)} className="ml-2 font-medium underline">
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="text-center py-8 text-muted-foreground">Loading users...</div>
@@ -157,23 +176,27 @@ export function UsersTable() {
                     <TableCell className="py-3.5">{user.email}</TableCell>
                     <TableCell className="py-3.5">{user.name ?? '-'}</TableCell>
                     <TableCell className="py-3.5">
-                      <Select
-                        value={user.role}
-                        onValueChange={(value) => {
-                          if (value) handleRoleChange(user.id, value);
-                        }}
-                      >
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {ROLES.map((role) => (
-                            <SelectItem key={role} value={role}>
-                              {role}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {user.id === currentUserId ? (
+                        <span className="text-sm text-muted-foreground">{user.role} (you)</span>
+                      ) : (
+                        <Select
+                          value={user.role}
+                          onValueChange={(value) => {
+                            if (value) handleRoleChange(user.id, value);
+                          }}
+                        >
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ROLES.map((role) => (
+                              <SelectItem key={role} value={role}>
+                                {role}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                     </TableCell>
                     <TableCell className="py-3.5">
                       {new Date(user.createdAt).toLocaleDateString()}

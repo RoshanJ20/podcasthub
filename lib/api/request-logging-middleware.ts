@@ -71,7 +71,11 @@ export function withRequestLogging(
         return response;
       }
 
-      log.error({ error, duration_ms: durationMs }, 'Unhandled error');
+      const errorInfo =
+        error instanceof Error
+          ? { message: error.message, name: error.name, stack: error.stack }
+          : { raw: String(error) };
+      log.error({ error: errorInfo, duration_ms: durationMs }, 'Unhandled error');
       const response = createErrorResponse(internalError(), ctx.requestId);
       response.headers.set('x-request-id', ctx.requestId);
       return response;

@@ -14,8 +14,10 @@ datasource db {
 model User {
   id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   email        String   @unique
-  passwordHash String   @map("password_hash")
+  passwordHash String?  @map("password_hash")
   displayName  String?  @map("display_name")
+  entraId      String?  @unique @map("entra_id")
+  authProvider String   @default("local") @map("auth_provider")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -66,6 +68,7 @@ model Transcript {
   auditBrief AuditBrief @relation(fields: [auditBriefId], references: [id], onDelete: Cascade)
 
   @@unique([auditBriefId, transcriptType])
+  @@index([auditBriefId])
   @@map("transcripts")
 }
 
@@ -87,6 +90,7 @@ model LearningGraph {
   progress UserProgress[]
   activity UserActivity[]     @relation("ActivityGraph")
 
+  @@index([createdBy])
   @@map("learning_graphs")
 }
 
@@ -128,6 +132,8 @@ model LearningPathEdge {
   targetEpisode Episode       @relation("TargetEpisode", fields: [targetEpisodeId], references: [id], onDelete: Cascade)
 
   @@index([graphId])
+  @@index([sourceEpisodeId])
+  @@index([targetEpisodeId])
   @@map("learning_path_edges")
 }
 
@@ -210,5 +216,8 @@ model UserActivity {
   @@index([userId])
   @@index([activityType])
   @@index([createdAt])
+  @@index([auditBriefId])
+  @@index([episodeId])
+  @@index([graphId])
   @@map("user_activity")
 }

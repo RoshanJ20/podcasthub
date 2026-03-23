@@ -18,7 +18,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
@@ -87,8 +87,7 @@ export function useWizardState({
 
   /* ---------- React Hook Form ---------- */
   const form = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(formSchema) as Resolver<FormValues>,
     mode: 'onTouched',
     reValidateMode: 'onChange',
     defaultValues: {

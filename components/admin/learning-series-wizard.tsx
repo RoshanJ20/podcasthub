@@ -14,7 +14,7 @@
 
 import { useState, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -111,8 +111,7 @@ export const LearningSeriesWizard = forwardRef<
 
   /* ---------- Form ---------- */
   const form = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(formSchema) as Resolver<FormValues>,
     mode: 'onTouched',
     reValidateMode: 'onChange',
     defaultValues: { title: '', description: '', domain: '' },

@@ -11,6 +11,7 @@ import { parsePaginationParams, createPaginatedResponse } from '@/lib/api/pagina
 import { ApiError, createErrorResponse, badRequest, internalError } from '@/lib/api/errors';
 import { createAuditBriefSchema } from '@/lib/schemas/audit-brief';
 import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import type { Prisma } from '@prisma/client';
 
 /**
  * Retrieves a paginated list of non-archived auditBriefs.
@@ -114,12 +115,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return createErrorResponse(badRequest('Validation failed', result.error.flatten()));
     }
 
-    const auditBrief = await prisma.auditBrief.create({
-      // WORKAROUND(team): Prisma type inference requires explicit cast for multi-table upsert payload — see TODO #tech-debt
-      // TODO(team): Replace with proper Prisma input type once schema types are exported
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: result.data as any,
-    });
+    const { bulletinUrls, tags, ...rest } = result.data;
+    const createData: Prisma.AuditBriefUncheckedCreateInput = {
+      ...rest,
+      tags: tags ?? [],
+      bulletinUrls: bulletinUrls ?? [],
+    };
+    const auditBrief = await prisma.auditBrief.create({ data: createData });
 
     return NextResponse.json({ data: auditBrief }, { status: 201 });
   } catch (error) {

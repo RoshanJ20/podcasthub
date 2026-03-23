@@ -14,7 +14,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Upload, Loader2 } from 'lucide-react';
@@ -117,8 +117,7 @@ export function AuditBriefUploadForm({
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(formSchema) as any,
+    resolver: zodResolver(formSchema) as Resolver<FormValues>,
     defaultValues: {
       title: initialData?.title ?? '',
       description: initialData?.description ?? '',

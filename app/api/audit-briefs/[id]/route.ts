@@ -17,6 +17,7 @@ import {
 } from '@/lib/api/errors';
 import { updateAuditBriefSchema } from '@/lib/schemas/audit-brief';
 import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import type { Prisma } from '@prisma/client';
 
 /** Route context providing the audit brief ID path parameter. */
 type RouteContext = { params: Promise<{ id: string }> };
@@ -73,12 +74,15 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
       return createErrorResponse(badRequest('Validation failed', result.error.flatten()));
     }
 
+    const { bulletinUrls, tags, ...rest } = result.data;
+    const updateData: Prisma.AuditBriefUncheckedUpdateInput = {
+      ...rest,
+      ...(tags !== undefined && { tags }),
+      ...(bulletinUrls !== undefined && { bulletinUrls: bulletinUrls ?? [] }),
+    };
     const auditBrief = await prisma.auditBrief.update({
       where: { id },
-      // WORKAROUND(team): Prisma type inference requires explicit cast for multi-table upsert payload — see TODO #tech-debt
-      // TODO(team): Replace with proper Prisma input type once schema types are exported
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      data: result.data as any,
+      data: updateData,
     });
 
     return NextResponse.json({ data: auditBrief });

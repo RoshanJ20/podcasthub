@@ -54,13 +54,7 @@ export function AuditBriefCard({
   const badgeText = isDark ? color.darkText : color.text;
 
   return (
-    // WORKAROUND: Next.js App Router typed routes don't support dynamic segments — safe to cast
-    <Link
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      href={`/audit-brief/${id}` as any}
-      className="group block"
-      data-testid="audit-brief-card-link"
-    >
+    <Link href={`/audit-brief/${id}`} className="group block" data-testid="audit-brief-card-link">
       <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-md">
         {/* Domain-colored left strip — expands on hover to reveal arrow */}
         <div

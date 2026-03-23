@@ -27,7 +27,7 @@ import { verifyPassword } from '@/lib/auth/password';
 import { signAccessToken, signRefreshToken } from '@/lib/auth/jwt';
 import { setAuthCookies } from '@/lib/auth/cookies';
 import { prisma } from '@/lib/db';
-import { unauthorized, validationFailed, createErrorResponse } from '@/lib/api/errors';
+import { badRequest, unauthorized, validationFailed, createErrorResponse } from '@/lib/api/errors';
 import { withRequestLogging } from '@/lib/api/request-logging-middleware';
 
 /**
@@ -60,6 +60,15 @@ export const POST = withRequestLogging(async (request: NextRequest): Promise<Nex
   if (!user) {
     // Use generic message to prevent email enumeration
     return createErrorResponse(unauthorized('Invalid email or password'));
+  }
+
+  // Guard: SSO-only users cannot log in with a password
+  if (!user.passwordHash) {
+    return createErrorResponse(
+      badRequest(
+        'This account uses Microsoft SSO. Please sign in with the "Sign in with Microsoft" button.'
+      )
+    );
   }
 
   // Verify password against stored hash

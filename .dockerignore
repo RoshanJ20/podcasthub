@@ -1,0 +1,52 @@
+# Version control
+.git
+.gitignore
+
+# Dependencies (rebuilt in Docker)
+node_modules
+
+# Environment files (secrets must not be baked into images)
+.env
+.env.*
+!.env.example
+
+# Test artifacts
+__tests__
+coverage
+.playwright
+playwright-report
+test-results
+
+# IDE and OS
+.vscode
+.idea
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Build artifacts (rebuilt in Docker)
+.next
+dist
+out
+
+# Documentation and config not needed at runtime
+docs
+*.md
+!README.md
+CLAUDE.md
+.claude
+
+# CI/CD
+.github
+.husky
+.lintstagedrc.js
+eslint.config.mjs
+vitest.config.ts
+playwright.config.ts
+tsconfig.tsbuildinfo
+
+# Infrastructure (not needed inside container)
+infra
+scripts
+docker-compose.yml

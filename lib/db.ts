@@ -13,7 +13,7 @@
  */
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import pg from 'pg';
+import type pg from 'pg';
 import { createLogger } from '@/lib/logger';
 import { logSlowQuery } from '@/lib/db-instrumentation';
 
@@ -24,14 +24,16 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const pool = new pg.Pool({
+  const poolConfig: pg.PoolConfig = {
     connectionString: process.env.DATABASE_URL,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
-  });
-  // @ts-expect-error — pg Pool type mismatch between @types/pg and @prisma/adapter-pg
-  const adapter = new PrismaPg(pool);
+  };
+  // Pass config directly to PrismaPg so it can create both query and transaction
+  // connections with the full connection string (including password for SASL auth).
+  // @ts-expect-error — pg PoolConfig type mismatch between @types/pg and @prisma/adapter-pg
+  const adapter = new PrismaPg(poolConfig);
   const baseClient = new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],

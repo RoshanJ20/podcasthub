@@ -1,37 +1,72 @@
+##
+# CD — Continuous Deployment to Azure Container Apps
+#
+# Triggered on every push to main. Builds the Docker image, pushes to ACR,
+# runs database migrations, and deploys a new Container App revision.
+#
+# Prerequisites:
+# - Azure AD App Registration with OIDC federated credential for GitHub Actions
+# - GitHub environment "production" with required secrets configured
+# - Azure Container Registry, Container Apps, and PostgreSQL provisioned
+##
 name: CD
 
 on:
   push:
     branches: [main]
 
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false # Never cancel a deployment in progress
+
 jobs:
   deploy:
     name: Build & Deploy
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      id-token: write # Required for Azure OIDC login
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+
       - run: npm ci
-      - run: npx prisma generate
-      - run: npm run build
+
+      # Authenticate to Azure using OIDC (keyless — federated credential)
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Authenticate to Azure Container Registry
+      - name: Login to ACR
+        run: az acr login --name ${{ secrets.REGISTRY_NAME }}
+
+      # Build and push Docker image with SHA and latest tags
+      - name: Build & Push Docker image
+        run: |
+          IMAGE="${{ secrets.REGISTRY_URL }}/the-audit-brief:${{ github.sha }}"
+          docker build -t "$IMAGE" .
+          docker tag "$IMAGE" "${{ secrets.REGISTRY_URL }}/the-audit-brief:latest"
+          docker push "$IMAGE"
+          docker push "${{ secrets.REGISTRY_URL }}/the-audit-brief:latest"
+
+      # Run database migrations BEFORE deploying the new container.
+      # This ensures schema changes are applied before new code runs.
+      - name: Run database migrations
+        run: npx prisma generate && npx prisma migrate deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
-          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
-          NEXT_PUBLIC_APP_URL: ${{ secrets.APP_URL }}
 
-      - name: Build Docker image
-        run: docker build -t the-audit-brief:${{ github.sha }} .
-
-      - name: Push to container registry
-        run: |
-          docker tag the-audit-brief:${{ github.sha }} ${{ secrets.REGISTRY_URL }}/the-audit-brief:${{ github.sha }}
-          docker push ${{ secrets.REGISTRY_URL }}/the-audit-brief:${{ github.sha }}
-
+      # Deploy new revision to Azure Container Apps
       - name: Deploy to Azure Container Apps
         run: |
           az containerapp update \
