@@ -189,7 +189,7 @@ describe('GraphEditorStore', () => {
       await store.save('graph-123');
 
       expect(global.fetch).toHaveBeenCalledWith(
-        '/api/learning-graphs/graph-123/data',
+        '/auditbrief/api/learning-graphs/graph-123/data',
         expect.objectContaining({
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },

@@ -38,6 +38,7 @@ import type { UseFormReturn } from 'react-hook-form';
 
 import type { AuditBriefFormData } from '@/components/admin/audit-brief-upload-wizard';
 import type { useFileUpload } from '@/hooks/use-file-upload';
+import { withBasePath } from '@/lib/config/base-path';
 import type { FormValues } from './wizard-state-types';
 
 /** The subset of a useFileUpload handle required by useWizardSubmit. */
@@ -219,7 +220,9 @@ export function useWizardSubmit({
         bulletinUrls: uploadedBulletinUrls,
       };
 
-      const url = mode === 'edit' ? `/api/audit-briefs/${initialData?.id}` : '/api/audit-briefs';
+      const url = withBasePath(
+        mode === 'edit' ? `/api/audit-briefs/${initialData?.id}` : '/api/audit-briefs'
+      );
       const method = mode === 'edit' ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -242,7 +245,7 @@ export function useWizardSubmit({
       /* Save transcripts if provided */
       if (auditBriefId) {
         if (shortTranscript.trim()) {
-          await fetch(`/api/audit-briefs/${auditBriefId}/transcript`, {
+          await fetch(withBasePath(`/api/audit-briefs/${auditBriefId}/transcript`), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -253,7 +256,7 @@ export function useWizardSubmit({
           });
         }
         if (longTranscript.trim()) {
-          await fetch(`/api/audit-briefs/${auditBriefId}/transcript`, {
+          await fetch(withBasePath(`/api/audit-briefs/${auditBriefId}/transcript`), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

@@ -26,6 +26,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  basePath: '/auditbrief',
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',

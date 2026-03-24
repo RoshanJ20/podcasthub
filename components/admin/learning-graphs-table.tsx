@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dialog';
 import { Edit, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { withBasePath } from '@/lib/config/base-path';
 
 interface LearningGraph {
   id: string;
@@ -51,7 +52,9 @@ export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
     if (!deleteId) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/learning-graphs/${deleteId}`, { method: 'DELETE' });
+      const res = await fetch(withBasePath(`/api/learning-graphs/${deleteId}`), {
+        method: 'DELETE',
+      });
       if (!res.ok) throw new Error('Failed to delete');
       toast.success('Learning series deleted');
     } catch {

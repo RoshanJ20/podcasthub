@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { formatTime } from '@/lib/format-time';
 import type { DomainColor } from '@/lib/domain-colors';
 import { createLogger } from '@/lib/logger';
+import { withBasePath } from '@/lib/config/base-path';
 import { BookmarkListItem, type Bookmark } from './bookmark-list-item';
 
 const log = createLogger('bookmark-panel');
@@ -57,7 +58,7 @@ export function BookmarkPanel({
 
   const fetchBookmarks = useCallback(async () => {
     try {
-      const response = await fetch(`/api/bookmarks?auditBriefId=${auditBriefId}`);
+      const response = await fetch(withBasePath(`/api/bookmarks?auditBriefId=${auditBriefId}`));
       if (!response.ok) return;
       const bookmarksResponse = await response.json();
       const items: Bookmark[] = bookmarksResponse.data ?? [];
@@ -86,7 +87,7 @@ export function BookmarkPanel({
 
     const timestampSeconds = Math.floor(currentTime);
     try {
-      const response = await fetch('/api/bookmarks', {
+      const response = await fetch(withBasePath('/api/bookmarks'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -117,7 +118,7 @@ export function BookmarkPanel({
   /** Delete a bookmark. */
   const handleDelete = async (id: string) => {
     try {
-      const response = await fetch(`/api/bookmarks/${id}`, { method: 'DELETE' });
+      const response = await fetch(withBasePath(`/api/bookmarks/${id}`), { method: 'DELETE' });
       if (!response.ok) {
         toast.error('Failed to delete bookmark');
         return;
@@ -137,7 +138,7 @@ export function BookmarkPanel({
   /** Save an edited bookmark note. */
   const saveEdit = async (id: string) => {
     try {
-      const response = await fetch(`/api/bookmarks/${id}`, {
+      const response = await fetch(withBasePath(`/api/bookmarks/${id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ note: editNote.trim() }),

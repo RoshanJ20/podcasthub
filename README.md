@@ -129,29 +129,31 @@ npx prisma db seed
 npm run dev
 ```
 
-The app will be available at [http://localhost:3000](http://localhost:3000).
+The app will be available at [http://localhost:3000/auditbrief](http://localhost:3000/auditbrief).
+
+> **Note:** The app is configured with `basePath: '/auditbrief'` in `next.config.ts`, so all routes are prefixed with `/auditbrief`. This matches the subpath deployment on the shared Azure VM (e.g., `uat.uno.wcgt.in/auditbrief`).
 
 ## Environment Variables
 
-| Variable                       | Description                          | Default / Required        |
-| ------------------------------ | ------------------------------------ | ------------------------- |
-| `DATABASE_URL`                 | PostgreSQL connection string         | (required)                |
-| `NEXTAUTH_SECRET`              | NextAuth JWT encryption secret       | (required, min 32 chars)  |
-| `NEXTAUTH_URL`                 | Canonical app URL                    | `http://localhost:3000`   |
-| `PORT`                         | Server listen port                   | `3000` (prod: `3103`)     |
-| `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection string | (required)                |
-| `AZURE_BLOB_CONTAINER`         | Azure Blob container name            | `the-audit-brief-uploads` |
-| `AZURE_AD_CLIENT_ID`           | Microsoft Entra ID app client ID     | (optional, for SSO)       |
-| `AZURE_AD_CLIENT_SECRET`       | Microsoft Entra ID app client secret | (optional, for SSO)       |
-| `AZURE_AD_TENANT_ID`           | Microsoft Entra ID tenant ID         | (optional, for SSO)       |
-| `AZURE_OPENAI_ENDPOINT`        | Azure OpenAI service endpoint        | (optional)                |
-| `AZURE_OPENAI_KEY`             | Azure OpenAI API key                 | (optional)                |
-| `AZURE_OPENAI_DEPLOYMENT`      | Azure OpenAI deployment name         | (optional)                |
-| `SENTRY_DSN`                   | Sentry error tracking DSN (server)   | (optional)                |
-| `NEXT_PUBLIC_SENTRY_DSN`       | Sentry DSN (client bundle)           | (optional)                |
-| `NEXT_PUBLIC_APP_URL`          | Public application URL               | `http://localhost:3000`   |
-| `NODE_ENV`                     | Runtime environment                  | `development`             |
-| `LOG_LEVEL`                    | Pino log level                       | `debug`                   |
+| Variable                       | Description                                             | Default / Required                 |
+| ------------------------------ | ------------------------------------------------------- | ---------------------------------- |
+| `DATABASE_URL`                 | PostgreSQL connection string                            | (required)                         |
+| `NEXTAUTH_SECRET`              | NextAuth JWT encryption secret                          | (required, min 32 chars)           |
+| `NEXTAUTH_URL`                 | Canonical app URL (must include `/auditbrief` basePath) | `http://localhost:3000/auditbrief` |
+| `PORT`                         | Server listen port                                      | `3000` (prod: `3103`)              |
+| `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection string                    | (required)                         |
+| `AZURE_BLOB_CONTAINER`         | Azure Blob container name                               | `the-audit-brief-uploads`          |
+| `AZURE_AD_CLIENT_ID`           | Microsoft Entra ID app client ID                        | (optional, for SSO)                |
+| `AZURE_AD_CLIENT_SECRET`       | Microsoft Entra ID app client secret                    | (optional, for SSO)                |
+| `AZURE_AD_TENANT_ID`           | Microsoft Entra ID tenant ID                            | (optional, for SSO)                |
+| `AZURE_OPENAI_ENDPOINT`        | Azure OpenAI service endpoint                           | (optional)                         |
+| `AZURE_OPENAI_KEY`             | Azure OpenAI API key                                    | (optional)                         |
+| `AZURE_OPENAI_DEPLOYMENT`      | Azure OpenAI deployment name                            | (optional)                         |
+| `SENTRY_DSN`                   | Sentry error tracking DSN (server)                      | (optional)                         |
+| `NEXT_PUBLIC_SENTRY_DSN`       | Sentry DSN (client bundle)                              | (optional)                         |
+| `NEXT_PUBLIC_APP_URL`          | Origin URL for CORS (no basePath)                       | `http://localhost:3000`            |
+| `NODE_ENV`                     | Runtime environment                                     | `development`                      |
+| `LOG_LEVEL`                    | Pino log level                                          | `debug`                            |
 
 ## Authentication & SSO
 
@@ -179,7 +181,7 @@ To enable SSO, register an application in Microsoft Entra ID:
 1. Go to **Azure Portal > Entra ID > App Registrations > New Registration**.
 2. Set the **Redirect URI**:
    - **Platform:** Select **"Web"** (NOT "Single-page application")
-   - **URL:** `https://your-domain.com/api/auth/callback/azure-ad` (use `http://localhost:3000/api/auth/callback/azure-ad` for local dev)
+   - **URL:** `https://your-domain.com/auditbrief/api/auth/callback/azure-ad` (use `http://localhost:3000/auditbrief/api/auth/callback/azure-ad` for local dev)
 3. Under **Certificates & Secrets**, create a new client secret.
 
 > **Warning:** This is a server-rendered application using a confidential OAuth client.
@@ -279,6 +281,20 @@ the-audit-brief/
 
 The application runs as a standalone Next.js server on **port 3103**, managed by pm2 for automatic restarts and clustering. Nginx handles SSL termination and proxies traffic from ports 80/443 to the app.
 
+### Subpath Deployment
+
+The app is configured with `basePath: '/auditbrief'` so it can be served alongside other apps on a shared VM under `uat.uno.wcgt.in/auditbrief`. Nginx routes `/auditbrief/*` to port 3103.
+
+Key env vars for the VM `.env`:
+
+```bash
+NEXTAUTH_URL=https://uat.uno.wcgt.in/auditbrief    # Must include basePath
+NEXT_PUBLIC_APP_URL=https://uat.uno.wcgt.in          # Origin only, no basePath (used for CORS)
+```
+
+The Azure AD redirect URI in Entra ID must also include the basePath:
+`https://uat.uno.wcgt.in/auditbrief/api/auth/callback/azure-ad`
+
 **Infrastructure:**
 
 - **Compute:** Azure VM (Standard_B2s or larger)
@@ -289,7 +305,9 @@ The application runs as a standalone Next.js server on **port 3103**, managed by
 
 ```bash
 # On the Azure VM:
+cp .env.example .env   # Single .env file — fill in production values
 npm install && npm run build
+npx prisma migrate deploy   # Apply pending migrations (not 'migrate dev')
 pm2 start ecosystem.config.js
 ```
 

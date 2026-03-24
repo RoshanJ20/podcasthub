@@ -18,6 +18,7 @@ import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { createLogger } from '@/lib/logger';
+import { withBasePath } from '@/lib/config/base-path';
 
 const log = createLogger('sidebar-user-profile');
 
@@ -79,7 +80,7 @@ export function SidebarUserProfile({
    */
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch(withBasePath('/api/auth/logout'), { method: 'POST' });
       router.push('/login');
     } catch (err) {
       log.error({ error: err instanceof Error ? err.message : String(err) }, 'Logout failed');

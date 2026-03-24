@@ -321,7 +321,7 @@ npx prisma migrate status
 Create the production environment file:
 
 ```bash
-sudo -u auditbrief nano /opt/auditbrief/app/.env.production
+sudo -u auditbrief nano /opt/auditbrief/app/.env
 ```
 
 Populate with the following (replace placeholders):
@@ -332,10 +332,11 @@ DATABASE_URL="postgresql://auditbrief:<PASSWORD>@psql-auditbrief.postgres.databa
 
 # Auth (NextAuth v4)
 NEXTAUTH_SECRET="<GENERATE_WITH: openssl rand -base64 32>"
-NEXTAUTH_URL="https://<YOUR_DOMAIN>"
-# CRITICAL: NEXTAUTH_URL must exactly match the URL users access in their browser
-# (e.g., https://auditbrief.yourorg.com). If this doesn't match the actual request
-# origin, NextAuth will reject all sign-in attempts with a CSRF verification error.
+NEXTAUTH_URL="https://<YOUR_DOMAIN>/auditbrief"
+# CRITICAL: NEXTAUTH_URL must include the /auditbrief basePath.
+# Example: https://uat.uno.wcgt.in/auditbrief
+# If this doesn't match the actual request URL (including basePath), NextAuth will
+# reject all sign-in attempts with a CSRF verification error.
 # Do NOT include a trailing slash. Do NOT use localhost in production.
 
 # Azure Blob Storage
@@ -366,8 +367,8 @@ LOG_LEVEL="info"
 Set restrictive file permissions:
 
 ```bash
-sudo chmod 600 /opt/auditbrief/app/.env.production
-sudo chown auditbrief:auditbrief /opt/auditbrief/app/.env.production
+sudo chmod 600 /opt/auditbrief/app/.env
+sudo chown auditbrief:auditbrief /opt/auditbrief/app/.env
 ```
 
 ---
@@ -381,7 +382,7 @@ sudo -u auditbrief bash
 cd /opt/auditbrief/app
 
 # Load production env for the build
-set -a; source .env.production; set +a
+set -a; source .env; set +a
 
 npm run build
 ```
@@ -398,7 +399,7 @@ module.exports = {
       script: 'node_modules/.bin/next',
       args: 'start -p 3103',
       cwd: '/opt/auditbrief/app',
-      env_file: '/opt/auditbrief/app/.env.production',
+      env_file: '/opt/auditbrief/app/.env',
       env: {
         NODE_ENV: 'production',
         PORT: 3103,
@@ -599,7 +600,7 @@ Skip this section if SSO is not needed. Users can still log in with email/passwo
 
 ### 11.3 Update environment
 
-Edit `/opt/auditbrief/app/.env.production` and fill in the three `AZURE_AD_*` variables, then restart:
+Edit `/opt/auditbrief/app/.env` and fill in the three `AZURE_AD_*` variables, then restart:
 
 ```bash
 sudo -u auditbrief pm2 restart auditbrief
@@ -667,7 +668,7 @@ git pull origin main
 npm install
 
 # Run database migrations (if any)
-set -a; source .env.production; set +a
+set -a; source .env; set +a
 npx prisma migrate deploy
 
 # Rebuild the application
@@ -769,7 +770,7 @@ pm2 status
 pm2 logs auditbrief --err --lines 50
 
 # Common causes:
-# - Missing .env.production file
+# - Missing .env file
 # - DATABASE_URL unreachable (check firewall rules)
 # - Port 3103 already in use: lsof -i :3103
 # - Build not run: npm run build
@@ -843,7 +844,7 @@ npx prisma migrate resolve --rolled-back <MIGRATION_NAME>
 | ------------------------------ | -------- | ---------------------------------------------------------- | ----------------------------------------------------- |
 | `DATABASE_URL`                 | Yes      | PostgreSQL connection string with SSL                      | `postgresql://user:pass@host:5432/db?sslmode=require` |
 | `NEXTAUTH_SECRET`              | Yes      | Secret for encrypting NextAuth JWT sessions (min 32 chars) | `openssl rand -base64 32`                             |
-| `NEXTAUTH_URL`                 | Yes      | Canonical URL of the application                           | `https://auditbrief.example.com`                      |
+| `NEXTAUTH_URL`                 | Yes      | Canonical URL including `/auditbrief` basePath             | `https://auditbrief.example.com/auditbrief`           |
 | `PORT`                         | Yes      | Port the Node.js server listens on                         | `3103`                                                |
 | `NODE_ENV`                     | Yes      | Runtime environment                                        | `production`                                          |
 | `AZURE_BLOB_CONNECTION_STRING` | Yes      | Azure Blob Storage connection string                       | `DefaultEndpointsProtocol=https;AccountName=...`      |

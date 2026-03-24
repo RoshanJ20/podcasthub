@@ -6,7 +6,11 @@
  *
  * In development, files are proxied through /api/media to avoid browser
  * security restrictions on loading media from localhost:10000 (Azurite).
+ *
+ * Dependencies:
+ * - @/lib/config/base-path (withBasePath)
  */
+import { withBasePath } from '@/lib/config/base-path';
 
 /**
  * Converts a storage key to a URL the browser can load.
@@ -16,8 +20,8 @@
  * @returns URL to the file
  */
 export function resolveStorageUrl(key: string | null | undefined): string {
-  if (!key) return '/placeholder.svg';
+  if (!key) return withBasePath('/placeholder.svg');
   if (key.startsWith('http://') || key.startsWith('https://')) return key;
   if (key.startsWith('/')) return key;
-  return `/api/media?key=${encodeURIComponent(key)}`;
+  return withBasePath(`/api/media?key=${encodeURIComponent(key)}`);
 }

@@ -7,6 +7,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { withBasePath } from '@/lib/config/base-path';
 
 interface UseFileUploadReturn {
   /** Upload progress percentage (0-100). */
@@ -78,7 +79,7 @@ export function useFileUpload(): UseFileUploadReturn {
         xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
         xhr.addEventListener('abort', () => reject(new Error('Upload was aborted')));
 
-        xhr.open('POST', '/api/upload/file');
+        xhr.open('POST', withBasePath('/api/upload/file'));
         xhr.timeout = 120000; // 2 minutes for file uploads
         xhr.send(formData);
       });

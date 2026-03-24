@@ -25,6 +25,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedNumber } from '@/components/ui/animated-number';
 import { createLogger } from '@/lib/logger';
+import { withBasePath } from '@/lib/config/base-path';
 
 const log = createLogger('analytics-charts');
 
@@ -55,7 +56,7 @@ export function AnalyticsCharts() {
       const params = new URLSearchParams();
       if (from) params.set('from', from);
       if (to) params.set('to', to);
-      const response = await fetch(`/api/admin/analytics?${params}`);
+      const response = await fetch(withBasePath(`/api/admin/analytics?${params}`));
       const analyticsResponse = await response.json();
       setData(analyticsResponse);
     } catch (error) {

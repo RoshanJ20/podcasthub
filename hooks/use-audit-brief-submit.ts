@@ -41,6 +41,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { createLogger } from '@/lib/logger';
+import { withBasePath } from '@/lib/config/base-path';
 import type { AuditBriefFormData } from '@/components/admin/audit-brief-upload-form';
 
 /**
@@ -205,7 +206,9 @@ export function useAuditBriefSubmit({
         bulletinUrls,
       };
 
-      const url = mode === 'edit' ? `/api/audit-briefs/${initialData?.id}` : '/api/audit-briefs';
+      const url = withBasePath(
+        mode === 'edit' ? `/api/audit-briefs/${initialData?.id}` : '/api/audit-briefs'
+      );
       const method = mode === 'edit' ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -226,7 +229,7 @@ export function useAuditBriefSubmit({
       // Save transcripts if provided
       if (auditBriefId) {
         if (shortTranscript.trim()) {
-          await fetch(`/api/audit-briefs/${auditBriefId}/transcript`, {
+          await fetch(withBasePath(`/api/audit-briefs/${auditBriefId}/transcript`), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -237,7 +240,7 @@ export function useAuditBriefSubmit({
           });
         }
         if (longTranscript.trim()) {
-          await fetch(`/api/audit-briefs/${auditBriefId}/transcript`, {
+          await fetch(withBasePath(`/api/audit-briefs/${auditBriefId}/transcript`), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

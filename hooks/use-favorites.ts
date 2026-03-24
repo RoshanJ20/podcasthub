@@ -20,6 +20,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { withBasePath } from '@/lib/config/base-path';
 
 /**
  * Manages the current user's favorite audit briefs.
@@ -45,7 +46,7 @@ export function useFavorites() {
      */
     async function fetchFavorites() {
       try {
-        const res = await fetch('/api/favorites');
+        const res = await fetch(withBasePath('/api/favorites'));
         if (!res.ok) return;
         const json = (await res.json()) as { data: string[] };
         setFavoriteIds(new Set(json.data));
@@ -84,7 +85,7 @@ export function useFavorites() {
     setFavoriteIds(flipId);
 
     try {
-      const res = await fetch('/api/favorites', {
+      const res = await fetch(withBasePath('/api/favorites'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ auditBriefId }),

@@ -15,6 +15,7 @@ import { createLogger } from '@/lib/logger';
 import { SearchInput } from '@/components/search/search-input';
 import type { BasicResult, SemanticResult } from '@/components/search/search-results';
 import { BasicResults, SemanticResults } from '@/components/search/search-results';
+import { withBasePath } from '@/lib/config/base-path';
 
 const log = createLogger('search-page');
 
@@ -42,11 +43,11 @@ export default function SearchPage() {
 
     try {
       if (mode === 'basic') {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const res = await fetch(withBasePath(`/api/search?q=${encodeURIComponent(query)}`));
         const data = await res.json();
         setResults(data.results ?? []);
       } else {
-        const res = await fetch('/api/search', {
+        const res = await fetch(withBasePath('/api/search'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query }),

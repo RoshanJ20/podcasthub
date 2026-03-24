@@ -11,6 +11,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { PathCard } from './path-card';
 import { StaggeredGrid, StaggeredGridItem } from '@/components/ui/staggered-grid';
+import { withBasePath } from '@/lib/config/base-path';
 
 interface LearningPath {
   id: string;
@@ -43,7 +44,7 @@ export function PathListClient({ paths }: PathListClientProps) {
   useEffect(() => {
     async function fetchProgress() {
       try {
-        const response = await fetch('/api/progress');
+        const response = await fetch(withBasePath('/api/progress'));
         if (!response.ok) return;
         const progressResponse = await response.json();
         // Count completed episodes per graph

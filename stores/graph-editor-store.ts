@@ -18,6 +18,7 @@
 import { create } from 'zustand';
 import dagre from 'dagre';
 import { createLogger } from '@/lib/logger';
+import { withBasePath } from '@/lib/config/base-path';
 import {
   buildSavePayload,
   reconcileServerResponse,
@@ -171,7 +172,7 @@ export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
       const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       try {
-        const response = await fetch(`/api/learning-graphs/${graphId}/data`, {
+        const response = await fetch(withBasePath(`/api/learning-graphs/${graphId}/data`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

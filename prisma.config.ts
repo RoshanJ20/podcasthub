@@ -1,8 +1,8 @@
 import dotenv from 'dotenv';
 import { defineConfig } from 'prisma/config';
 
-// Load .env.local for local development (Next.js convention)
-dotenv.config({ path: '.env.local' });
+// Load env files: .env.local takes precedence (local dev), .env is the default (production VM)
+dotenv.config({ path: ['.env.local', '.env'] });
 
 export default defineConfig({
   schema: 'prisma/schema.prisma',

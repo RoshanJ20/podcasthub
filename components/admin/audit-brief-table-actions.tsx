@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { AuditBriefData } from '@/lib/types';
+import { withBasePath } from '@/lib/config/base-path';
 
 interface AuditBriefTableActionsProps {
   /** The audit brief to display actions for. */
@@ -51,7 +52,7 @@ export function AuditBriefTableActions({ auditBrief, onRefresh }: AuditBriefTabl
     try {
       if (auditBrief.isArchived) {
         // Unarchive: update isArchived to false
-        const response = await fetch(`/api/audit-briefs/${auditBrief.id}`, {
+        const response = await fetch(withBasePath(`/api/audit-briefs/${auditBrief.id}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ isArchived: false }),
@@ -64,7 +65,7 @@ export function AuditBriefTableActions({ auditBrief, onRefresh }: AuditBriefTabl
         toast.success('Audit brief unarchived');
       } else {
         // Archive: call DELETE endpoint
-        const response = await fetch(`/api/audit-briefs/${auditBrief.id}`, {
+        const response = await fetch(withBasePath(`/api/audit-briefs/${auditBrief.id}`), {
           method: 'DELETE',
         });
 

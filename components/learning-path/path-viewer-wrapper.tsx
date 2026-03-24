@@ -24,6 +24,7 @@ import { variants, transitions, sectionStagger } from '@/lib/animation';
 import { getDomainColor } from '@/lib/domain-colors';
 import { cn } from '@/lib/utils';
 import { EpisodePlayer } from './episode-player';
+import { withBasePath } from '@/lib/config/base-path';
 
 interface Episode {
   id: string;
@@ -69,7 +70,7 @@ export function PathViewerWrapper({
   useEffect(() => {
     async function fetchProgress() {
       try {
-        const response = await fetch('/api/progress');
+        const response = await fetch(withBasePath('/api/progress'));
         if (!response.ok) return;
         const progressResponse = await response.json();
         const ids = new Set<string>(

@@ -17,6 +17,7 @@
 
 import { useState, useCallback } from 'react';
 import { signIn } from 'next-auth/react';
+import { BASE_PATH } from '@/lib/config/base-path';
 
 /**
  * Props for the LoginForm component.
@@ -66,8 +67,10 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           return;
         }
 
-        // Redirect on successful login
-        window.location.href = redirectTo;
+        // Redirect on successful login (prepend basePath for subpath deployment)
+        window.location.href = redirectTo.startsWith(BASE_PATH)
+          ? redirectTo
+          : BASE_PATH + redirectTo;
       } catch {
         setError('An unexpected error occurred. Please try again.');
       } finally {

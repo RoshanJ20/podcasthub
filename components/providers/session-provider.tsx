@@ -11,6 +11,7 @@
 'use client';
 
 import { SessionProvider as NextAuthSessionProvider } from 'next-auth/react';
+import { BASE_PATH } from '@/lib/config/base-path';
 
 /**
  * Props for the SessionProvider component.
@@ -27,5 +28,7 @@ interface SessionProviderProps {
  * @returns The children wrapped in NextAuth's SessionProvider.
  */
 export function SessionProvider({ children }: SessionProviderProps) {
-  return <NextAuthSessionProvider>{children}</NextAuthSessionProvider>;
+  return (
+    <NextAuthSessionProvider basePath={`${BASE_PATH}/api/auth`}>{children}</NextAuthSessionProvider>
+  );
 }

@@ -11,6 +11,7 @@
 import { useEffect, useRef } from 'react';
 import { usePlayerStore } from '@/stores/player-store';
 import { createLogger } from '@/lib/logger';
+import { withBasePath } from '@/lib/config/base-path';
 
 const log = createLogger('use-listen-tracker');
 
@@ -32,7 +33,7 @@ export function useListenTracker(auditBriefId: string | null) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       try {
-        await fetch('/api/activity', {
+        await fetch(withBasePath('/api/activity'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

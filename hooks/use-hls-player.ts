@@ -12,6 +12,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import Hls from 'hls.js';
 import { usePlayerStore } from '@/stores/player-store';
 import { useAudioRef } from '@/components/audio-player/audio-context';
+import { withBasePath } from '@/lib/config/base-path';
 
 export function useHlsPlayer() {
   const audioRef = useAudioRef();
@@ -29,7 +30,7 @@ export function useHlsPlayer() {
   const audioUrl = rawUrl
     ? rawUrl.startsWith('http') || rawUrl.startsWith('/')
       ? rawUrl
-      : `/api/media?key=${encodeURIComponent(rawUrl)}`
+      : withBasePath(`/api/media?key=${encodeURIComponent(rawUrl)}`)
     : null;
 
   /** Initialize HLS.js for .m3u8 streams or set native audio source. */

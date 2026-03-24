@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/table';
 import { AuditBriefTableActions } from '@/components/admin/audit-brief-table-actions';
 import type { AuditBriefData } from '@/lib/types';
+import { withBasePath } from '@/lib/config/base-path';
 
 interface PaginationInfo {
   page: number;
@@ -100,7 +101,7 @@ export function AuditBriefTable({
     }));
 
     try {
-      const response = await fetch('/api/audit-briefs/batch', {
+      const response = await fetch(withBasePath('/api/audit-briefs/batch'), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),

@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { withBasePath } from '@/lib/config/base-path';
 
 interface UserData {
   id: string;
@@ -64,7 +65,7 @@ export function UsersTable({ currentUserId }: UsersTableProps) {
     try {
       const params = new URLSearchParams({ page: String(page), limit: '20' });
       if (search) params.set('search', search);
-      const res = await fetch(`/api/users?${params}`);
+      const res = await fetch(withBasePath(`/api/users?${params}`));
       const data = await res.json();
       setUsers(data.data ?? []);
       setTotal(data.total ?? 0);
@@ -87,7 +88,7 @@ export function UsersTable({ currentUserId }: UsersTableProps) {
     if (!pendingRoleChange) return;
     setError(null);
     try {
-      const res = await fetch(`/api/users/${pendingRoleChange.userId}/role`, {
+      const res = await fetch(withBasePath(`/api/users/${pendingRoleChange.userId}/role`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: pendingRoleChange.role }),

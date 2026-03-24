@@ -19,6 +19,7 @@ import { Play, Pause, Volume2, VolumeX, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatTime } from '@/lib/format-time';
 import type { DomainColor } from '@/lib/domain-colors';
+import { withBasePath } from '@/lib/config/base-path';
 
 export interface EpisodePlayerProps {
   episodeId: string;
@@ -82,7 +83,7 @@ export function EpisodePlayer({
   const handleMarkComplete = async () => {
     setMarking(true);
     try {
-      const res = await fetch('/api/progress', {
+      const res = await fetch(withBasePath('/api/progress'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ graphId, episodeId }),

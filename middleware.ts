@@ -68,7 +68,9 @@ export default withAuth(
     // Admin route role enforcement
     if (isAdminRoute(pathname) && token) {
       if (token.role !== 'admin' && token.role !== 'superadmin') {
-        const response = NextResponse.redirect(new URL('/unauthorized', request.url));
+        const unauthorizedUrl = request.nextUrl.clone();
+        unauthorizedUrl.pathname = '/unauthorized';
+        const response = NextResponse.redirect(unauthorizedUrl);
         response.headers.set('x-request-id', requestId);
         return response;
       }

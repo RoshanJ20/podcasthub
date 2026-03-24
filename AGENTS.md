@@ -154,7 +154,7 @@ User visits protected route
 git clone <repo-url> the-audit-brief
 cd the-audit-brief
 npm install
-cp .env.example .env.local
+cp .env.example .env
 # Fill in DATABASE_URL, NEXTAUTH_SECRET, AZURE_BLOB_CONNECTION_STRING, etc.
 docker compose up -d          # Start PostgreSQL + Azurite
 npx prisma migrate dev        # Apply database migrations

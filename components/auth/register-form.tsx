@@ -10,6 +10,7 @@
 
 import { useState, useCallback } from 'react';
 import { signIn } from 'next-auth/react';
+import { withBasePath, BASE_PATH } from '@/lib/config/base-path';
 
 interface RegisterFormProps {
   redirectTo: string;
@@ -29,7 +30,7 @@ export function RegisterForm({ redirectTo }: RegisterFormProps) {
       setIsLoading(true);
 
       try {
-        const response = await fetch('/api/auth/register', {
+        const response = await fetch(withBasePath('/api/auth/register'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, password, displayName: displayName || undefined }),
@@ -50,11 +51,14 @@ export function RegisterForm({ redirectTo }: RegisterFormProps) {
 
         if (signInResult?.error) {
           // Registration succeeded but auto-login failed; redirect to login
-          window.location.href = '/login';
+          window.location.href = BASE_PATH + '/login';
           return;
         }
 
-        window.location.href = redirectTo;
+        // Redirect on success (prepend basePath for subpath deployment)
+        window.location.href = redirectTo.startsWith(BASE_PATH)
+          ? redirectTo
+          : BASE_PATH + redirectTo;
       } catch {
         setError('An unexpected error occurred. Please try again.');
       } finally {

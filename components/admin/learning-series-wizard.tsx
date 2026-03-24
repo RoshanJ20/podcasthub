@@ -29,6 +29,7 @@ import { WizardStepIndicator } from '@/components/admin/wizard-step-indicator';
 import { LinearEditor } from '@/components/learning-path/linear-editor';
 import { useGraphEditorStore } from '@/stores/graph-editor-store';
 import { LEARNING_SERIES_DOMAINS } from '@/lib/schemas/common';
+import { withBasePath } from '@/lib/config/base-path';
 
 /** Step labels for this wizard. */
 const STEPS = ['Details', 'Episodes'] as const;
@@ -141,7 +142,7 @@ export const LearningSeriesWizard = forwardRef<
 
       if (!graphId) {
         /* First pass — create graph and initialise episode store */
-        const res = await fetch('/api/learning-graphs', {
+        const res = await fetch(withBasePath('/api/learning-graphs'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
@@ -160,7 +161,7 @@ export const LearningSeriesWizard = forwardRef<
         setAutoSaveGraphId(graph.id);
       } else {
         /* Subsequent passes — update metadata only, preserve episode store state */
-        const res = await fetch(`/api/learning-graphs/${graphId}`, {
+        const res = await fetch(withBasePath(`/api/learning-graphs/${graphId}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),

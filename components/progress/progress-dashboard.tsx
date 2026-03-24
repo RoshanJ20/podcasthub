@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatTime } from '@/lib/format-time';
 import { createLogger } from '@/lib/logger';
+import { withBasePath } from '@/lib/config/base-path';
 
 const log = createLogger('progress-dashboard');
 
@@ -74,8 +75,8 @@ export function ProgressDashboard() {
     async function fetchData() {
       try {
         const [progressRes, bookmarksRes] = await Promise.all([
-          fetch('/api/progress'),
-          fetch('/api/bookmarks?limit=100'),
+          fetch(withBasePath('/api/progress')),
+          fetch(withBasePath('/api/bookmarks?limit=100')),
         ]);
         const progressData = await progressRes.json();
         const bookmarksData = await bookmarksRes.json();

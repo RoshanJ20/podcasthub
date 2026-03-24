@@ -20,6 +20,7 @@ import { Plus } from 'lucide-react';
 import { usePlayerStore } from '@/stores/player-store';
 import { formatTime } from '@/lib/format-time';
 import type { getDomainColor } from '@/lib/domain-colors';
+import { withBasePath } from '@/lib/config/base-path';
 
 /** Shape of a single bookmark record returned by the API. */
 export interface SidebarBookmark {
@@ -54,7 +55,7 @@ export function SidebarBookmarks({ auditBriefId, onSeek, domainColor }: SidebarB
   const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchBookmarks = useCallback(() => {
-    fetch(`/api/bookmarks?auditBriefId=${auditBriefId}`)
+    fetch(withBasePath(`/api/bookmarks?auditBriefId=${auditBriefId}`))
       .then((r) => (r.ok ? r.json() : { data: [] }))
       .then((d) => {
         const items = (d.data ?? []) as SidebarBookmark[];
@@ -76,7 +77,7 @@ export function SidebarBookmarks({ auditBriefId, onSeek, domainColor }: SidebarB
   const handleAdd = async () => {
     const ts = Math.floor(currentTime);
     try {
-      const res = await fetch('/api/bookmarks', {
+      const res = await fetch(withBasePath('/api/bookmarks'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
