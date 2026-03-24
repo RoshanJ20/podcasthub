@@ -61,7 +61,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydration guard: must re-render once client-side to read resolvedTheme
+  // Hydration guard: must re-render once client-side to read resolvedTheme
   useEffect(() => {
     setMounted(true);
   }, []);

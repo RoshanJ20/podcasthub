@@ -65,29 +65,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         )}
 
-        {isSsoConfigured && (
-          <>
-            <SsoButton redirectTo={redirectTo} />
+        {isSsoConfigured && <SsoButton redirectTo={redirectTo} />}
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">or</span>
-              </div>
-            </div>
+        {!isSsoConfigured && (
+          <>
+            <LoginForm redirectTo={redirectTo} />
+
+            <p className="text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{' '}
+              <Link href="/register" className="font-medium text-primary hover:underline">
+                Create one
+              </Link>
+            </p>
           </>
         )}
-
-        <LoginForm redirectTo={redirectTo} />
-
-        <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="font-medium text-primary hover:underline">
-            Create one
-          </Link>
-        </p>
       </LoginPageCard>
     </main>
   );

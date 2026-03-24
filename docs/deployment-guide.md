@@ -333,6 +333,10 @@ DATABASE_URL="postgresql://auditbrief:<PASSWORD>@psql-auditbrief.postgres.databa
 # Auth (NextAuth v4)
 NEXTAUTH_SECRET="<GENERATE_WITH: openssl rand -base64 32>"
 NEXTAUTH_URL="https://<YOUR_DOMAIN>"
+# CRITICAL: NEXTAUTH_URL must exactly match the URL users access in their browser
+# (e.g., https://auditbrief.yourorg.com). If this doesn't match the actual request
+# origin, NextAuth will reject all sign-in attempts with a CSRF verification error.
+# Do NOT include a trailing slash. Do NOT use localhost in production.
 
 # Azure Blob Storage
 AZURE_BLOB_CONNECTION_STRING="<FROM_STEP_4.7>"
@@ -573,8 +577,19 @@ Skip this section if SSO is not needed. Users can still log in with email/passwo
 1. Go to **Azure Portal** > **Microsoft Entra ID** > **App registrations** > **New registration**
 2. **Name:** `The Audit Brief`
 3. **Supported account types:** Single tenant (this organization only)
-4. **Redirect URI:** Web — `https://<YOUR_DOMAIN>/api/auth/callback/azure-ad`
+4. **Redirect URI:**
+   - **Platform:** Select **"Web"** (NOT "Single-page application")
+   - **URL:** `https://<YOUR_DOMAIN>/api/auth/callback/azure-ad`
 5. Click **Register**
+
+> **IMPORTANT:** The platform MUST be **"Web"**. The Audit Brief is a server-rendered
+> Next.js application that uses a confidential OAuth client (client ID + client secret).
+> Selecting "Single-page application (SPA)" will cause OAuth errors because the SPA platform
+> uses PKCE without a client secret, which is incompatible with NextAuth's Azure AD provider.
+>
+> **If you already registered with the wrong platform:** Go to **Authentication** >
+> **Platform configurations**, remove the SPA entry, and add a new **Web** platform with
+> the correct redirect URI.
 
 ### 11.2 Configure the App
 

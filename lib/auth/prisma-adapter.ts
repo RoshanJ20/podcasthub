@@ -3,19 +3,28 @@
  *
  * Key responsibilities:
  * - Wraps @next-auth/prisma-adapter to map NextAuth's `name` field to our `displayName` column
+ * - Handles P2002 unique constraint violations in createUser for concurrent SSO race conditions
  * - Avoids renaming the database column and breaking existing queries
  *
  * Dependencies:
  * - @next-auth/prisma-adapter (PrismaAdapter)
- * - @prisma/client (PrismaClient)
+ * - @prisma/client (PrismaClient, Prisma)
+ * - @/lib/auth/prisma-adapter-utils (mapUserToAdapterUser)
+ * - @/lib/logger (createLogger)
  */
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import type { PrismaClient } from '@prisma/client';
-import type { Adapter, AdapterUser } from 'next-auth/adapters';
+import { Prisma } from '@prisma/client';
+import type { Adapter } from 'next-auth/adapters';
+import { mapUserToAdapterUser } from '@/lib/auth/prisma-adapter-utils';
+import { createLogger } from '@/lib/logger';
+
+const adapterLog = createLogger('prisma-adapter');
 
 /**
  * Creates a custom Prisma adapter that maps NextAuth's `name` property
- * to the `displayName` column in the database.
+ * to the `displayName` column in the database. Handles P2002 unique
+ * constraint violations in createUser for concurrent SSO login race conditions.
  *
  * @param prisma - The Prisma client instance.
  * @returns An Adapter compatible with NextAuth v4.
@@ -32,54 +41,57 @@ export function createPrismaAdapter(prisma: PrismaClient): Adapter {
       emailVerified?: Date | null;
       image?: string | null;
     }) {
-      const user = await prisma.user.create({
-        data: {
-          email: data.email,
-          displayName: data.name ?? null,
-          emailVerified: data.emailVerified,
-          image: data.image ?? null,
-        },
-      });
+      try {
+        const user = await prisma.user.create({
+          data: {
+            email: data.email,
+            displayName: data.name ?? null,
+            emailVerified: data.emailVerified,
+            image: data.image ?? null,
+          },
+        });
 
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.displayName,
-        emailVerified: user.emailVerified,
-        image: user.image,
-        role: user.role,
-        displayName: user.displayName,
-      } as AdapterUser;
+        return mapUserToAdapterUser(user);
+      } catch (error) {
+        // P2002: unique constraint violation — a concurrent request already
+        // created this user (SSO race condition with multiple tabs).
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          adapterLog.warn(
+            { email: data.email },
+            'User already exists (concurrent P2002) — returning existing user'
+          );
+
+          const existingUser = await prisma.user.findUnique({
+            where: { email: data.email },
+          });
+
+          if (!existingUser) {
+            adapterLog.error(
+              { email: data.email },
+              'P2002 caught but user not found on retry lookup'
+            );
+            throw error;
+          }
+
+          return mapUserToAdapterUser(existingUser);
+        }
+
+        throw error;
+      }
     },
 
     async getUser(id) {
       const user = await prisma.user.findUnique({ where: { id } });
       if (!user) return null;
 
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.displayName,
-        emailVerified: user.emailVerified,
-        image: user.image,
-        role: user.role,
-        displayName: user.displayName,
-      } as AdapterUser;
+      return mapUserToAdapterUser(user);
     },
 
     async getUserByEmail(email) {
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) return null;
 
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.displayName,
-        emailVerified: user.emailVerified,
-        image: user.image,
-        role: user.role,
-        displayName: user.displayName,
-      } as AdapterUser;
+      return mapUserToAdapterUser(user);
     },
 
     async getUserByAccount({ providerAccountId, provider }) {
@@ -95,16 +107,7 @@ export function createPrismaAdapter(prisma: PrismaClient): Adapter {
 
       if (!account?.user) return null;
 
-      const user = account.user;
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.displayName,
-        emailVerified: user.emailVerified,
-        image: user.image,
-        role: user.role,
-        displayName: user.displayName,
-      } as AdapterUser;
+      return mapUserToAdapterUser(account.user);
     },
 
     async updateUser(data) {
@@ -120,15 +123,7 @@ export function createPrismaAdapter(prisma: PrismaClient): Adapter {
         data: updateData,
       });
 
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.displayName,
-        emailVerified: user.emailVerified,
-        image: user.image,
-        role: user.role,
-        displayName: user.displayName,
-      } as AdapterUser;
+      return mapUserToAdapterUser(user);
     },
   };
 }

@@ -10,6 +10,7 @@
  *
  * @route /register
  */
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { RegisterForm } from '@/components/auth/register-form';
 import { LoginPageCard } from '@/components/auth/login-page-card';
@@ -32,6 +33,11 @@ interface RegisterPageProps {
  * @returns The full-screen centered registration card.
  */
 export default async function RegisterPage({ searchParams }: RegisterPageProps) {
+  // Registration is disabled when SSO is configured — redirect to login
+  if (process.env.AZURE_AD_CLIENT_ID) {
+    redirect('/login');
+  }
+
   const params = await searchParams;
   const redirectTo = params.redirectTo ?? '/';
 

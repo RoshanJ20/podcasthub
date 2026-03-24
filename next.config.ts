@@ -33,7 +33,6 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '20mb',
     },
-    middlewareClientMaxBodySize: '20mb',
   },
   images: {
     dangerouslyAllowSVG: true,
@@ -67,7 +66,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  turbopack: {},
 };
 
 export default nextConfig;

@@ -4,7 +4,7 @@
  * Key responsibilities:
  * - Provides a single PrismaClient instance across the application
  * - Prevents connection exhaustion in development (Next.js hot reloading)
- * - Configures the PostgreSQL driver adapter for Prisma v7
+ * - Configures the PostgreSQL driver adapter for Prisma v6
  * - Instruments all queries with slow query detection via $extends
  *
  * @example
@@ -32,7 +32,6 @@ function createPrismaClient(): PrismaClient {
   };
   // Pass config directly to PrismaPg so it can create both query and transaction
   // connections with the full connection string (including password for SASL auth).
-  // @ts-expect-error — pg PoolConfig type mismatch between @types/pg and @prisma/adapter-pg
   const adapter = new PrismaPg(poolConfig);
   const baseClient = new PrismaClient({
     adapter,

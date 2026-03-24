@@ -113,7 +113,7 @@ export function BulletinViewer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer returns non-memoizable functions by design; safe here as virtualizer is only used within this component
+  // useVirtualizer returns non-memoizable functions by design; safe here as virtualizer is only used within this component
   const virtualizer = useVirtualizer({
     count: numPages,
     getScrollElement: () => scrollContainerRef.current,

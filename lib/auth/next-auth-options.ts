@@ -3,15 +3,20 @@
  *
  * Key responsibilities:
  * - Configures Credentials provider for email/password login (bcrypt verification)
- * - Configures Azure AD provider for Microsoft Entra ID SSO
+ * - Configures Azure AD provider for Microsoft Entra ID SSO (with email fallback)
  * - Injects user role into JWT and session via callbacks
- * - Handles SSO account linking in the signIn callback
+ * - Handles SSO account linking in the signIn callback (with P2002 race handling)
  * - Uses custom Prisma adapter for name ↔ displayName mapping
+ * - Delegates NextAuth internal errors to Pino structured logger
+ * - Validates auth-critical environment variables at startup
  *
  * Dependencies:
  * - next-auth (NextAuthOptions)
  * - @/lib/auth/password (verifyPassword)
  * - @/lib/auth/prisma-adapter (createPrismaAdapter)
+ * - @/lib/auth/azure-ad-utils (extractAzureAdEmail)
+ * - @/lib/auth/nextauth-logger (buildNextAuthLogger)
+ * - @/lib/auth/env-validation (validateAuthEnvironment)
  * - @/lib/db (prisma)
  * - @/lib/logger (createLogger)
  */
@@ -20,11 +25,22 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import AzureADProvider from 'next-auth/providers/azure-ad';
 import { verifyPassword } from '@/lib/auth/password';
 import { createPrismaAdapter } from '@/lib/auth/prisma-adapter';
+import { extractAzureAdEmail } from '@/lib/auth/azure-ad-utils';
+import { buildNextAuthLogger } from '@/lib/auth/nextauth-logger';
+import { validateAuthEnvironment } from '@/lib/auth/env-validation';
+import { linkAzureAdAccount } from '@/lib/auth/account-linking';
 import { prisma } from '@/lib/db';
 import { createLogger } from '@/lib/logger';
 import { revokeToken, isTokenRevoked } from '@/lib/auth/token-revocation';
 
 const log = createLogger('next-auth');
+
+/* Validate auth environment variables at module load time.
+ * Throws on missing/invalid required vars; logs warnings for production misconfigs. */
+if (process.env.NODE_ENV !== 'test') {
+  const warnings = validateAuthEnvironment();
+  warnings.forEach((warning) => log.warn(warning));
+}
 
 /**
  * Builds the list of NextAuth providers based on available environment variables.
@@ -83,6 +99,31 @@ function buildProviders(): NextAuthOptions['providers'] {
         clientId: process.env.AZURE_AD_CLIENT_ID,
         clientSecret: process.env.AZURE_AD_CLIENT_SECRET,
         tenantId: process.env.AZURE_AD_TENANT_ID,
+        /**
+         * Custom profile callback to handle Azure AD tenants that return
+         * the email in `preferred_username` or `mail` instead of `email`.
+         * Without this, SSO fails with a 500 error when the email field is empty.
+         */
+        profile(profile) {
+          // AzureADProfile extends Record<string, any>, safe to access arbitrary fields
+          const email = extractAzureAdEmail(profile);
+          if (!email) {
+            log.error(
+              { profileFields: Object.keys(profile) },
+              'Azure AD profile contains no usable email field'
+            );
+            throw new Error('Azure AD profile has no email, preferred_username, or mail field');
+          }
+
+          return {
+            id: profile.sub,
+            name: profile.name ?? null,
+            email,
+            image: null,
+            role: 'public',
+            displayName: profile.name ?? null,
+          };
+        },
       })
     );
   }
@@ -96,6 +137,7 @@ function buildProviders(): NextAuthOptions['providers'] {
 export const authOptions: NextAuthOptions = {
   adapter: createPrismaAdapter(prisma),
   providers: buildProviders(),
+  logger: buildNextAuthLogger(log),
 
   session: {
     strategy: 'jwt',
@@ -130,12 +172,20 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (account?.provider === 'azure-ad' && token.userId) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.userId },
-          select: { role: true },
-        });
-        if (dbUser) {
-          token.role = dbUser.role;
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.userId },
+            select: { role: true },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+          }
+        } catch (roleError) {
+          log.error(
+            { error: roleError, userId: token.userId },
+            'Failed to look up user role during JWT callback — using default role'
+          );
+          // Keep whatever role was already assigned (from user object or default 'public')
         }
       }
 
@@ -175,44 +225,8 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!existingAccount) {
-            try {
-              await prisma.account.create({
-                data: {
-                  userId: existingUser.id,
-                  type: account.type,
-                  provider: account.provider,
-                  providerAccountId: account.providerAccountId,
-                  access_token: account.access_token,
-                  refresh_token: account.refresh_token,
-                  expires_at: account.expires_at,
-                  token_type: account.token_type,
-                  scope: account.scope,
-                  id_token: account.id_token,
-                  session_state: account.session_state as string | null,
-                },
-              });
-
-              const newAuthProvider = existingUser.passwordHash ? 'both' : 'entra_id';
-              await prisma.user.update({
-                where: { id: existingUser.id },
-                data: {
-                  entraId: account.providerAccountId,
-                  authProvider: newAuthProvider,
-                  ...(existingUser.displayName ? {} : { displayName: user.name }),
-                },
-              });
-
-              log.info(
-                { userId: existingUser.id, email: user.email },
-                'Linked existing account with Azure AD'
-              );
-            } catch (linkError) {
-              log.error(
-                { error: linkError, email: user.email, provider: account.provider },
-                'Failed to link Azure AD account'
-              );
-              return false;
-            }
+            const linked = await linkAzureAdAccount(existingUser, account, user.name);
+            if (!linked) return false;
           }
 
           // Set user.id to existing user so JWT callback gets the right ID

@@ -20,7 +20,7 @@ Internal enterprise audio platform for managing, distributing, and tracking audi
 
 | Layer         | Technology                                | Purpose                                               |
 | ------------- | ----------------------------------------- | ----------------------------------------------------- |
-| Framework     | Next.js 16 (App Router), TypeScript 5     | Full-stack React framework with SSR/SSG               |
+| Framework     | Next.js 15 (App Router), TypeScript 5     | Full-stack React framework with SSR/SSG               |
 | Styling       | Tailwind CSS 4, shadcn/ui (Radix)         | Utility-first CSS with accessible component library   |
 | State         | Zustand                                   | Client-side state (audio player, graph editor)        |
 | Forms         | React Hook Form + Zod                     | Form state management and validation                  |
@@ -29,7 +29,7 @@ Internal enterprise audio platform for managing, distributing, and tracking audi
 | Drag & Drop   | @dnd-kit                                  | Sortable lists (audit brief ordering, linear editor)  |
 | PDF Viewer    | react-pdf (pdfjs-dist)                    | In-app attachment/document viewing                    |
 | Audio         | HLS.js                                    | Adaptive audio streaming with native fallback         |
-| Database      | PostgreSQL 16, Prisma ORM (v7)            | Data persistence, migrations, pgvector search         |
+| Database      | PostgreSQL 16, Prisma ORM (v6)            | Data persistence, migrations, pgvector search         |
 | Auth          | NextAuth v4 (Credentials + Azure AD)      | JWT session strategy, HttpOnly cookies, SSO support   |
 | Storage       | Azurite (dev) / Azure Blob Storage (prod) | File uploads (audio, images, PDFs) via Azure Blob API |
 | Logging       | Pino                                      | Structured JSON logging with child loggers            |
@@ -38,7 +38,7 @@ Internal enterprise audio platform for managing, distributing, and tracking audi
 | Notifications | Sonner                                    | Toast notifications                                   |
 | Icons         | Lucide React                              | Consistent icon set                                   |
 | Theming       | next-themes                               | Dark/light mode switching                             |
-| Testing       | Vitest, RTL, Playwright, MSW              | Unit, component, E2E tests (449 tests)                |
+| Testing       | Vitest, RTL, Playwright, MSW              | Unit, component, E2E tests (706 tests)                |
 | Linting       | ESLint 9 (flat config), Prettier          | Code quality and formatting                           |
 | Git Hooks     | Husky + lint-staged                       | Pre-commit lint/format enforcement                    |
 | Monitoring    | Sentry                                    | Error tracking and performance monitoring             |
@@ -56,7 +56,7 @@ graph TB
 
     subgraph "Azure VM (Ubuntu 22.04)"
         Nginx["Nginx<br/>(SSL termination, reverse proxy)"]
-        NextJS["Next.js 16 Standalone<br/>(Node.js 20, pm2, port 3103)"]
+        NextJS["Next.js 15 Standalone<br/>(Node.js 20, pm2, port 3103)"]
         Middleware["NextAuth Middleware<br/>(Session + Route Protection)"]
     end
 
@@ -177,9 +177,13 @@ The app uses **NextAuth v4** with two authentication providers:
 To enable SSO, register an application in Microsoft Entra ID:
 
 1. Go to **Azure Portal > Entra ID > App Registrations > New Registration**.
-2. Set the **Redirect URI** to `https://your-domain.com/api/auth/callback/azure-ad` (use `http://localhost:3000/api/auth/callback/azure-ad` for local dev).
+2. Set the **Redirect URI**:
+   - **Platform:** Select **"Web"** (NOT "Single-page application")
+   - **URL:** `https://your-domain.com/api/auth/callback/azure-ad` (use `http://localhost:3000/api/auth/callback/azure-ad` for local dev)
 3. Under **Certificates & Secrets**, create a new client secret.
-4. Set the following environment variables:
+
+> **Warning:** This is a server-rendered application using a confidential OAuth client.
+> The Entra ID app registration platform MUST be "Web", not "SPA". 4. Set the following environment variables:
 
 ```bash
 AZURE_AD_CLIENT_ID=<Application (client) ID>
