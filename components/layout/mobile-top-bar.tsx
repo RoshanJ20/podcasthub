@@ -18,7 +18,7 @@
  */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, Library, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -28,7 +28,13 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { SidebarNavItem } from '@/components/layout/sidebar-nav-item';
 import { SidebarNowPlaying } from '@/components/layout/sidebar-now-playing';
 import { SidebarUserProfile } from '@/components/layout/sidebar-user-profile';
-import { mainLinks, libraryLinks, adminLinks, isRouteActive } from '@/lib/navigation-config';
+import {
+  mainLinks,
+  libraryLinks,
+  personalLinks,
+  adminLinks,
+  isRouteActive,
+} from '@/lib/navigation-config';
 
 /**
  * Props for the MobileTopBar component.
@@ -59,12 +65,6 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydration guard: must re-render once client-side to read resolvedTheme
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   /** Closes the navigation drawer. Passed to every SidebarNavItem. */
   const closeDrawer = () => setOpen(false);
@@ -77,7 +77,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
   return (
     <header
       data-testid="mobile-top-bar"
-      className="flex h-12 items-center justify-between border-b border-border bg-background px-3 md:hidden"
+      className="flex h-12 items-center justify-between border-b border-border/80 bg-background/95 px-3 backdrop-blur-sm md:hidden"
     >
       {/* ── Left: hamburger drawer trigger ─────────────────────────────── */}
       <Sheet open={open} onOpenChange={setOpen}>
@@ -98,7 +98,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
           <div className="flex h-full flex-col overflow-hidden">
             {/* Drawer header */}
             <div className="flex items-center gap-2 px-4 py-4">
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-orange-500">
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary">
                 <Library className="size-4 text-white" />
               </div>
               <span className="text-sm font-semibold tracking-tight">The Audit Brief</span>
@@ -127,6 +127,22 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
                 Library
               </p>
               {libraryLinks.map((link) => (
+                <SidebarNavItem
+                  key={link.href}
+                  href={link.href}
+                  label={link.label}
+                  icon={link.icon}
+                  isActive={isRouteActive(link.href, pathname)}
+                  onClick={closeDrawer}
+                />
+              ))}
+
+              <div className="my-1" />
+
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-muted-foreground">
+                Personal
+              </p>
+              {personalLinks.map((link) => (
                 <SidebarNavItem
                   key={link.href}
                   href={link.href}
@@ -181,7 +197,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
 
       {/* ── Centre: logo + app name ─────────────────────────────────────── */}
       <div className="flex items-center gap-2">
-        <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-orange-500">
+        <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary">
           <Library className="size-3.5 text-white" />
         </div>
         <span className="text-sm font-semibold tracking-tight">The Audit Brief</span>
@@ -191,13 +207,11 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
       <Button
         variant="ghost"
         size="icon"
-        aria-label={
-          mounted && resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
-        }
+        aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         onClick={handleThemeToggle}
         className="size-9"
       >
-        {mounted && resolvedTheme === 'dark' ? (
+        {resolvedTheme === 'dark' ? (
           <Sun className="size-5" />
         ) : (
           <Moon className="size-5" />

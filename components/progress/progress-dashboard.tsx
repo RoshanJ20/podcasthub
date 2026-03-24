@@ -107,7 +107,7 @@ export function ProgressDashboard() {
 
   return (
     <Tabs defaultValue="in-progress" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid h-10 w-full grid-cols-4 rounded-xl border border-border/70 bg-card p-1">
         <TabsTrigger value="in-progress">In Progress</TabsTrigger>
         <TabsTrigger value="completed">Completed</TabsTrigger>
         <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
@@ -117,7 +117,7 @@ export function ProgressDashboard() {
       {/* In Progress */}
       <TabsContent value="in-progress" className="space-y-4">
         {grouped.length === 0 ? (
-          <Card>
+          <Card className="border-dashed">
             <CardContent className="pt-6">
               <p className="text-muted-foreground text-center">
                 No learning series in progress. Start exploring!
@@ -149,7 +149,7 @@ export function ProgressDashboard() {
 
       {/* Completed */}
       <TabsContent value="completed" className="space-y-4">
-        <Card>
+        <Card className="border-dashed">
           <CardContent className="pt-6">
             <p className="text-muted-foreground text-center">
               Fully completed paths will appear here once all episodes in a path are done.
@@ -161,7 +161,7 @@ export function ProgressDashboard() {
       {/* Bookmarks */}
       <TabsContent value="bookmarks" className="space-y-4">
         {bookmarks.length === 0 ? (
-          <Card>
+          <Card className="border-dashed">
             <CardContent className="pt-6">
               <p className="text-muted-foreground text-center">
                 No bookmarks yet. Bookmark moments while listening!
@@ -187,7 +187,7 @@ export function ProgressDashboard() {
 
       {/* History */}
       <TabsContent value="history" className="space-y-4">
-        <Card>
+        <Card className="border-dashed">
           <CardContent className="pt-6">
             <p className="text-muted-foreground text-center">
               Your recent activity will appear here.

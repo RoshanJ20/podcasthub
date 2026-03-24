@@ -11,6 +11,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Search } from 'lucide-react';
 import { PathCard } from './path-card';
 import { StaggeredGrid, StaggeredGridItem } from '@/components/ui/staggered-grid';
+import { Input } from '@/components/ui/input';
 
 interface LearningPath {
   id: string;
@@ -65,19 +66,26 @@ export function PathListClient({ paths }: PathListClientProps) {
   return (
     <>
       {/* Header: title left, search right — matches bulletins page */}
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Learning Series</h1>
-        <div className="relative w-full sm:w-auto sm:min-w-55">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search..."
-            className="h-9 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
-          />
+      <section className="mb-8 rounded-2xl border border-border/70 bg-card/85 p-5 shadow-[0_10px_35px_-30px_oklch(45.6%_0.311_264.1/.65)]">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+              Library
+            </p>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight">Learning Series</h1>
+          </div>
+          <div className="relative w-full sm:w-auto sm:min-w-55">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className="h-9 w-full pl-9"
+            />
+          </div>
         </div>
-      </div>
+      </section>
 
       <StaggeredGrid className="grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filteredPaths.map((path) => (

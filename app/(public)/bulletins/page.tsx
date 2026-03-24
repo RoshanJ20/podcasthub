@@ -125,11 +125,18 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   }));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Technical Content</h1>
-        <LibraryFilters />
-      </div>
+    <div className="space-y-6 py-2">
+      <section className="rounded-2xl border border-border/70 bg-card/85 p-5 shadow-[0_10px_35px_-30px_oklch(45.6%_0.311_264.1/.65)]">
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+              Library
+            </p>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight">Technical Content</h1>
+          </div>
+          <LibraryFilters />
+        </div>
+      </section>
 
       <AuditBriefGrid auditBriefs={auditBriefData} />
 

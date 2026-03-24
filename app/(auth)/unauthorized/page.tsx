@@ -19,17 +19,17 @@ import Link from 'next/link';
  */
 export default function UnauthorizedPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center space-y-4">
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,oklch(95%_0.02_264/.4),transparent_50%),var(--background)] px-4">
+      <div className="space-y-4 rounded-2xl border border-border/70 bg-card/95 p-8 text-center shadow-[0_8px_30px_-24px_oklch(45.6%_0.311_264.1/.65)]">
         <h1 className="text-6xl font-bold text-muted-foreground">403</h1>
-        <h2 className="text-2xl font-semibold">Access Denied</h2>
-        <p className="text-muted-foreground max-w-md">
+        <h2 className="text-2xl font-semibold tracking-tight">Access Denied</h2>
+        <p className="max-w-md text-muted-foreground">
           You do not have permission to access this page. If you believe this is an error, please
           contact your administrator.
         </p>
         <Link
           href="/"
-          className="inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
         >
           Return to Home
         </Link>

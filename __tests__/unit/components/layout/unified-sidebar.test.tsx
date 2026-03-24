@@ -48,6 +48,21 @@ const DEFAULT_PROPS = {
 beforeEach(() => {
   cleanup();
   vi.mocked(usePlayerStore).mockReturnValue(null as unknown as ReturnType<typeof usePlayerStore>);
+  if (!window.localStorage || typeof window.localStorage.removeItem !== 'function') {
+    const store = new Map<string, string>();
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => {
+          store.set(key, value);
+        },
+        removeItem: (key: string) => {
+          store.delete(key);
+        },
+      },
+    });
+  }
   window.localStorage.removeItem('sidebar-collapsed');
 });
 
@@ -58,6 +73,13 @@ describe('UnifiedSidebar', () => {
     it('renders the app name "The Audit Brief"', () => {
       const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} />);
       expect(container.textContent).toContain('The Audit Brief');
+    });
+
+    it('uses tokenized brand styling for the logo mark (no hardcoded orange)', () => {
+      const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} />);
+      const sidebar = container.querySelector('[data-testid="unified-sidebar"]');
+      expect(sidebar?.querySelector('.bg-primary')).not.toBeNull();
+      expect(sidebar?.querySelector('.bg-orange-500')).toBeNull();
     });
   });
 

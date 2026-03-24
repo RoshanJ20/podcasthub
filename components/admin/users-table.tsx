@@ -122,11 +122,7 @@ export function UsersTable({ currentUserId }: UsersTableProps) {
           placeholder="Search by name or email..."
           className="max-w-sm"
         />
-        <Button
-          type="submit"
-          variant="outline"
-          className="border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary"
-        >
+        <Button type="submit" variant="outline">
           Search
         </Button>
       </form>
@@ -144,8 +140,8 @@ export function UsersTable({ currentUserId }: UsersTableProps) {
         <div className="text-center py-8 text-muted-foreground">Loading users...</div>
       ) : (
         <>
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="border-b border-border px-5 py-3.5">
+          <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
+            <div className="border-b border-border/70 px-5 py-3.5">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 {total} user{total !== 1 ? 's' : ''} total
               </p>
@@ -171,7 +167,7 @@ export function UsersTable({ currentUserId }: UsersTableProps) {
                 {users.map((user) => (
                   <TableRow
                     key={user.id}
-                    className="border-border/30 transition-colors hover:bg-secondary/30"
+                    className="border-border/60 transition-colors hover:bg-secondary/35"
                   >
                     <TableCell className="py-3.5">{user.email}</TableCell>
                     <TableCell className="py-3.5">{user.name ?? '-'}</TableCell>
@@ -213,7 +209,6 @@ export function UsersTable({ currentUserId }: UsersTableProps) {
               size="sm"
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary"
             >
               Previous
             </Button>
@@ -222,7 +217,6 @@ export function UsersTable({ currentUserId }: UsersTableProps) {
               size="sm"
               disabled={page * 20 >= total}
               onClick={() => setPage((p) => p + 1)}
-              className="border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-secondary"
             >
               Next
             </Button>
@@ -232,8 +226,8 @@ export function UsersTable({ currentUserId }: UsersTableProps) {
 
       {/* Role change confirmation dialog */}
       {pendingRoleChange && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background border rounded-lg p-6 max-w-md mx-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
+          <div className="mx-4 max-w-md rounded-xl border border-border/70 bg-card p-6">
             <h3 className="text-lg font-semibold mb-2">Confirm Role Change</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Are you sure you want to change this user&apos;s role to{' '}

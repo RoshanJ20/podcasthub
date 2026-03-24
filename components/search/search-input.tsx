@@ -35,7 +35,7 @@ export function SearchInput({ onSearch, isLoading }: SearchInputProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border border-border/70 bg-card/85 p-4">
       <div className="flex gap-2">
         <Input
           value={query}

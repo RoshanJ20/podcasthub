@@ -36,16 +36,19 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   const redirectTo = params.redirectTo ?? '/';
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background">
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,oklch(95%_0.02_264/.45),transparent_46%),var(--background)] px-4 py-10">
       <LoginPageCard>
-        <div className="text-center">
-          <h1 className="text-lg font-semibold tracking-tight">The Audit Brief</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Create your account</p>
+        <div className="space-y-2 text-center">
+          <p className="inline-flex rounded-full border border-border/80 bg-secondary/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+            New Member Setup
+          </p>
+          <h1 className="text-xl font-semibold tracking-tight">The Audit Brief</h1>
+          <p className="text-sm text-muted-foreground">Create your account</p>
         </div>
         <RegisterForm redirectTo={redirectTo} />
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
             Sign in
           </Link>
         </p>

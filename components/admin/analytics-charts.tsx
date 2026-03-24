@@ -28,7 +28,7 @@ import { createLogger } from '@/lib/logger';
 
 const log = createLogger('analytics-charts');
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const COLORS = ['#000cff', '#20a4f3', '#2f9e44', '#f59f00', '#e03131', '#6c5ce7'];
 
 interface AnalyticsData {
   totalAuditBriefs: number;
@@ -97,42 +97,42 @@ export function AnalyticsCharts() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Card className="rounded-xl border border-border bg-card">
+        <Card className="rounded-xl border border-border/70 bg-card">
           <CardContent className="p-5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Total Listens
             </p>
-            <p className="text-2xl font-semibold tracking-tight mt-1">
+            <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
               <AnimatedNumber value={data.totalListens} />
             </p>
           </CardContent>
         </Card>
-        <Card className="rounded-xl border border-border bg-card">
+        <Card className="rounded-xl border border-border/70 bg-card">
           <CardContent className="p-5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Unique Listeners
             </p>
-            <p className="text-2xl font-semibold tracking-tight mt-1">
+            <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
               <AnimatedNumber value={data.uniqueListeners} />
             </p>
           </CardContent>
         </Card>
-        <Card className="rounded-xl border border-border bg-card">
+        <Card className="rounded-xl border border-border/70 bg-card">
           <CardContent className="p-5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Total Audit Briefs
             </p>
-            <p className="text-2xl font-semibold tracking-tight mt-1">
+            <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
               <AnimatedNumber value={data.totalAuditBriefs} />
             </p>
           </CardContent>
         </Card>
-        <Card className="rounded-xl border border-border bg-card">
+        <Card className="rounded-xl border border-border/70 bg-card">
           <CardContent className="p-5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Learning Paths
             </p>
-            <p className="text-2xl font-semibold tracking-tight mt-1">
+            <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
               <AnimatedNumber value={data.totalPaths} />
             </p>
           </CardContent>
@@ -140,8 +140,8 @@ export function AnalyticsCharts() {
       </div>
 
       {/* Domain Pie Chart */}
-      <Card className="rounded-xl border border-border bg-card">
-        <CardHeader className="border-b border-border px-5 py-3.5">
+      <Card className="rounded-xl border border-border/70 bg-card">
+        <CardHeader className="border-b border-border/70 px-5 py-3.5">
           <CardTitle className="text-sm font-semibold">Listens by Domain</CardTitle>
         </CardHeader>
         <CardContent className="p-5">
@@ -172,8 +172,8 @@ export function AnalyticsCharts() {
       </Card>
 
       {/* Monthly Trends */}
-      <Card className="rounded-xl border border-border bg-card">
-        <CardHeader className="border-b border-border px-5 py-3.5">
+      <Card className="rounded-xl border border-border/70 bg-card">
+        <CardHeader className="border-b border-border/70 px-5 py-3.5">
           <CardTitle className="text-sm font-semibold">Monthly Trends</CardTitle>
         </CardHeader>
         <CardContent className="p-5">
@@ -188,7 +188,7 @@ export function AnalyticsCharts() {
                 <Tooltip />
                 <Bar
                   dataKey="count"
-                  fill="#3b82f6"
+                  fill="#000cff"
                   radius={[4, 4, 0, 0]}
                   isAnimationActive={true}
                   animationDuration={800}
@@ -200,8 +200,8 @@ export function AnalyticsCharts() {
       </Card>
 
       {/* Top Topics */}
-      <Card className="rounded-xl border border-border bg-card">
-        <CardHeader className="border-b border-border px-5 py-3.5">
+      <Card className="rounded-xl border border-border/70 bg-card">
+        <CardHeader className="border-b border-border/70 px-5 py-3.5">
           <CardTitle className="text-sm font-semibold">Top Topics</CardTitle>
         </CardHeader>
         <CardContent className="p-5">
@@ -216,7 +216,7 @@ export function AnalyticsCharts() {
                 <Tooltip />
                 <Bar
                   dataKey="count"
-                  fill="#10b981"
+                  fill="#20a4f3"
                   isAnimationActive={true}
                   animationDuration={800}
                 />

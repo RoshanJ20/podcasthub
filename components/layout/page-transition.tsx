@@ -56,10 +56,10 @@ export function PageTransition({ children, className }: PageTransitionProps) {
   return (
     <motion.div
       key={pathname}
-      initial="hidden"
+      initial={false}
       animate="visible"
       variants={variants.fadeUp}
-      transition={transitions.slow}
+      transition={transitions.normal}
       className={className}
     >
       {children}

@@ -44,7 +44,7 @@ export function PathCard({
 
   return (
     <Link href={`/learning-path/${id}` as string}>
-      <div className="group flex overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-md">
+      <div className="group flex overflow-hidden rounded-xl border border-border/70 bg-card transition-[box-shadow,border-color] duration-200 hover:border-primary/25 hover:shadow-[0_10px_30px_-26px_oklch(45.6%_0.311_264.1/.6)]">
         {/* Domain-colored left strip — expands on hover to reveal chevron */}
         <div
           className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"
@@ -77,7 +77,7 @@ export function PathCard({
           <div className="mt-2">
             <div className="mb-1 flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               <span>{episodeCount} episodes</span>
-              <span>{progress}% complete</span>
+              <span className="tabular-nums">{progress}% complete</span>
             </div>
             <div className="h-1.5 w-full rounded-full bg-border/40">
               <div

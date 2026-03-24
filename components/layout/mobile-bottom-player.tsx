@@ -62,7 +62,7 @@ export function MobileBottomPlayer() {
   return (
     <div
       data-testid="mobile-bottom-player"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/70 bg-background/95 backdrop-blur-sm md:hidden"
     >
       {/* ── Slim progress bar ─────────────────────────────────────────── */}
       <div
@@ -71,7 +71,7 @@ export function MobileBottomPlayer() {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="Playback progress"
-        className="h-0.5 w-full bg-secondary"
+        className="h-0.5 w-full bg-muted"
       >
         <div
           className="h-full bg-primary transition-[width] duration-150 ease-out"

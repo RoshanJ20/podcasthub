@@ -49,7 +49,7 @@ export default function NewLearningPathPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -62,12 +62,19 @@ export default function NewLearningPathPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={handleBack} aria-label="Go back">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-xl font-semibold tracking-tight">Upload New Learning Series</h1>
-      </div>
+      <section className="rounded-2xl border border-border/70 bg-card/85 p-5 shadow-[0_10px_35px_-30px_oklch(45.6%_0.311_264.1/.65)]">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={handleBack} aria-label="Go back">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+              Admin Console
+            </p>
+            <h1 className="text-xl font-semibold tracking-tight">Upload New Learning Series</h1>
+          </div>
+        </div>
+      </section>
 
       <LearningSeriesWizard
         ref={wizardRef}

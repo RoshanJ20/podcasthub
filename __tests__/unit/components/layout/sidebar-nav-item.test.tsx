@@ -44,6 +44,15 @@ describe('SidebarNavItem', () => {
       expect(anchor?.getAttribute('aria-current')).toBe('page');
     });
 
+    it('uses primary intent styles when active', () => {
+      const { container } = render(
+        <SidebarNavItem href="/" label="Home" icon={Home} isActive={true} />
+      );
+      const anchor = container.querySelector('a');
+      expect(anchor?.className).toContain('bg-primary/10');
+      expect(anchor?.className).toContain('text-primary');
+    });
+
     it('does not set aria-current when inactive', () => {
       const { container } = render(
         <SidebarNavItem href="/" label="Home" icon={Home} isActive={false} />
