@@ -18,7 +18,7 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Menu, Library, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -59,6 +59,12 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydration guard: must re-render once client-side to read resolvedTheme
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   /** Closes the navigation drawer. Passed to every SidebarNavItem. */
   const closeDrawer = () => setOpen(false);
@@ -185,11 +191,17 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
       <Button
         variant="ghost"
         size="icon"
-        aria-label={resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        aria-label={
+          mounted && resolvedTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+        }
         onClick={handleThemeToggle}
         className="size-9"
       >
-        {resolvedTheme === 'dark' ? <Sun className="size-5" /> : <Moon className="size-5" />}
+        {mounted && resolvedTheme === 'dark' ? (
+          <Sun className="size-5" />
+        ) : (
+          <Moon className="size-5" />
+        )}
       </Button>
     </header>
   );

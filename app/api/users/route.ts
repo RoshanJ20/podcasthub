@@ -6,7 +6,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { ApiError, createErrorResponse, internalError } from '@/lib/api/errors';
 import { parsePaginationParams } from '@/lib/api/pagination';
 
@@ -23,7 +23,7 @@ import { parsePaginationParams } from '@/lib/api/pagination';
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['superadmin']);
 
     const url = new URL(request.url);
@@ -47,10 +47,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           id: true,
           displayName: true,
           email: true,
+          role: true,
           createdAt: true,
-          role: {
-            select: { role: true },
-          },
         },
         skip,
         take: limit,
@@ -59,20 +57,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       prisma.user.count({ where }),
     ]);
 
-    // Flatten role from relation
-    const data = users.map((user) => ({
-      id: user.id,
-      name: user.displayName,
-      email: user.email,
-      role: user.role?.role ?? 'public',
-      createdAt: user.createdAt,
+    const data = users.map((u) => ({
+      id: u.id,
+      name: u.displayName,
+      email: u.email,
+      role: u.role,
+      createdAt: u.createdAt,
     }));
 
     return NextResponse.json({ data, total, page, limit });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }

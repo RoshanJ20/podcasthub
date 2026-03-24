@@ -4,7 +4,8 @@
  * Renders the unified sidebar on desktop, mobile top bar + bottom player
  * on mobile, and page content in the main area with page transitions.
  */
-import { headers } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/next-auth-options';
 import { prisma } from '@/lib/db';
 import { createLogger } from '@/lib/logger';
 import { UnifiedSidebar } from '@/components/layout/unified-sidebar';
@@ -15,11 +16,11 @@ import { PageTransition } from '@/components/layout/page-transition';
 const log = createLogger('public-layout');
 
 export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-  // Read authenticated user's data from request headers
-  const headersList = await headers();
-  const userId = headersList.get('x-user-id') || '';
-  const userEmail = headersList.get('x-user-email') || 'User';
-  const userRole = headersList.get('x-user-role') || 'member';
+  const session = await getServerSession(authOptions);
+
+  const userId = session?.user?.id ?? '';
+  const userEmail = session?.user?.email ?? 'User';
+  const userRole = session?.user?.role ?? 'member';
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
 
   // Fetch user's display name from database
@@ -34,7 +35,6 @@ export default async function PublicLayout({ children }: { children: React.React
         userName = user.displayName;
       }
     } catch (err) {
-      // Fall back to email if fetch fails
       log.warn(
         { error: err instanceof Error ? err.message : String(err), userId },
         'Failed to fetch user context for public layout'

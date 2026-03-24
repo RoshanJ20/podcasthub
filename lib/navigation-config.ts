@@ -9,7 +9,7 @@
  * - Export the NavLink interface for type-safe consumers
  * - Provide the isRouteActive helper for highlighting active links
  */
-import { Home, Headphones, Route, BarChart3, User, Users } from 'lucide-react';
+import { Home, Headphones, Route, BarChart3, Users } from 'lucide-react';
 import type React from 'react';
 
 /**
@@ -40,10 +40,7 @@ export const libraryLinks: NavLink[] = [
 /**
  * Personal links scoped to the current user's account.
  */
-export const personalLinks: NavLink[] = [
-  { href: '/progress', label: 'Progress', icon: BarChart3 },
-  { href: '/profile', label: 'Profile', icon: User },
-];
+export const personalLinks: NavLink[] = [{ href: '/progress', label: 'Progress', icon: BarChart3 }];
 
 /**
  * Admin-only navigation links. Rendered only when the user holds an admin role.

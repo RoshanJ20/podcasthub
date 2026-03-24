@@ -30,14 +30,13 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
-  getAuthUser: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { ApiError, ErrorCode } from '@/lib/api/errors';
 
 /**
@@ -319,7 +318,7 @@ describe('POST /api/audit-briefs', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -346,9 +345,9 @@ describe('POST /api/audit-briefs', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/audit-briefs', {
       method: 'POST',
@@ -361,7 +360,7 @@ describe('POST /api/audit-briefs', () => {
   });
 
   it('returns 403 when user lacks admin role', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'user@test.com',
       role: 'public',
@@ -399,7 +398,7 @@ describe('PUT /api/audit-briefs/[id]', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -411,6 +410,7 @@ describe('PUT /api/audit-briefs/[id]', () => {
 
   it('updates an audit brief and returns 200', async () => {
     const updated = { ...mockAuditBrief, title: 'Updated Title' };
+    vi.mocked(prisma.auditBrief.findUnique).mockResolvedValue({ id: mockAuditBrief.id } as never);
     vi.mocked(prisma.auditBrief.update).mockResolvedValue(updated as never);
 
     const req = createRequest(`/api/audit-briefs/${mockAuditBrief.id}`, {
@@ -426,9 +426,9 @@ describe('PUT /api/audit-briefs/[id]', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest(`/api/audit-briefs/${mockAuditBrief.id}`, {
       method: 'PUT',
@@ -459,7 +459,7 @@ describe('DELETE /api/audit-briefs/[id]', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'super@test.com',
       role: 'superadmin',
@@ -471,6 +471,7 @@ describe('DELETE /api/audit-briefs/[id]', () => {
 
   it('soft deletes an audit brief and returns 200', async () => {
     const archived = { ...mockAuditBrief, isArchived: true };
+    vi.mocked(prisma.auditBrief.findUnique).mockResolvedValue({ id: mockAuditBrief.id } as never);
     vi.mocked(prisma.auditBrief.update).mockResolvedValue(archived as never);
 
     const req = createRequest(`/api/audit-briefs/${mockAuditBrief.id}`, { method: 'DELETE' });
@@ -482,13 +483,13 @@ describe('DELETE /api/audit-briefs/[id]', () => {
       where: { id: mockAuditBrief.id },
       data: { isArchived: true },
     });
-    expect(body.message).toBeDefined();
+    expect(body.data.message).toBeDefined();
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest(`/api/audit-briefs/${mockAuditBrief.id}`, { method: 'DELETE' });
     const res = await DELETE(req, { params: Promise.resolve({ id: mockAuditBrief.id }) });
@@ -497,7 +498,7 @@ describe('DELETE /api/audit-briefs/[id]', () => {
   });
 
   it('returns 403 when user is not superadmin', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -520,7 +521,7 @@ describe('PATCH /api/audit-briefs/batch', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -550,9 +551,9 @@ describe('PATCH /api/audit-briefs/batch', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/audit-briefs/batch', {
       method: 'PATCH',

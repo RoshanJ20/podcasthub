@@ -9,6 +9,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { signIn } from 'next-auth/react';
 
 interface RegisterFormProps {
   redirectTo: string;
@@ -37,6 +38,19 @@ export function RegisterForm({ redirectTo }: RegisterFormProps) {
         if (!response.ok) {
           const data = await response.json();
           setError(data.message ?? 'Registration failed');
+          return;
+        }
+
+        // Auto-sign-in after successful registration
+        const signInResult = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
+        });
+
+        if (signInResult?.error) {
+          // Registration succeeded but auto-login failed; redirect to login
+          window.location.href = '/login';
           return;
         }
 
@@ -102,11 +116,11 @@ export function RegisterForm({ redirectTo }: RegisterFormProps) {
           type="password"
           autoComplete="new-password"
           required
-          minLength={8}
+          minLength={12}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          placeholder="Minimum 8 characters"
+          placeholder="Minimum 12 characters"
           disabled={isLoading}
         />
       </div>

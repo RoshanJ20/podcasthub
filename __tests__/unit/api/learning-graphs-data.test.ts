@@ -26,14 +26,13 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
-  getAuthUser: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { ApiError, ErrorCode } from '@/lib/api/errors';
 
 /** Creates a NextRequest for testing. */
@@ -111,7 +110,7 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -281,9 +280,9 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
   });
 
   it('returns 401 for unauthenticated users', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
       method: 'PUT',
@@ -296,7 +295,7 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
   });
 
   it('returns 403 for non-admin users', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-2',
       email: 'user@test.com',
       role: 'public',

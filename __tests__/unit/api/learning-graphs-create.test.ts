@@ -18,14 +18,13 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
-  getAuthUser: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 
 /**
  * Creates a NextRequest for testing.
@@ -61,7 +60,7 @@ describe('POST /api/learning-graphs — auto-publish', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue(ADMIN_USER);
+    vi.mocked(requireAuth).mockResolvedValue(ADMIN_USER);
     vi.mocked(requireRole).mockReturnValue(undefined);
     const mod = await import('@/app/api/learning-graphs/route');
     POST = mod.POST;

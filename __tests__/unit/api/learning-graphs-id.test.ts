@@ -19,14 +19,13 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
-  getAuthUser: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
-import { requireAuth, requireRole, getAuthUser } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { ApiError, ErrorCode } from '@/lib/api/errors';
 
 function createRequest(url: string, options?: RequestInit): NextRequest {
@@ -96,7 +95,6 @@ describe('GET /api/learning-graphs/[id]', () => {
   });
 
   it('returns graph with episodes and edges', async () => {
-    vi.mocked(getAuthUser).mockReturnValue(null);
     vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue(mockGraphWithRelations as never);
 
     const req = createRequest(`/api/learning-graphs/${graphId}`);
@@ -110,7 +108,6 @@ describe('GET /api/learning-graphs/[id]', () => {
   });
 
   it('returns 404 for non-existent graph', async () => {
-    vi.mocked(getAuthUser).mockReturnValue(null);
     vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue(null);
 
     const req = createRequest('/api/learning-graphs/non-existent');
@@ -120,7 +117,6 @@ describe('GET /api/learning-graphs/[id]', () => {
   });
 
   it('returns graph regardless of isPublished status for any user', async () => {
-    vi.mocked(getAuthUser).mockReturnValue(null);
     vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue(unpublishedGraph as never);
 
     const req = createRequest(`/api/learning-graphs/${graphId}`);
@@ -133,7 +129,6 @@ describe('GET /api/learning-graphs/[id]', () => {
   });
 
   it('returns 500 on unexpected error', async () => {
-    vi.mocked(getAuthUser).mockReturnValue(null);
     vi.mocked(prisma.learningGraph.findUnique).mockRejectedValue(new Error('DB error'));
 
     const req = createRequest(`/api/learning-graphs/${graphId}`);
@@ -150,7 +145,7 @@ describe('PUT /api/learning-graphs/[id]', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -162,6 +157,7 @@ describe('PUT /api/learning-graphs/[id]', () => {
 
   it('updates a learning graph and returns 200', async () => {
     const updated = { ...mockGraphWithRelations, title: 'Updated Title' };
+    vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue({ id: graphId } as never);
     vi.mocked(prisma.learningGraph.update).mockResolvedValue(updated as never);
 
     const req = createRequest(`/api/learning-graphs/${graphId}`, {
@@ -177,9 +173,9 @@ describe('PUT /api/learning-graphs/[id]', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest(`/api/learning-graphs/${graphId}`, {
       method: 'PUT',
@@ -192,7 +188,7 @@ describe('PUT /api/learning-graphs/[id]', () => {
   });
 
   it('returns 403 for non-admin users', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-2',
       email: 'user@test.com',
       role: 'public',
@@ -219,7 +215,7 @@ describe('DELETE /api/learning-graphs/[id]', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -230,6 +226,7 @@ describe('DELETE /api/learning-graphs/[id]', () => {
   });
 
   it('deletes a learning graph and returns 200', async () => {
+    vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue({ id: graphId } as never);
     vi.mocked(prisma.learningGraph.delete).mockResolvedValue(mockGraphWithRelations as never);
 
     const req = createRequest(`/api/learning-graphs/${graphId}`, { method: 'DELETE' });
@@ -237,14 +234,12 @@ describe('DELETE /api/learning-graphs/[id]', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.message).toBeDefined();
+    expect(body.data.message).toBeDefined();
     expect(prisma.learningGraph.delete).toHaveBeenCalledWith({ where: { id: graphId } });
   });
 
   it('returns 404 for non-existent graph', async () => {
-    vi.mocked(prisma.learningGraph.delete).mockRejectedValue(
-      new Error('Record to delete does not exist.')
-    );
+    vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue(null);
 
     const req = createRequest(`/api/learning-graphs/non-existent`, { method: 'DELETE' });
     const res = await DELETE(req, { params: Promise.resolve({ id: 'non-existent' }) });
@@ -253,9 +248,9 @@ describe('DELETE /api/learning-graphs/[id]', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest(`/api/learning-graphs/${graphId}`, { method: 'DELETE' });
     const res = await DELETE(req, { params: Promise.resolve({ id: graphId }) });
@@ -264,7 +259,7 @@ describe('DELETE /api/learning-graphs/[id]', () => {
   });
 
   it('returns 403 for non-admin users', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-2',
       email: 'user@test.com',
       role: 'public',

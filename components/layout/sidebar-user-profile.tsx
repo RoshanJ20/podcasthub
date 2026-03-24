@@ -3,7 +3,7 @@
  *
  * Key responsibilities:
  * - Display the current user's avatar (initials fallback), name, and role
- * - Provide a settings/profile link via a gear icon and a logout button
+ * - Provide a logout button
  * - In collapsed mode show only the avatar with a Tooltip containing
  *   the user's name for accessibility
  *
@@ -13,9 +13,8 @@
  */
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { createLogger } from '@/lib/logger';
@@ -99,13 +98,7 @@ export function SidebarUserProfile({
       <div className="flex justify-center px-2 py-3">
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger
-              render={
-                <Link href="/profile" aria-label={`${name} — go to profile`}>
-                  {avatar}
-                </Link>
-              }
-            />
+            <TooltipTrigger render={<span aria-label={name}>{avatar}</span>} />
             <TooltipContent side="right">{name}</TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -126,14 +119,6 @@ export function SidebarUserProfile({
         <p className="truncate text-sm font-medium leading-tight">{name}</p>
         <p className="truncate text-xs text-muted-foreground">{role}</p>
       </div>
-
-      <Link
-        href="/profile"
-        aria-label="Profile settings"
-        className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-      >
-        <Settings className="size-4" />
-      </Link>
 
       <button
         onClick={handleLogout}

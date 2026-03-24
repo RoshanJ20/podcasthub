@@ -24,7 +24,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { createErrorResponse, badRequest, validationFailed } from '@/lib/api/errors';
 import {
   FILE_TYPE_GROUPS,
@@ -56,7 +56,7 @@ const uploadRequestSchema = z.object({
  */
 export const POST = withRequestLogging(async (request: NextRequest): Promise<NextResponse> => {
   // Require admin authentication — throws ApiError if unauthorized
-  const user = requireAuth(request);
+  const user = await requireAuth();
   requireRole(user, ['admin', 'superadmin']);
 
   // Parse and validate request body

@@ -10,7 +10,7 @@ import { prisma } from '@/lib/db';
 import { parsePaginationParams, createPaginatedResponse } from '@/lib/api/pagination';
 import { ApiError, createErrorResponse, badRequest, internalError } from '@/lib/api/errors';
 import { createAuditBriefSchema } from '@/lib/schemas/audit-brief';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import type { Prisma } from '@prisma/client';
 
 /**
@@ -87,10 +87,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(createPaginatedResponse(data, { page, limit, total }));
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }
 
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['admin', 'superadmin']);
 
     const body = await request.json();
@@ -125,9 +126,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ data: auditBrief }, { status: 201 });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }

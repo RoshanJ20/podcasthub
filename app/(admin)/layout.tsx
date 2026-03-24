@@ -4,7 +4,8 @@
  * Uses the same UnifiedSidebar as public pages but with isAdmin
  * flag to show admin navigation section.
  */
-import { headers } from 'next/headers';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth/next-auth-options';
 import { prisma } from '@/lib/db';
 import { createLogger } from '@/lib/logger';
 import { UnifiedSidebar } from '@/components/layout/unified-sidebar';
@@ -14,11 +15,11 @@ import { PageTransition } from '@/components/layout/page-transition';
 const log = createLogger('admin-layout');
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  // Read actual authenticated user's data from request headers
-  const headersList = await headers();
-  const userId = headersList.get('x-user-id') || '';
-  const userEmail = headersList.get('x-user-email') || 'Admin';
-  const userRole = headersList.get('x-user-role') || 'admin';
+  const session = await getServerSession(authOptions);
+
+  const userId = session?.user?.id ?? '';
+  const userEmail = session?.user?.email ?? 'Admin';
+  const userRole = session?.user?.role ?? 'admin';
   const isAdmin = userRole === 'admin' || userRole === 'superadmin';
 
   // Fetch user's display name from database
@@ -33,7 +34,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         userName = user.displayName;
       }
     } catch (err) {
-      // Fall back to email if fetch fails
       log.warn(
         { error: err instanceof Error ? err.message : String(err), userId },
         'Failed to fetch user context for admin layout'

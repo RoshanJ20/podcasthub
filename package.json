@@ -18,7 +18,11 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "postinstall": "prisma generate",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.31.0",
@@ -27,6 +31,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "^5.2.2",
+    "@next-auth/prisma-adapter": "^1.0.7",
     "@prisma/adapter-pg": "^7.5.0",
     "@prisma/client": "^7.5.0",
     "@tanstack/react-virtual": "^3.13.23",
@@ -38,11 +43,10 @@
     "dagre": "^0.8.5",
     "geist": "^1.7.0",
     "hls.js": "^1.6.15",
-    "jose": "^6.2.1",
-    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.577.0",
     "motion": "^12.36.0",
     "next": "16.1.6",
+    "next-auth": "^4.24.13",
     "next-themes": "^0.4.6",
     "pg": "^8.20.0",
     "pino": "^10.3.1",
@@ -69,7 +73,6 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/dagre": "^0.7.54",
-    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/pg": "^8.18.0",
     "@types/react": "^19",

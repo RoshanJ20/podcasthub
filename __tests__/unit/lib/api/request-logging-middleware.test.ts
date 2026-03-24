@@ -120,7 +120,9 @@ describe('withRequestLogging', () => {
     expect(body.request_id).toBeDefined();
 
     expect(mockError).toHaveBeenCalledWith(
-      expect.objectContaining({ error: expect.any(Error) }),
+      expect.objectContaining({
+        error: expect.objectContaining({ message: 'DB connection lost', name: 'Error' }),
+      }),
       'Unhandled error'
     );
   });

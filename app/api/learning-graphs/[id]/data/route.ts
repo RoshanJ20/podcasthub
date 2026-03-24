@@ -22,7 +22,7 @@ import {
   notFound,
   internalError,
 } from '@/lib/api/errors';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { logger } from '@/lib/logger';
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -149,7 +149,7 @@ async function recreateEdges(
  */
 export async function PUT(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['admin', 'superadmin']);
 
     const { id } = await context.params;
@@ -185,10 +185,11 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
 
     return NextResponse.json({ data: saved });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
     logger.error({ error, message: 'Learning graph data save error' });
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }

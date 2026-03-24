@@ -16,7 +16,7 @@ import {
   internalError,
 } from '@/lib/api/errors';
 import { updateAuditBriefSchema } from '@/lib/schemas/audit-brief';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import type { Prisma } from '@prisma/client';
 
 /** Route context providing the audit brief ID path parameter. */
@@ -29,7 +29,7 @@ type RouteContext = { params: Promise<{ id: string }> };
  * @param context - Route context containing the audit brief ID
  * @returns JSON response with the audit brief data or 404 if not found
  */
-export async function GET(_request: NextRequest, context: RouteContext): Promise<NextResponse> {
+export async function GET(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   try {
     const { id } = await context.params;
 
@@ -44,10 +44,11 @@ export async function GET(_request: NextRequest, context: RouteContext): Promise
 
     return NextResponse.json({ data: auditBrief });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }
 
@@ -63,7 +64,7 @@ export async function GET(_request: NextRequest, context: RouteContext): Promise
  */
 export async function PUT(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['admin', 'superadmin']);
 
     const { id } = await context.params;
@@ -72,6 +73,14 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
 
     if (!result.success) {
       return createErrorResponse(badRequest('Validation failed', result.error.flatten()));
+    }
+
+    const existing = await prisma.auditBrief.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) {
+      return createErrorResponse(
+        notFound('AuditBrief'),
+        request.headers.get('x-request-id') ?? undefined
+      );
     }
 
     const { bulletinUrls, tags, ...rest } = result.data;
@@ -87,10 +96,11 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
 
     return NextResponse.json({ data: auditBrief });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }
 
@@ -105,21 +115,30 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
  */
 export async function DELETE(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['superadmin']);
 
     const { id } = await context.params;
+
+    const existing = await prisma.auditBrief.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) {
+      return createErrorResponse(
+        notFound('AuditBrief'),
+        request.headers.get('x-request-id') ?? undefined
+      );
+    }
 
     await prisma.auditBrief.update({
       where: { id },
       data: { isArchived: true },
     });
 
-    return NextResponse.json({ message: 'Audit brief archived successfully' });
+    return NextResponse.json({ data: { message: 'Audit brief archived successfully' } });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }

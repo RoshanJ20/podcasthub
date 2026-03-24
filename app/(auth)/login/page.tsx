@@ -25,18 +25,13 @@ interface LoginPageProps {
   searchParams: Promise<{ redirectTo?: string; error?: string }>;
 }
 
-/** Map of SSO error codes to user-friendly messages. */
-const SSO_ERROR_MESSAGES: Record<string, string> = {
-  sso_cancelled: 'Sign-in was cancelled. Please try again.',
-  sso_state_expired: 'Your sign-in session expired. Please try again.',
-  sso_state_mismatch: 'Sign-in verification failed. Please try again.',
-  sso_state_invalid: 'Sign-in session was corrupted. Please try again.',
-  sso_invalid_request: 'Invalid sign-in request. Please try again.',
-  sso_token_exchange_failed: 'Failed to complete sign-in with Microsoft. Please try again.',
-  sso_token_invalid: 'Sign-in token validation failed. Please try again.',
-  sso_claims_invalid: 'Could not retrieve your account information from Microsoft.',
-  sso_not_configured: 'Microsoft sign-in is not configured. Please contact your administrator.',
-  sso_error: 'An unexpected error occurred during sign-in. Please try again.',
+/** Map of error codes to user-friendly messages (NextAuth + legacy SSO). */
+const ERROR_MESSAGES: Record<string, string> = {
+  CredentialsSignin: 'Invalid email or password.',
+  OAuthSignin: 'Failed to start Microsoft sign-in. Please try again.',
+  OAuthCallback: 'Failed to complete sign-in with Microsoft. Please try again.',
+  OAuthAccountNotLinked: 'This email is already registered with a different sign-in method.',
+  Default: 'An unexpected error occurred during sign-in. Please try again.',
 };
 
 /**
@@ -51,8 +46,10 @@ const SSO_ERROR_MESSAGES: Record<string, string> = {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams;
   const redirectTo = params.redirectTo ?? '/';
-  const ssoError = params.error ? SSO_ERROR_MESSAGES[params.error] : undefined;
-  const isSsoConfigured = Boolean(process.env.ENTRA_CLIENT_ID);
+  const errorMessage = params.error
+    ? (ERROR_MESSAGES[params.error] ?? ERROR_MESSAGES.Default)
+    : undefined;
+  const isSsoConfigured = Boolean(process.env.AZURE_AD_CLIENT_ID);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background">
@@ -62,9 +59,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <p className="mt-1 text-sm text-muted-foreground">Sign in to your account</p>
         </div>
 
-        {ssoError && (
+        {errorMessage && (
           <div className="rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
-            {ssoError}
+            {errorMessage}
           </div>
         )}
 

@@ -8,7 +8,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { ApiError, createErrorResponse, badRequest, internalError } from '@/lib/api/errors';
 import { batchUpdateSortOrderSchema } from '@/lib/schemas/audit-brief';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 
 /**
  * Batch updates audit brief sort orders within a transaction.
@@ -22,7 +22,7 @@ import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
  */
 export async function PATCH(request: NextRequest): Promise<NextResponse> {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['admin', 'superadmin']);
 
     const body = await request.json();
@@ -43,9 +43,10 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ message: 'Sort orders updated successfully' });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }

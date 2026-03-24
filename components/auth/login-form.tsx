@@ -16,6 +16,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { signIn } from 'next-auth/react';
 
 /**
  * Props for the LoginForm component.
@@ -54,15 +55,14 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
       setIsLoading(true);
 
       try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
+        const result = await signIn('credentials', {
+          email,
+          password,
+          redirect: false,
         });
 
-        if (!response.ok) {
-          const data = await response.json();
-          setError(data.message ?? 'Login failed');
+        if (result?.error) {
+          setError('Invalid email or password');
           return;
         }
 

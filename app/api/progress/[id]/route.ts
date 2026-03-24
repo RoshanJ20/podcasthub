@@ -6,7 +6,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth } from '@/lib/auth/api-helpers';
+import { requireAuth } from '@/lib/auth/session-helpers';
 import {
   ApiError,
   createErrorResponse,
@@ -33,7 +33,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     const { id } = await params;
 
     const progress = await prisma.userProgress.findUnique({ where: { id } });
@@ -48,7 +48,8 @@ export async function DELETE(
 
     return NextResponse.json({ message: 'Progress record deleted' });
   } catch (error) {
-    if (error instanceof ApiError) return createErrorResponse(error);
-    return createErrorResponse(internalError());
+    const requestId = request.headers.get('x-request-id') ?? undefined;
+    if (error instanceof ApiError) return createErrorResponse(error, requestId);
+    return createErrorResponse(internalError(), requestId);
   }
 }

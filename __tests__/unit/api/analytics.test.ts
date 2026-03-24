@@ -28,14 +28,13 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
-  getAuthUser: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 
 function createRequest(url: string): NextRequest {
   return new NextRequest(new URL(url, 'http://localhost:3000'));
@@ -51,9 +50,9 @@ describe('GET /api/admin/analytics', () => {
   });
 
   it('returns 401 for unauthenticated users', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/admin/analytics');
     const res = await GET(req);
@@ -61,7 +60,7 @@ describe('GET /api/admin/analytics', () => {
   });
 
   it('returns 403 for non-admin users', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'user@test.com',
       role: 'public',
@@ -76,7 +75,7 @@ describe('GET /api/admin/analytics', () => {
   });
 
   it('returns analytics summary with correct shape for admin', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'admin-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -116,7 +115,7 @@ describe('GET /api/admin/analytics', () => {
   });
 
   it('passes date range filtering params', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'admin-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -152,7 +151,7 @@ describe('GET /api/admin/analytics', () => {
   });
 
   it('returns correct aggregation values for listensByDomain', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'admin-1',
       email: 'admin@test.com',
       role: 'admin',

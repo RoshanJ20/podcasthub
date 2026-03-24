@@ -9,6 +9,8 @@ Internal enterprise audio platform for managing, distributing, and tracking audi
 - [Prerequisites](#prerequisites)
 - [Local Development Setup](#local-development-setup)
 - [Environment Variables](#environment-variables)
+- [Authentication & SSO](#authentication--sso)
+- [User Roles](#user-roles)
 - [Testing](#testing)
 - [Project Structure](#project-structure)
 - [Deployment](#deployment)
@@ -28,7 +30,7 @@ Internal enterprise audio platform for managing, distributing, and tracking audi
 | PDF Viewer    | react-pdf (pdfjs-dist)                    | In-app attachment/document viewing                    |
 | Audio         | HLS.js                                    | Adaptive audio streaming with native fallback         |
 | Database      | PostgreSQL 16, Prisma ORM (v7)            | Data persistence, migrations, pgvector search         |
-| Auth          | Custom JWT (jose + bcryptjs)              | HttpOnly cookie auth with refresh token rotation      |
+| Auth          | NextAuth v4 (Credentials + Azure AD)      | JWT session strategy, HttpOnly cookies, SSO support   |
 | Storage       | Azurite (dev) / Azure Blob Storage (prod) | File uploads (audio, images, PDFs) via Azure Blob API |
 | Logging       | Pino                                      | Structured JSON logging with child loggers            |
 | Validation    | Zod v4                                    | Request body + form validation (shared schemas)       |
@@ -41,7 +43,7 @@ Internal enterprise audio platform for managing, distributing, and tracking audi
 | Git Hooks     | Husky + lint-staged                       | Pre-commit lint/format enforcement                    |
 | Monitoring    | Sentry                                    | Error tracking and performance monitoring             |
 | CI/CD         | GitHub Actions                            | Automated lint, test, build, deploy pipelines         |
-| Deployment    | Docker, Azure Container Apps              | Containerized production deployment                   |
+| Deployment    | Azure VM, Nginx, pm2                      | VM-based production deployment on port 3103           |
 
 ## Architecture
 
@@ -52,56 +54,46 @@ graph TB
         HLS["HLS.js<br/>Adaptive Streaming"]
     end
 
-    subgraph "CDN / Edge"
-        FrontDoor["Azure Front Door<br/>(CDN + WAF)"]
+    subgraph "Azure VM (Ubuntu 22.04)"
+        Nginx["Nginx<br/>(SSL termination, reverse proxy)"]
+        NextJS["Next.js 16 Standalone<br/>(Node.js 20, pm2, port 3103)"]
+        Middleware["NextAuth Middleware<br/>(Session + Route Protection)"]
     end
 
-    subgraph "Application Tier"
-        subgraph "Azure Container Apps"
-            NextJS["Next.js 16<br/>Standalone Server<br/>(Node.js 20 LTS)"]
-            EdgeMW["Edge Middleware<br/>(JWT + Route Protection)"]
-        end
+    subgraph "Azure Managed Services"
+        PostgreSQL["Azure Database for<br/>PostgreSQL Flexible Server<br/>(16 + pgvector)"]
+        BlobStorage["Azure Blob Storage<br/>Audio, PDFs, Thumbnails"]
     end
 
-    subgraph "Data Tier"
-        subgraph "Primary Database"
-            PostgreSQL["PostgreSQL 16"]
-        end
-        subgraph "Object Storage"
-            BlobStorage["Azure Blob Storage<br/>Audio, PDFs, Thumbnails"]
-        end
-    end
-
-    subgraph "DevOps"
-        ACR["Azure Container<br/>Registry"]
-        GitHub["GitHub Actions<br/>(CI/CD)"]
-        AzureMonitor["Azure Monitor<br/>(Metrics + Logs)"]
+    subgraph "Optional Services"
+        OpenAI["Azure OpenAI<br/>(Embeddings)"]
+        Sentry["Sentry<br/>(Error Tracking)"]
+        EntraID["Microsoft Entra ID<br/>(SSO)"]
     end
 
     subgraph "Local Dev"
         DockerCompose["Docker Compose"]
         PGLocal["PostgreSQL 16"]
-        Azurite["Azurite<br/>(Azure Blob Storage)"]
+        Azurite["Azurite<br/>(Blob Storage Emulator)"]
     end
 
-    WebApp -->|"HTTPS"| FrontDoor
-    HLS -->|"HLS streams"| FrontDoor
-    FrontDoor -->|"Proxy"| NextJS
-    NextJS --> EdgeMW
-    EdgeMW -->|"Prisma ORM"| PostgreSQL
-    EdgeMW -->|"Presigned URLs"| BlobStorage
-
-    GitHub -->|"Build + Push"| ACR
-    ACR -->|"Deploy"| NextJS
-    NextJS -.->|"Logs + Metrics"| AzureMonitor
+    WebApp -->|"HTTPS :443"| Nginx
+    HLS -->|"HLS streams"| Nginx
+    Nginx -->|"Proxy :3103"| NextJS
+    NextJS --> Middleware
+    Middleware -->|"Prisma ORM"| PostgreSQL
+    Middleware -->|"Presigned URLs"| BlobStorage
+    NextJS -.->|"Embeddings API"| OpenAI
+    NextJS -.->|"Error Reports"| Sentry
+    NextJS -.->|"OAuth2 / OIDC"| EntraID
 
     DockerCompose --> PGLocal & Azurite
 
-    style FrontDoor fill:#0078d4,color:#fff
+    style Nginx fill:#009639,color:#fff
     style PostgreSQL fill:#336791,color:#fff
     style BlobStorage fill:#0078d4,color:#fff
-    style ACR fill:#0078d4,color:#fff
     style Azurite fill:#0078d4,color:#fff
+    style NextJS fill:#000,color:#fff
 ```
 
 For detailed architecture diagrams covering frontend components, backend API routes, database schema (ER diagram), end-to-end product flow, and deployment infrastructure, see [docs/architecture-diagrams.md](docs/architecture-diagrams.md).
@@ -141,27 +133,83 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 
 ## Environment Variables
 
-| Variable                       | Description                          | Default                  |
-| ------------------------------ | ------------------------------------ | ------------------------ |
-| `DATABASE_URL`                 | PostgreSQL connection string         | See `.env.example`       |
-| `JWT_ACCESS_SECRET`            | Secret for signing access tokens     | (required, min 32 chars) |
-| `JWT_REFRESH_SECRET`           | Secret for signing refresh tokens    | (required, min 32 chars) |
-| `JWT_ACCESS_EXPIRY`            | Access token TTL                     | `15m`                    |
-| `JWT_REFRESH_EXPIRY`           | Refresh token TTL                    | `7d`                     |
-| `BCRYPT_SALT_ROUNDS`           | bcrypt hashing cost factor           | `12`                     |
-| `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection string | See `.env.example`       |
-| `AZURE_BLOB_CONTAINER`         | Azure Blob container name            | `the-audit-brief`        |
-| `AZURE_OPENAI_ENDPOINT`        | Azure OpenAI service endpoint (v2)   | (optional)               |
-| `AZURE_OPENAI_KEY`             | Azure OpenAI API key (v2)            | (optional)               |
-| `AZURE_OPENAI_DEPLOYMENT`      | Azure OpenAI deployment name (v2)    | (optional)               |
+| Variable                       | Description                          | Default / Required        |
+| ------------------------------ | ------------------------------------ | ------------------------- |
+| `DATABASE_URL`                 | PostgreSQL connection string         | (required)                |
+| `NEXTAUTH_SECRET`              | NextAuth JWT encryption secret       | (required, min 32 chars)  |
+| `NEXTAUTH_URL`                 | Canonical app URL                    | `http://localhost:3000`   |
+| `PORT`                         | Server listen port                   | `3000` (prod: `3103`)     |
+| `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection string | (required)                |
+| `AZURE_BLOB_CONTAINER`         | Azure Blob container name            | `the-audit-brief-uploads` |
+| `AZURE_AD_CLIENT_ID`           | Microsoft Entra ID app client ID     | (optional, for SSO)       |
+| `AZURE_AD_CLIENT_SECRET`       | Microsoft Entra ID app client secret | (optional, for SSO)       |
+| `AZURE_AD_TENANT_ID`           | Microsoft Entra ID tenant ID         | (optional, for SSO)       |
+| `AZURE_OPENAI_ENDPOINT`        | Azure OpenAI service endpoint        | (optional)                |
+| `AZURE_OPENAI_KEY`             | Azure OpenAI API key                 | (optional)                |
+| `AZURE_OPENAI_DEPLOYMENT`      | Azure OpenAI deployment name         | (optional)                |
+| `SENTRY_DSN`                   | Sentry error tracking DSN (server)   | (optional)                |
+| `NEXT_PUBLIC_SENTRY_DSN`       | Sentry DSN (client bundle)           | (optional)                |
+| `NEXT_PUBLIC_APP_URL`          | Public application URL               | `http://localhost:3000`   |
+| `NODE_ENV`                     | Runtime environment                  | `development`             |
+| `LOG_LEVEL`                    | Pino log level                       | `debug`                   |
 
-> **Note:** The `AZURE_OPENAI_*` variables power v2 features (semantic search, AI-powered embeddings via pgvector). The infrastructure and schema are in place, but these features are not yet active — you do not need an Azure OpenAI key to run the application.
-> | `SENTRY_DSN` | Sentry error tracking DSN (server) | (optional) |
-> | `NEXT_PUBLIC_SENTRY_DSN` | Sentry DSN (client bundle) | (optional) |
-> | `NEXT_PUBLIC_APP_URL` | Public application URL | `http://localhost:3000` |
-> | `NODE_ENV` | Runtime environment | `development` |
-> | `LOG_LEVEL` | Pino log level | `debug` |
-> | `SLOW_QUERY_THRESHOLD_MS` | Prisma slow query warning threshold | `500` |
+## Authentication & SSO
+
+The app uses **NextAuth v4** with two authentication providers:
+
+- **Credentials** — email/password login with bcrypt verification
+- **Azure AD** — Microsoft Entra ID SSO via OAuth2/OIDC
+
+### How SSO Works
+
+1. User clicks **"Sign in with Microsoft"** on the login page.
+2. NextAuth redirects to Microsoft Entra ID for authentication.
+3. After successful login, Entra ID redirects back to `/api/auth/callback/azure-ad`.
+4. The `signIn` callback handles account linking:
+   - If a user with that email already exists in the database, the Azure AD account is **linked** to the existing user record.
+   - The `authProvider` field is set to `"entra_id"` (SSO-only) or `"both"` (if they also have a password).
+   - If no existing user is found, a new user record is created automatically.
+5. The `jwt` callback injects `userId` and `role` from the database into the session token.
+6. The middleware enforces route-level auth and admin role checks on every request.
+
+### Azure AD Setup
+
+To enable SSO, register an application in Microsoft Entra ID:
+
+1. Go to **Azure Portal > Entra ID > App Registrations > New Registration**.
+2. Set the **Redirect URI** to `https://your-domain.com/api/auth/callback/azure-ad` (use `http://localhost:3000/api/auth/callback/azure-ad` for local dev).
+3. Under **Certificates & Secrets**, create a new client secret.
+4. Set the following environment variables:
+
+```bash
+AZURE_AD_CLIENT_ID=<Application (client) ID>
+AZURE_AD_CLIENT_SECRET=<Client secret value>
+AZURE_AD_TENANT_ID=<Directory (tenant) ID>
+```
+
+To restrict which users can sign in, go to **Enterprise Applications > your app > Properties** and set **"Assignment required?"** to **Yes**, then assign specific users or groups.
+
+## User Roles
+
+Roles are managed locally in the database (not pulled from Azure AD). Each user has a `role` column that defaults to `"public"`.
+
+| Role         | Access Level                                                     |
+| ------------ | ---------------------------------------------------------------- |
+| `public`     | Standard user — view content, bookmark, track listening progress |
+| `admin`      | Access `/admin` routes — upload, edit, and manage audit briefs   |
+| `superadmin` | Full admin access plus user role management                      |
+
+The middleware redirects non-admin users to `/unauthorized` when they attempt to access `/admin/*` routes. API routes use `requireRole()` to enforce role checks.
+
+### Assigning Roles
+
+When a user first signs in (via SSO or credentials), they receive the default `"public"` role. To grant elevated access, update their role directly in the database:
+
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'user@yourorg.com';
+```
+
+Alternatively, a `superadmin` can change user roles from the admin UI at `/admin/users`.
 
 ## Testing
 
@@ -223,19 +271,25 @@ the-audit-brief/
 
 ## Deployment
 
-The application is containerized using a multi-stage Dockerfile that produces a standalone Next.js build.
+**Target platform:** Azure VM (Ubuntu 22.04 LTS) with Nginx reverse proxy and pm2 process manager.
 
-**Target platform:** Azure Container Apps
+The application runs as a standalone Next.js server on **port 3103**, managed by pm2 for automatic restarts and clustering. Nginx handles SSL termination and proxies traffic from ports 80/443 to the app.
+
+**Infrastructure:**
+
+- **Compute:** Azure VM (Standard_B2s or larger)
+- **Database:** Azure Database for PostgreSQL Flexible Server (with pgvector)
+- **Storage:** Azure Blob Storage
+- **Process Manager:** pm2
+- **Reverse Proxy:** Nginx with Let's Encrypt SSL
 
 ```bash
-# Build the Docker image
-docker build -t the-audit-brief .
-
-# Run the container
-docker run -p 3000:3000 --env-file .env the-audit-brief
+# On the Azure VM:
+npm install && npm run build
+pm2 start ecosystem.config.js
 ```
 
-For production deployments, push the image to Azure Container Registry and deploy via Azure Container Apps. Ensure all required environment variables are configured in the deployment environment.
+For the complete step-by-step deployment guide, see [docs/deployment-guide.md](docs/deployment-guide.md).
 
 ## Contributing
 

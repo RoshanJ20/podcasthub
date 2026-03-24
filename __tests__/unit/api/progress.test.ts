@@ -17,17 +17,19 @@ vi.mock('@/lib/db', () => ({
       delete: vi.fn(),
       findUnique: vi.fn(),
     },
+    episode: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
-  getAuthUser: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
-import { requireAuth } from '@/lib/auth/api-helpers';
+import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, ErrorCode } from '@/lib/api/errors';
 
 function createRequest(url: string, options?: RequestInit): NextRequest {
@@ -54,7 +56,7 @@ describe('GET /api/progress', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue(mockUser);
+    vi.mocked(requireAuth).mockResolvedValue(mockUser);
     const mod = await import('@/app/api/progress/route');
     GET = mod.GET;
   });
@@ -90,9 +92,9 @@ describe('GET /api/progress', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/progress');
     const res = await GET(req);
@@ -121,12 +123,16 @@ describe('POST /api/progress', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue(mockUser);
+    vi.mocked(requireAuth).mockResolvedValue(mockUser);
     const mod = await import('@/app/api/progress/route');
     POST = mod.POST;
   });
 
   it('marks episode complete and returns 201', async () => {
+    vi.mocked(prisma.episode.findUnique).mockResolvedValue({
+      id: 'ep-1',
+      graphId: 'graph-1',
+    } as never);
     vi.mocked(prisma.userProgress.upsert).mockResolvedValue(mockProgress as never);
 
     const req = createRequest('/api/progress', {
@@ -158,9 +164,9 @@ describe('POST /api/progress', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/progress', {
       method: 'POST',
@@ -191,7 +197,7 @@ describe('DELETE /api/progress/[id]', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue(mockUser);
+    vi.mocked(requireAuth).mockResolvedValue(mockUser);
     const mod = await import('@/app/api/progress/[id]/route');
     DELETE = mod.DELETE;
   });

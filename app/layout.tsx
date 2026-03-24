@@ -9,6 +9,7 @@
  * - Sets global metadata
  */
 import type { Metadata } from 'next';
+import { SessionProvider } from '@/components/providers/session-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { CommandPalette } from '@/components/layout/command-palette';
 import { AudioProvider } from '@/components/audio-player/audio-context';
@@ -29,19 +30,21 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AudioProvider>
-            <CommandPalette />
-            <GlobalAudioPlayer />
-            {children}
-            <Toaster richColors position="bottom-right" />
-          </AudioProvider>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AudioProvider>
+              <CommandPalette />
+              <GlobalAudioPlayer />
+              {children}
+              <Toaster richColors position="bottom-right" />
+            </AudioProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );

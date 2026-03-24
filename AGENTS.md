@@ -9,22 +9,22 @@
 
 ## Tech Stack
 
-| Layer               | Technology                                 | Version | Notes                                                |
-| ------------------- | ------------------------------------------ | ------- | ---------------------------------------------------- |
-| **Framework**       | Next.js (App Router)                       | 16.x    | Server Components, API routes, middleware, streaming |
-| **Language**        | TypeScript                                 | 5.x     | Strict mode (`strict: true`), no `any` types         |
-| **Runtime**         | Node.js                                    | 20 LTS  | Native ESM                                           |
-| **Database**        | PostgreSQL + Prisma ORM                    | 16.x    | pgvector extension for vector search                 |
-| **Auth**            | Custom JWT                                 | —       | bcrypt + jsonwebtoken, HttpOnly cookies              |
-| **UI**              | React 19 + shadcn/ui (Radix)               | Latest  | Accessible, composable components                    |
-| **Styling**         | Tailwind CSS                               | 4.x     | Utility-first, design system tokens                  |
-| **State**           | Zustand                                    | Latest  | Lightweight state management (PlayerContext, etc.)   |
-| **File Storage**    | MinIO (dev) → Azure Blob Storage (prod)    | —       | S3-compatible object storage                         |
-| **Audio Streaming** | FFmpeg (HLS transcoding) + HLS.js (client) | —       | Adaptive bitrate streaming                           |
-| **Vector Search**   | pgvector (PostgreSQL extension)            | —       | Via Prisma raw queries                               |
-| **Embeddings**      | Azure OpenAI                               | —       | text-embedding-3-large model                         |
-| **Icons**           | Lucide React                               | Latest  | Consistent icon set                                  |
-| **Fonts**           | Geist                                      | —       | Body font via next/font                              |
+| Layer               | Technology                                | Version | Notes                                                |
+| ------------------- | ----------------------------------------- | ------- | ---------------------------------------------------- |
+| **Framework**       | Next.js (App Router)                      | 16.x    | Server Components, API routes, middleware, streaming |
+| **Language**        | TypeScript                                | 5.x     | Strict mode (`strict: true`), no `any` types         |
+| **Runtime**         | Node.js                                   | 20 LTS  | Native ESM                                           |
+| **Database**        | PostgreSQL + Prisma ORM                   | 16.x    | pgvector extension for vector search                 |
+| **Auth**            | NextAuth v4                               | 4.x     | Credentials + Azure AD providers, JWT strategy       |
+| **UI**              | React 19 + shadcn/ui (Radix)              | Latest  | Accessible, composable components                    |
+| **Styling**         | Tailwind CSS                              | 4.x     | Utility-first, design system tokens                  |
+| **State**           | Zustand                                   | Latest  | Lightweight state management (PlayerContext, etc.)   |
+| **File Storage**    | Azurite (dev) → Azure Blob Storage (prod) | —       | Azure Blob Storage object storage                    |
+| **Audio Streaming** | HLS.js (client)                           | —       | Adaptive bitrate streaming from Azure Blob           |
+| **Vector Search**   | pgvector (PostgreSQL extension)           | —       | Via Prisma raw queries                               |
+| **Embeddings**      | Azure OpenAI                              | —       | text-embedding-3-large model                         |
+| **Icons**           | Lucide React                              | Latest  | Consistent icon set                                  |
+| **Fonts**           | Geist                                     | —       | Body font via next/font                              |
 
 ## Key Libraries
 
@@ -75,22 +75,22 @@ the-audit-brief/
 │   └── error-boundary.tsx       # React error boundary wrapper
 ├── lib/
 │   ├── prisma.ts                # Prisma client singleton
-│   ├── auth/                    # JWT utilities, session management, middleware helpers
+│   ├── auth/                    # NextAuth config, session helpers, Prisma adapter, password utilities
 │   ├── api/                     # error-response.ts, pagination.ts, rate-limit.ts
 │   ├── schemas/                 # Zod schemas per entity
 │   ├── logger.ts                # Pino structured logger
 │   ├── embeddings.ts            # Azure OpenAI embedding generation
-│   ├── upload.ts                # File upload utilities (MinIO/Azure Blob)
+│   ├── storage.ts               # File upload utilities (Azure Blob Storage)
 │   └── utils.ts                 # General utilities (cn(), etc.)
 ├── hooks/                       # Custom React hooks
 ├── stores/                      # Zustand stores
-├── middleware.ts                 # Auth + admin route protection (JWT verification)
+├── middleware.ts                 # Auth + admin route protection (NextAuth withAuth)
 ├── __tests__/
 │   ├── unit/                    # Pure function tests (lib/, schemas/)
 │   ├── integration/             # API route + component tests (RTL + MSW)
 │   └── e2e/                     # Playwright browser tests
 ├── Dockerfile
-├── docker-compose.yml           # Local dev: PostgreSQL + MinIO containers
+├── docker-compose.yml           # Local dev: PostgreSQL + Azurite containers
 ├── vitest.config.ts
 ├── playwright.config.ts
 └── package.json
@@ -102,24 +102,26 @@ the-audit-brief/
 - **Route groups:** `(auth)`, `(public)`, `(admin)` for layout and middleware isolation
 - **Centralized Zod validation** in `lib/schemas/`, shared between client forms and API routes
 - **Error boundary hierarchy** — React ErrorBoundary in root layout + `error.tsx` per route group
-- **Defense in depth:** Middleware (JWT verify) → API auth check → Prisma-level checks (3 layers)
+- **Defense in depth:** Middleware (NextAuth session verify) → API auth check → Prisma-level checks (3 layers)
 - **PlayerContext (Zustand)** for audio state shared across components
 - **Service layer separation** — API routes handle HTTP concerns; business logic in `lib/`
 
 ## Audio Pipeline
 
 ```
-Upload → FFmpeg HLS transcoding → MinIO/Azure Blob storage → HLS.js adaptive playback
+Upload → Azure Blob Storage → HLS.js adaptive playback (client-side)
 ```
 
 ## Auth Flow
 
 ```
 User visits protected route
-  → Middleware verifies JWT from HttpOnly cookie
-  → No valid JWT → Redirect to /login?redirectTo=<original-path>
-  → User authenticates (email + password)
-  → Server validates credentials (bcrypt), issues JWT + refresh token (HttpOnly cookies)
+  → Middleware (NextAuth withAuth) checks session token
+  → No valid session → Redirect to /login?callbackUrl=<original-path>
+  → User authenticates:
+      • Email/password → Credentials provider (bcrypt verify)
+      • Microsoft SSO  → Azure AD provider (OAuth2/OIDC)
+  → NextAuth issues encrypted JWT session cookie
   → Redirect to original path
 ```
 
@@ -143,7 +145,7 @@ User visits protected route
 - **Testing stack**: Vitest + RTL (unit/integration) → Playwright (E2E)
 - **Conventional Commits**: `feat:`, `fix:`, `docs:`, `chore:`, etc.
 - Husky + lint-staged pre-commit hooks (ESLint + Prettier + type check)
-- Docker Compose for local dev: PostgreSQL 16, MinIO (S3-compatible storage)
+- Docker Compose for local dev: PostgreSQL 16, Azurite (Azure Blob Storage emulator)
 - Branch naming: `feat/FR-USER-002-audio-player`, `fix/BUG-001-playback-issue`
 
 ## Local Dev Setup
@@ -153,8 +155,8 @@ git clone <repo-url> the-audit-brief
 cd the-audit-brief
 npm install
 cp .env.example .env.local
-# Fill in DATABASE_URL, JWT_SECRET, MINIO_ENDPOINT, AZURE_OPENAI_KEY, etc.
-docker compose up -d          # Start PostgreSQL + MinIO
+# Fill in DATABASE_URL, NEXTAUTH_SECRET, AZURE_BLOB_CONNECTION_STRING, etc.
+docker compose up -d          # Start PostgreSQL + Azurite
 npx prisma migrate dev        # Apply database migrations
 npx prisma db seed            # Seed initial data (if available)
 npx husky install             # Set up git hooks
@@ -166,12 +168,14 @@ npm run dev                   # Start Next.js dev server
 | Variable                       | Description                          |
 | ------------------------------ | ------------------------------------ |
 | `DATABASE_URL`                 | PostgreSQL connection string         |
-| `JWT_SECRET`                   | Secret key for JWT signing           |
-| `JWT_REFRESH_SECRET`           | Secret key for refresh token signing |
-| `MINIO_ENDPOINT`               | MinIO/S3 endpoint URL                |
-| `MINIO_ACCESS_KEY`             | MinIO/S3 access key                  |
-| `MINIO_SECRET_KEY`             | MinIO/S3 secret key                  |
-| `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection (prod) |
+| `NEXTAUTH_SECRET`              | NextAuth JWT encryption secret       |
+| `NEXTAUTH_URL`                 | Canonical app URL                    |
+| `PORT`                         | Server listen port (prod: `3103`)    |
+| `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection string |
+| `AZURE_BLOB_CONTAINER`         | Azure Blob container name            |
+| `AZURE_AD_CLIENT_ID`           | Entra ID app client ID (for SSO)     |
+| `AZURE_AD_CLIENT_SECRET`       | Entra ID app client secret (for SSO) |
+| `AZURE_AD_TENANT_ID`           | Entra ID tenant ID (for SSO)         |
 | `AZURE_OPENAI_ENDPOINT`        | Azure OpenAI API endpoint            |
 | `AZURE_OPENAI_KEY`             | Azure OpenAI API key                 |
 | `AZURE_OPENAI_DEPLOYMENT`      | Azure OpenAI deployment name         |
@@ -181,24 +185,25 @@ npm run dev                   # Start Next.js dev server
 
 ## Deployment
 
-- **Target:** Azure Container Apps (each service containerized separately)
-- **Container Registry:** Azure Container Registry
-- **Secrets:** Azure Key Vault + GitHub Secrets
-- **CDN:** Azure Front Door
-- **DNS:** Azure DNS
-- **Monitoring:** Sentry + Azure Monitor
+- **Target:** Azure VM (Ubuntu 22.04 LTS) on port 3103
+- **Reverse Proxy:** Nginx (SSL termination, gzip, static caching)
+- **Process Manager:** pm2 (auto-restart, clustering, log management)
+- **Database:** Azure Database for PostgreSQL Flexible Server (pgvector)
+- **Storage:** Azure Blob Storage
+- **Secrets:** Environment file on VM (or Azure Key Vault)
+- **Monitoring:** Sentry + pm2 logs + Pino structured logging
 
 ## Code Rules
 
 All code must follow these mandatory rules (see individual files for full details):
 
-- [SOLID Principles](.Codex/rules/solid-principles.md)
-- [Naming Conventions](.Codex/rules/naming-conventions.md)
-- [README & Deployment Documentation](.Codex/rules/readme-documentation.md)
-- [Code Documentation](.Codex/rules/code-documentation.md)
-- [Project Structure](.Codex/rules/project-structure.md)
-- [Error Handling & Resilience](.Codex/rules/error-handling.md)
-- [Logging & Observability](.Codex/rules/logging-observability.md)
-- [Quick-Reference Checklist](.Codex/rules/checklist.md)
+- [SOLID Principles](.claude/rules/solid-principles.md)
+- [Naming Conventions](.claude/rules/naming-conventions.md)
+- [README & Deployment Documentation](.claude/rules/readme-documentation.md)
+- [Code Documentation](.claude/rules/code-documentation.md)
+- [Project Structure](.claude/rules/project-structure.md)
+- [Error Handling & Resilience](.claude/rules/error-handling.md)
+- [Logging & Observability](.claude/rules/logging-observability.md)
+- [Quick-Reference Checklist](.claude/rules/checklist.md)
 
-Before submitting any code, verify against the [Quick-Reference Checklist](.Codex/rules/checklist.md).
+Before submitting any code, verify against the [Quick-Reference Checklist](.claude/rules/checklist.md).

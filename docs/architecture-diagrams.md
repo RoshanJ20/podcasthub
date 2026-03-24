@@ -82,20 +82,17 @@ graph TB
     end
 
     subgraph "Edge Middleware Layer"
-        MW["middleware.ts<br/>(JWT verify via jose)"]
+        MW["middleware.ts<br/>(NextAuth withAuth)"]
         MW -->|"Set Headers"| Headers["x-user-id<br/>x-user-email<br/>x-user-role"]
-        MW -->|"Auto-refresh"| TokenRefresh["Silent Token<br/>Refresh"]
+        MW -->|"Session check"| SessionCheck["JWT Session<br/>Validation"]
     end
 
     subgraph "API Routes Layer"
         direction TB
 
         subgraph "Auth APIs"
-            AuthLogin["POST /api/auth/login"]
+            NextAuthAPI["GET/POST /api/auth/[...nextauth]"]
             AuthRegister["POST /api/auth/register"]
-            AuthRefresh["POST /api/auth/refresh"]
-            AuthLogout["POST /api/auth/logout"]
-            AuthMe["GET /api/auth/me"]
         end
 
         subgraph "Content APIs"
@@ -138,10 +135,10 @@ graph TB
 
     subgraph "Service Layer (lib/)"
         direction TB
-        AuthService["lib/auth/<br/>jwt.ts, password.ts,<br/>cookies.ts,<br/>api-helpers.ts"]
+        AuthService["lib/auth/<br/>next-auth-options.ts,<br/>password.ts,<br/>session-helpers.ts,<br/>prisma-adapter.ts"]
         APIUtils["lib/api/<br/>errors.ts, pagination.ts,<br/>rate-limit.ts, cors.ts"]
         Schemas["lib/schemas/<br/>Zod validation<br/>(user, podcast, learning-graph,<br/>bookmark, common)"]
-        Storage["lib/storage.ts<br/>S3 presigned URLs<br/>(AWS SDK v3)"]
+        Storage["lib/storage.ts<br/>Azure Blob Storage"]
         Logger["lib/logger.ts<br/>Pino structured logging"]
         Prisma["lib/db.ts<br/>Prisma client singleton"]
     end
@@ -153,7 +150,7 @@ graph TB
 
     Browser --> MW
     MW --> Headers
-    Headers -->|"Route to"| AuthLogin & PodcastsList & GraphList & BookmarksCRUD & AdminAnalytics
+    Headers -->|"Route to"| NextAuthAPI & PodcastsList & GraphList & BookmarksCRUD & AdminAnalytics
 
     AuthLogin --> AuthService
     PodcastCreate --> Schemas --> APIUtils
@@ -303,56 +300,39 @@ graph TB
         HLS["HLS.js<br/>Adaptive Streaming"]
     end
 
-    subgraph "CDN / Edge"
-        FrontDoor["Azure Front Door<br/>(CDN + WAF)"]
+    subgraph "Azure VM (Ubuntu 22.04)"
+        Nginx["Nginx<br/>(SSL termination, :80/:443)"]
+        PM2["pm2 Process Manager"]
+        NextJS["Next.js 16 Standalone<br/>(Node.js 20 LTS, :3103)"]
+        Middleware["NextAuth Middleware<br/>(Session + Route Protection)"]
     end
 
-    subgraph "Application Tier"
-        subgraph "Azure Container Apps"
-            NextJS["Next.js 16<br/>Standalone Server<br/>(Node.js 20 LTS)"]
-            EdgeMW["Edge Middleware<br/>(JWT + Route Protection)"]
-        end
-    end
-
-    subgraph "Data Tier"
-        subgraph "Primary Database"
-            PostgreSQL["PostgreSQL 16"]
-        end
-        subgraph "Object Storage"
-            BlobStorage["Azure Blob Storage<br/>(S3-compatible)<br/>Audio, PDFs, Thumbnails"]
-        end
-    end
-
-    subgraph "DevOps"
-        ACR["Azure Container<br/>Registry"]
-        GitHub["GitHub Actions<br/>(CI/CD)"]
-        AzureMonitor["Azure Monitor<br/>(Metrics + Logs)"]
+    subgraph "Azure Managed Services"
+        PostgreSQL["Azure Database for<br/>PostgreSQL Flexible Server<br/>(16 + pgvector)"]
+        BlobStorage["Azure Blob Storage<br/>Audio, PDFs, Thumbnails"]
     end
 
     subgraph "Local Dev"
         DockerCompose["Docker Compose"]
         PGLocal["PostgreSQL 16"]
-        MinIO["MinIO<br/>(S3-compatible)"]
+        Azurite["Azurite<br/>(Blob Storage Emulator)"]
     end
 
-    WebApp -->|"HTTPS"| FrontDoor
-    HLS -->|"HLS streams"| FrontDoor
-    FrontDoor -->|"Proxy"| NextJS
-    NextJS --> EdgeMW
-    EdgeMW -->|"Prisma ORM"| PostgreSQL
-    EdgeMW -->|"Presigned URLs"| BlobStorage
+    WebApp -->|"HTTPS :443"| Nginx
+    HLS -->|"HLS streams"| Nginx
+    Nginx -->|"proxy_pass :3103"| PM2
+    PM2 --> NextJS
+    NextJS --> Middleware
+    Middleware -->|"Prisma ORM"| PostgreSQL
+    Middleware -->|"Presigned URLs"| BlobStorage
 
-    GitHub -->|"Build + Push"| ACR
-    ACR -->|"Deploy"| NextJS
-    NextJS -.->|"Logs + Metrics"| AzureMonitor
+    DockerCompose --> PGLocal & Azurite
 
-    DockerCompose --> PGLocal & MinIO
-
-    style FrontDoor fill:#0078d4,color:#fff
+    style Nginx fill:#009639,color:#fff
     style PostgreSQL fill:#336791,color:#fff
     style BlobStorage fill:#0078d4,color:#fff
-    style ACR fill:#0078d4,color:#fff
-    style MinIO fill:#c41d15,color:#fff
+    style Azurite fill:#0078d4,color:#fff
+    style NextJS fill:#000,color:#fff
 ```
 
 ---
@@ -505,9 +485,8 @@ flowchart TB
     subgraph "CD Pipeline (GitHub Actions - cd.yml)"
         direction TB
         MergeMain["Push to main"] --> NpmBuild["npm run build"]
-        NpmBuild --> DockerBuild["Docker Build<br/>(Multi-stage)"]
-        DockerBuild --> PushACR["Push to Azure<br/>Container Registry"]
-        PushACR --> DeployACA["Deploy to Azure<br/>Container Apps<br/>(az containerapp update)"]
+        NpmBuild --> SSHDeploy["SSH Deploy to<br/>Azure VM"]
+        SSHDeploy --> PM2Restart["pm2 restart<br/>auditbrief"]
     end
 
     subgraph "E2E Pipeline (GitHub Actions - e2e.yml)"
@@ -516,14 +495,12 @@ flowchart TB
         PlaywrightRun -->|"Against"| StagingURL["Staging<br/>Environment"]
     end
 
-    subgraph "Azure Production Infrastructure"
+    subgraph "Azure VM Production Infrastructure"
         direction TB
 
-        AzureDNS["Azure DNS"]
-        FrontDoor2["Azure Front Door<br/>(CDN + WAF + SSL)"]
-
-        subgraph "Compute"
-            ACA["Azure Container Apps<br/>(Next.js Standalone)"]
+        subgraph "Azure VM"
+            NginxProd["Nginx<br/>(SSL + Reverse Proxy)"]
+            PM2Prod["pm2 + Next.js<br/>(:3103)"]
         end
 
         subgraph "Data"
@@ -531,38 +508,24 @@ flowchart TB
             AzureBlob["Azure Blob Storage<br/>(Audio, PDFs,<br/>Thumbnails)"]
         end
 
-        subgraph "Security"
-            KeyVault["Azure Key Vault<br/>(Secrets)"]
-            GitHubSecrets["GitHub Secrets<br/>(CI/CD Vars)"]
-        end
-
         subgraph "Observability"
-            AzureMon["Azure Monitor<br/>(Logs + Metrics)"]
+            SentryMon["Sentry<br/>(Errors + Performance)"]
+            PM2Logs["pm2 Logs<br/>(Pino JSON)"]
         end
 
-        AzureDNS --> FrontDoor2
-        FrontDoor2 --> ACA
-        ACA -->|"Prisma"| AzurePG
-        ACA -->|"AWS SDK v3"| AzureBlob
-        ACA -.->|"stdout"| AzureMon
-        KeyVault -.->|"Inject"| ACA
-    end
-
-    subgraph "Docker Build (Multi-stage)"
-        direction TB
-        Stage1["Stage 1: deps<br/>npm ci"]
-        Stage2["Stage 2: builder<br/>prisma generate<br/>npm run build"]
-        Stage3["Stage 3: runner<br/>Copy standalone +<br/>public + static<br/>Expose :3000"]
-        Stage1 --> Stage2 --> Stage3
+        NginxProd -->|":3103"| PM2Prod
+        PM2Prod -->|"Prisma"| AzurePG
+        PM2Prod -->|"Azure SDK"| AzureBlob
+        PM2Prod -.->|"Error reports"| SentryMon
+        PM2Prod -.->|"stdout"| PM2Logs
     end
 
     PRReady -->|"Merge"| MergeMain
-    DeployACA -->|"Deploys to"| ACA
+    SSHDeploy -->|"Deploys to"| PM2Prod
 
-    style FrontDoor2 fill:#0078d4,color:#fff
-    style ACA fill:#0078d4,color:#fff
+    style NginxProd fill:#009639,color:#fff
+    style PM2Prod fill:#000,color:#fff
     style AzurePG fill:#336791,color:#fff
     style AzureBlob fill:#0078d4,color:#fff
-    style KeyVault fill:#0078d4,color:#fff
     style ACR fill:#0078d4,color:#fff
 ```

@@ -15,14 +15,13 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
-  getAuthUser: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
-import { requireAuth } from '@/lib/auth/api-helpers';
+import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, ErrorCode } from '@/lib/api/errors';
 
 function createRequest(url: string, options?: RequestInit): NextRequest {
@@ -41,7 +40,7 @@ describe('POST /api/activity', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue(mockUser);
+    vi.mocked(requireAuth).mockResolvedValue(mockUser);
     const mod = await import('@/app/api/activity/route');
     POST = mod.POST;
   });
@@ -99,9 +98,9 @@ describe('POST /api/activity', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/activity', {
       method: 'POST',

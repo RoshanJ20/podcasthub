@@ -16,7 +16,7 @@ import {
   internalError,
 } from '@/lib/api/errors';
 import { updateLearningGraphSchema } from '@/lib/schemas/learning-graph';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 
 /** Route context providing the learning graph ID path parameter. */
 type RouteContext = { params: Promise<{ id: string }> };
@@ -45,10 +45,11 @@ export async function GET(request: NextRequest, context: RouteContext): Promise<
 
     return NextResponse.json({ data: graph });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }
 
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest, context: RouteContext): Promise<
  */
 export async function PUT(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['admin', 'superadmin']);
 
     const { id } = await context.params;
@@ -75,6 +76,14 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
       return createErrorResponse(badRequest('Validation failed', result.error.flatten()));
     }
 
+    const existing = await prisma.learningGraph.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) {
+      return createErrorResponse(
+        notFound('Learning graph'),
+        request.headers.get('x-request-id') ?? undefined
+      );
+    }
+
     const graph = await prisma.learningGraph.update({
       where: { id },
       data: result.data,
@@ -82,10 +91,11 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
 
     return NextResponse.json({ data: graph });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }
 
@@ -100,21 +110,26 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
  */
 export async function DELETE(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['admin', 'superadmin']);
 
     const { id } = await context.params;
 
-    try {
-      await prisma.learningGraph.delete({ where: { id } });
-      return NextResponse.json({ message: 'Learning graph deleted successfully' });
-    } catch {
-      return createErrorResponse(notFound('Learning graph'));
+    const existing = await prisma.learningGraph.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) {
+      return createErrorResponse(
+        notFound('Learning graph'),
+        request.headers.get('x-request-id') ?? undefined
+      );
     }
+
+    await prisma.learningGraph.delete({ where: { id } });
+    return NextResponse.json({ data: { message: 'Learning graph deleted successfully' } });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }

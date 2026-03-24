@@ -20,17 +20,19 @@ vi.mock('@/lib/db', () => ({
       delete: vi.fn(),
       findUnique: vi.fn(),
     },
+    auditBrief: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
-  getAuthUser: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
-import { requireAuth } from '@/lib/auth/api-helpers';
+import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, ErrorCode } from '@/lib/api/errors';
 
 function createRequest(url: string, options?: RequestInit): NextRequest {
@@ -59,7 +61,7 @@ describe('GET /api/bookmarks', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue(mockUser);
+    vi.mocked(requireAuth).mockResolvedValue(mockUser);
     const mod = await import('@/app/api/bookmarks/route');
     GET = mod.GET;
   });
@@ -108,9 +110,9 @@ describe('GET /api/bookmarks', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/bookmarks');
     const res = await GET(req);
@@ -132,12 +134,15 @@ describe('POST /api/bookmarks', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue(mockUser);
+    vi.mocked(requireAuth).mockResolvedValue(mockUser);
     const mod = await import('@/app/api/bookmarks/route');
     POST = mod.POST;
   });
 
   it('creates a bookmark and returns 201', async () => {
+    vi.mocked(prisma.auditBrief.findUnique).mockResolvedValue({
+      id: '550e8400-e29b-41d4-a716-446655440000',
+    } as never);
     const created = { ...mockBookmark, ...validBody, userId: 'user-1' };
     vi.mocked(prisma.bookmark.create).mockResolvedValue(created as never);
 
@@ -162,9 +167,9 @@ describe('POST /api/bookmarks', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/bookmarks', {
       method: 'POST',
@@ -195,7 +200,7 @@ describe('PUT /api/bookmarks/[id]', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue(mockUser);
+    vi.mocked(requireAuth).mockResolvedValue(mockUser);
     const mod = await import('@/app/api/bookmarks/[id]/route');
     PUT = mod.PUT;
   });
@@ -254,7 +259,7 @@ describe('DELETE /api/bookmarks/[id]', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue(mockUser);
+    vi.mocked(requireAuth).mockResolvedValue(mockUser);
     const mod = await import('@/app/api/bookmarks/[id]/route');
     DELETE = mod.DELETE;
   });

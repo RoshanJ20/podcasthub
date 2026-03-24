@@ -7,7 +7,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth } from '@/lib/auth/api-helpers';
+import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, createErrorResponse, internalError, badRequest } from '@/lib/api/errors';
 import { z } from 'zod';
 
@@ -28,7 +28,7 @@ const markCompleteSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
 
     const progress = await prisma.userProgress.findMany({
       where: { userId: user.userId },
@@ -41,8 +41,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: progress });
   } catch (error) {
-    if (error instanceof ApiError) return createErrorResponse(error);
-    return createErrorResponse(internalError());
+    const requestId = request.headers.get('x-request-id') ?? undefined;
+    if (error instanceof ApiError) return createErrorResponse(error, requestId);
+    return createErrorResponse(internalError(), requestId);
   }
 }
 
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     const body = await request.json();
 
     const parsed = markCompleteSchema.safeParse(body);
@@ -68,6 +69,17 @@ export async function POST(request: NextRequest) {
     }
 
     const { graphId, episodeId } = parsed.data;
+
+    const episode = await prisma.episode.findUnique({
+      where: { id: episodeId },
+      select: { id: true, graphId: true },
+    });
+    if (!episode) {
+      return createErrorResponse(badRequest('Episode not found'));
+    }
+    if (episode.graphId !== graphId) {
+      return createErrorResponse(badRequest('Episode does not belong to the specified graph'));
+    }
 
     const progress = await prisma.userProgress.upsert({
       where: {
@@ -86,7 +98,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: progress }, { status: 201 });
   } catch (error) {
-    if (error instanceof ApiError) return createErrorResponse(error);
-    return createErrorResponse(internalError());
+    const requestId = request.headers.get('x-request-id') ?? undefined;
+    if (error instanceof ApiError) return createErrorResponse(error, requestId);
+    return createErrorResponse(internalError(), requestId);
   }
 }

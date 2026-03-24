@@ -14,7 +14,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 // Mock auth helpers
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
 }));
@@ -25,7 +25,7 @@ vi.mock('@/lib/storage', () => ({
   CONTAINER: 'test-container',
 }));
 
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { generatePresignedUploadUrl } from '@/lib/storage';
 import { ApiError, ErrorCode } from '@/lib/api/errors';
 import { POST } from '@/app/api/upload/route';
@@ -48,7 +48,7 @@ function createUploadRequest(body: Record<string, unknown>): NextRequest {
 describe('POST /api/upload', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequireAuth.mockReturnValue({
+    mockRequireAuth.mockResolvedValue({
       userId: 'user-1',
       email: 'admin@example.com',
       role: 'admin',
@@ -58,9 +58,9 @@ describe('POST /api/upload', () => {
   });
 
   it('returns 401 when not authenticated', async () => {
-    mockRequireAuth.mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    mockRequireAuth.mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const request = createUploadRequest({
       filename: 'test.mp3',
@@ -225,7 +225,7 @@ describe('POST /api/upload', () => {
 
     await POST(request);
 
-    expect(mockRequireAuth).toHaveBeenCalledWith(request);
+    expect(mockRequireAuth).toHaveBeenCalled();
     expect(mockRequireRole).toHaveBeenCalledWith(
       { userId: 'user-1', email: 'admin@example.com', role: 'admin' },
       ['admin', 'superadmin']
@@ -233,9 +233,7 @@ describe('POST /api/upload', () => {
   });
 
   it('returns 500 for unexpected errors', async () => {
-    mockRequireAuth.mockImplementation(() => {
-      throw new Error('Unexpected database error');
-    });
+    mockRequireAuth.mockRejectedValue(new Error('Unexpected database error'));
 
     const request = createUploadRequest({
       filename: 'test.mp3',

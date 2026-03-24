@@ -9,7 +9,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth } from '@/lib/auth/api-helpers';
+import { Prisma } from '@prisma/client';
+import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, createErrorResponse, internalError, badRequest } from '@/lib/api/errors';
 
 /**
@@ -25,7 +26,7 @@ import { ApiError, createErrorResponse, internalError, badRequest } from '@/lib/
  */
 export async function GET(request: NextRequest) {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
 
     const favorites = await prisma.favorite.findMany({
       where: { userId: user.userId },
@@ -36,8 +37,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ data: ids });
   } catch (error) {
-    if (error instanceof ApiError) return createErrorResponse(error);
-    return createErrorResponse(internalError());
+    const requestId = request.headers.get('x-request-id') ?? undefined;
+    if (error instanceof ApiError) return createErrorResponse(error, requestId);
+    return createErrorResponse(internalError(), requestId);
   }
 }
 
@@ -55,7 +57,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     const body = await request.json();
 
     const { auditBriefId } = body as { auditBriefId?: unknown };
@@ -65,27 +67,38 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(badRequest('auditBriefId must be a non-empty string'));
     }
 
-    const existing = await prisma.favorite.findUnique({
-      where: { userId_auditBriefId: { userId: user.userId, auditBriefId } },
-    });
-
-    if (existing) {
-      // Favorite exists — remove it
-      await prisma.favorite.delete({
+    try {
+      const existing = await prisma.favorite.findUnique({
         where: { userId_auditBriefId: { userId: user.userId, auditBriefId } },
       });
 
-      return NextResponse.json({ data: { favorited: false } });
+      if (existing) {
+        await prisma.favorite.delete({
+          where: { userId_auditBriefId: { userId: user.userId, auditBriefId } },
+        });
+        return NextResponse.json({ data: { favorited: false } });
+      }
+
+      await prisma.favorite.create({
+        data: { userId: user.userId, auditBriefId },
+      });
+      return NextResponse.json({ data: { favorited: true } }, { status: 201 });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          // Record deleted between find and delete — treat as already unfavorited
+          return NextResponse.json({ data: { favorited: false } });
+        }
+        if (error.code === 'P2002') {
+          // Record created between find and create — treat as already favorited
+          return NextResponse.json({ data: { favorited: true } });
+        }
+      }
+      throw error;
     }
-
-    // Favorite does not exist — create it
-    await prisma.favorite.create({
-      data: { userId: user.userId, auditBriefId },
-    });
-
-    return NextResponse.json({ data: { favorited: true } }, { status: 201 });
   } catch (error) {
-    if (error instanceof ApiError) return createErrorResponse(error);
-    return createErrorResponse(internalError());
+    const requestId = request.headers.get('x-request-id') ?? undefined;
+    if (error instanceof ApiError) return createErrorResponse(error, requestId);
+    return createErrorResponse(internalError(), requestId);
   }
 }

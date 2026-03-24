@@ -6,7 +6,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth } from '@/lib/auth/api-helpers';
+import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, createErrorResponse, internalError, badRequest } from '@/lib/api/errors';
 import { z } from 'zod';
 
@@ -40,7 +40,7 @@ const activitySchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     const body = await request.json();
 
     const parsed = activitySchema.safeParse(body);
@@ -64,7 +64,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(null, { status: 201 });
   } catch (error) {
-    if (error instanceof ApiError) return createErrorResponse(error);
-    return createErrorResponse(internalError());
+    const requestId = request.headers.get('x-request-id') ?? undefined;
+    if (error instanceof ApiError) return createErrorResponse(error, requestId);
+    return createErrorResponse(internalError(), requestId);
   }
 }

@@ -15,21 +15,18 @@ vi.mock('@/lib/db', () => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
       count: vi.fn(),
-    },
-    userRole: {
-      upsert: vi.fn(),
+      update: vi.fn(),
     },
   },
 }));
 
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
-  getAuthUser: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 
 function createRequest(url: string, options?: RequestInit): NextRequest {
   return new NextRequest(
@@ -50,9 +47,9 @@ describe('GET /api/users', () => {
   });
 
   it('returns 401 for unauthenticated users', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/users');
     const res = await GET(req);
@@ -60,7 +57,7 @@ describe('GET /api/users', () => {
   });
 
   it('returns 403 for non-superadmin', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'admin-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -75,7 +72,7 @@ describe('GET /api/users', () => {
   });
 
   it('returns user list for superadmin', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'super-1',
       email: 'super@test.com',
       role: 'superadmin',
@@ -88,7 +85,7 @@ describe('GET /api/users', () => {
         displayName: 'Test User',
         email: 'user@test.com',
         createdAt: new Date('2026-01-01'),
-        role: { role: 'public' },
+        role: 'public',
       },
     ] as never);
     vi.mocked(prisma.user.count).mockResolvedValue(1);
@@ -106,7 +103,7 @@ describe('GET /api/users', () => {
   });
 
   it('supports search filter', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'super-1',
       email: 'super@test.com',
       role: 'superadmin',
@@ -145,9 +142,9 @@ describe('PUT /api/users/[id]/role', () => {
   });
 
   it('returns 401 for unauthenticated users', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/users/user-1/role', {
       method: 'PUT',
@@ -159,7 +156,7 @@ describe('PUT /api/users/[id]/role', () => {
   });
 
   it('returns 403 for non-superadmin', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'admin-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -178,7 +175,7 @@ describe('PUT /api/users/[id]/role', () => {
   });
 
   it('updates user role successfully', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'super-1',
       email: 'super@test.com',
       role: 'superadmin',
@@ -190,9 +187,8 @@ describe('PUT /api/users/[id]/role', () => {
       displayName: 'Test User',
       email: 'user@test.com',
     } as never);
-    vi.mocked(prisma.userRole.upsert).mockResolvedValue({
-      id: 'role-1',
-      userId: 'user-1',
+    vi.mocked(prisma.user.update).mockResolvedValue({
+      id: 'user-1',
       role: 'admin',
     } as never);
 
@@ -205,11 +201,11 @@ describe('PUT /api/users/[id]/role', () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(body.role).toBe('admin');
+    expect(body.data.role).toBe('admin');
   });
 
   it('returns 400 for invalid role', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'super-1',
       email: 'super@test.com',
       role: 'superadmin',
@@ -226,7 +222,7 @@ describe('PUT /api/users/[id]/role', () => {
   });
 
   it('returns 404 for non-existent user', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'super-1',
       email: 'super@test.com',
       role: 'superadmin',
@@ -247,7 +243,7 @@ describe('PUT /api/users/[id]/role', () => {
   });
 
   it('prevents changing own role', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'super-1',
       email: 'super@test.com',
       role: 'superadmin',

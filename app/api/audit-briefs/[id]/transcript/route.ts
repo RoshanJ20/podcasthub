@@ -8,8 +8,14 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
-import { ApiError, createErrorResponse, badRequest, internalError } from '@/lib/api/errors';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import {
+  ApiError,
+  createErrorResponse,
+  badRequest,
+  notFound,
+  internalError,
+} from '@/lib/api/errors';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 
 /** Route context providing the audit brief ID path parameter. */
 type RouteContext = { params: Promise<{ id: string }> };
@@ -47,7 +53,7 @@ const upsertTranscriptSchema = z.object({
  * @param context - Route context containing the audit brief ID
  * @returns JSON response with an array of transcripts
  */
-export async function GET(_request: NextRequest, context: RouteContext): Promise<NextResponse> {
+export async function GET(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   try {
     const { id } = await context.params;
 
@@ -57,10 +63,11 @@ export async function GET(_request: NextRequest, context: RouteContext): Promise
 
     return NextResponse.json({ data: transcripts });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }
 
@@ -76,7 +83,7 @@ export async function GET(_request: NextRequest, context: RouteContext): Promise
  */
 export async function PUT(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['admin', 'superadmin']);
 
     const { id } = await context.params;
@@ -88,6 +95,14 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
     }
 
     const { fullText, segments, transcriptType } = result.data;
+
+    const auditBrief = await prisma.auditBrief.findUnique({
+      where: { id, isArchived: false },
+      select: { id: true },
+    });
+    if (!auditBrief) {
+      return createErrorResponse(notFound('AuditBrief'));
+    }
 
     const transcript = await prisma.transcript.upsert({
       where: {
@@ -107,9 +122,10 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
 
     return NextResponse.json({ data: transcript });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }

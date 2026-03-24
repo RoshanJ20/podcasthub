@@ -18,14 +18,13 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-vi.mock('@/lib/auth/api-helpers', () => ({
+vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
-  getAuthUser: vi.fn(),
 }));
 
 import { prisma } from '@/lib/db';
-import { requireAuth, requireRole, getAuthUser } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { ApiError, ErrorCode } from '@/lib/api/errors';
 
 function createRequest(url: string, options?: RequestInit): NextRequest {
@@ -73,7 +72,6 @@ describe('GET /api/learning-graphs', () => {
   });
 
   it('returns all paths for unauthenticated users without isPublished filter', async () => {
-    vi.mocked(getAuthUser).mockReturnValue(null);
     vi.mocked(prisma.learningGraph.findMany).mockResolvedValue([
       mockGraph,
       mockDraftGraph,
@@ -95,7 +93,7 @@ describe('GET /api/learning-graphs', () => {
   });
 
   it('returns all paths for admin users without isPublished filter', async () => {
-    vi.mocked(getAuthUser).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -120,7 +118,7 @@ describe('GET /api/learning-graphs', () => {
   });
 
   it('returns all paths for superadmin users', async () => {
-    vi.mocked(getAuthUser).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'super@test.com',
       role: 'superadmin',
@@ -139,7 +137,6 @@ describe('GET /api/learning-graphs', () => {
   });
 
   it('supports domain filter', async () => {
-    vi.mocked(getAuthUser).mockReturnValue(null);
     vi.mocked(prisma.learningGraph.findMany).mockResolvedValue([]);
     vi.mocked(prisma.learningGraph.count).mockResolvedValue(0);
 
@@ -154,7 +151,6 @@ describe('GET /api/learning-graphs', () => {
   });
 
   it('supports pagination params', async () => {
-    vi.mocked(getAuthUser).mockReturnValue(null);
     vi.mocked(prisma.learningGraph.findMany).mockResolvedValue([]);
     vi.mocked(prisma.learningGraph.count).mockResolvedValue(50);
 
@@ -176,7 +172,6 @@ describe('GET /api/learning-graphs', () => {
   });
 
   it('returns 500 on unexpected error', async () => {
-    vi.mocked(getAuthUser).mockReturnValue(null);
     vi.mocked(prisma.learningGraph.findMany).mockRejectedValue(new Error('DB down'));
 
     const req = createRequest('/api/learning-graphs');
@@ -200,7 +195,7 @@ describe('POST /api/learning-graphs', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-1',
       email: 'admin@test.com',
       role: 'admin',
@@ -228,9 +223,9 @@ describe('POST /api/learning-graphs', () => {
   });
 
   it('returns 401 for unauthenticated users', async () => {
-    vi.mocked(requireAuth).mockImplementation(() => {
-      throw new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required');
-    });
+    vi.mocked(requireAuth).mockRejectedValue(
+      new ApiError(401, ErrorCode.UNAUTHORIZED, 'Authentication required')
+    );
 
     const req = createRequest('/api/learning-graphs', {
       method: 'POST',
@@ -243,7 +238,7 @@ describe('POST /api/learning-graphs', () => {
   });
 
   it('returns 403 for non-admin users', async () => {
-    vi.mocked(requireAuth).mockReturnValue({
+    vi.mocked(requireAuth).mockResolvedValue({
       userId: 'user-2',
       email: 'user@test.com',
       role: 'public',

@@ -12,7 +12,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 import { uploadBuffer } from '@/lib/storage';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { createErrorResponse, badRequest } from '@/lib/api/errors';
 import {
   FILE_TYPE_GROUPS,
@@ -38,7 +38,7 @@ import { withRequestLogging } from '@/lib/api/request-logging-middleware';
  * @throws {ApiError} 403 if the user does not have admin or superadmin role
  */
 export const POST = withRequestLogging(async (request: NextRequest): Promise<NextResponse> => {
-  const user = requireAuth(request);
+  const user = await requireAuth();
   requireRole(user, ['admin', 'superadmin']);
 
   const formData = await request.formData();
@@ -49,8 +49,11 @@ export const POST = withRequestLogging(async (request: NextRequest): Promise<Nex
     return createErrorResponse(badRequest('file and category are required'));
   }
 
-  if (!['audio', 'image', 'pdf'].includes(category)) {
-    return createErrorResponse(badRequest('category must be audio, image, or pdf'));
+  const validCategories = Object.keys(FILE_TYPE_GROUPS);
+  if (!validCategories.includes(category)) {
+    return createErrorResponse(
+      badRequest(`category must be one of: ${validCategories.join(', ')}`)
+    );
   }
 
   const typedCategory = category as 'audio' | 'image' | 'pdf';

@@ -6,7 +6,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import {
   ApiError,
   createErrorResponse,
@@ -21,8 +21,8 @@ const VALID_ROLES = ['public', 'admin', 'superadmin'];
  * Handles PUT requests to update a user's role.
  *
  * Requires superadmin role. Validates that the role is one of 'public', 'admin',
- * or 'superadmin'. Prevents superadmins from changing their own role. Upserts
- * the role record for the target user.
+ * or 'superadmin'. Prevents superadmins from changing their own role. Updates
+ * the role field directly on the user record.
  *
  * @param request - The incoming Next.js request object with the new role in the body
  * @param params - Route parameters containing the target user ID
@@ -38,10 +38,9 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const { id } = await params;
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['superadmin']);
 
-    // Prevent changing own role
     if (user.userId === id) {
       return createErrorResponse(badRequest('Cannot change your own role'));
     }
@@ -55,7 +54,6 @@ export async function PUT(
       );
     }
 
-    // Verify user exists
     const targetUser = await prisma.user.findUnique({
       where: { id },
       select: { id: true, displayName: true, email: true },
@@ -65,23 +63,24 @@ export async function PUT(
       return createErrorResponse(notFound('User'));
     }
 
-    // Upsert user role
-    await prisma.userRole.upsert({
-      where: { userId: id },
-      update: { role },
-      create: { userId: id, role },
+    await prisma.user.update({
+      where: { id },
+      data: { role },
     });
 
     return NextResponse.json({
-      id: targetUser.id,
-      name: targetUser.displayName,
-      email: targetUser.email,
-      role,
+      data: {
+        id: targetUser.id,
+        name: targetUser.displayName,
+        email: targetUser.email,
+        role,
+      },
     });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }

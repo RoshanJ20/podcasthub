@@ -7,7 +7,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth } from '@/lib/auth/api-helpers';
+import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, createErrorResponse, internalError, badRequest } from '@/lib/api/errors';
 import { parsePaginationParams, createPaginatedResponse } from '@/lib/api/pagination';
 import { createBookmarkSchema } from '@/lib/schemas/bookmark';
@@ -24,7 +24,7 @@ import { createBookmarkSchema } from '@/lib/schemas/bookmark';
  */
 export async function GET(request: NextRequest) {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     const url = new URL(request.url);
     const { page, limit } = parsePaginationParams(url);
     const skip = (page - 1) * limit;
@@ -48,8 +48,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(createPaginatedResponse(data, { page, limit, total }));
   } catch (error) {
-    if (error instanceof ApiError) return createErrorResponse(error);
-    return createErrorResponse(internalError());
+    const requestId = request.headers.get('x-request-id') ?? undefined;
+    if (error instanceof ApiError) return createErrorResponse(error, requestId);
+    return createErrorResponse(internalError(), requestId);
   }
 }
 
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     const body = await request.json();
 
     const parsed = createBookmarkSchema.safeParse(body);
@@ -75,6 +76,14 @@ export async function POST(request: NextRequest) {
     }
 
     const { auditBriefId, timestampSeconds, note } = parsed.data;
+
+    const auditBrief = await prisma.auditBrief.findUnique({
+      where: { id: auditBriefId },
+      select: { id: true },
+    });
+    if (!auditBrief) {
+      return createErrorResponse(badRequest('Audit brief not found'));
+    }
 
     const bookmark = await prisma.bookmark.create({
       data: {
@@ -87,7 +96,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: bookmark }, { status: 201 });
   } catch (error) {
-    if (error instanceof ApiError) return createErrorResponse(error);
-    return createErrorResponse(internalError());
+    const requestId = request.headers.get('x-request-id') ?? undefined;
+    if (error instanceof ApiError) return createErrorResponse(error, requestId);
+    return createErrorResponse(internalError(), requestId);
   }
 }

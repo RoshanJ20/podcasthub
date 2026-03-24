@@ -12,16 +12,20 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  email        String   @unique
-  passwordHash String?  @map("password_hash")
-  displayName  String?  @map("display_name")
-  entraId      String?  @unique @map("entra_id")
-  authProvider String   @default("local") @map("auth_provider")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email         String    @unique
+  passwordHash  String?   @map("password_hash")
+  displayName   String?   @map("display_name")
+  entraId       String?   @unique @map("entra_id")
+  authProvider  String    @default("local") @map("auth_provider")
+  role          String    @default("public")
+  emailVerified DateTime? @map("email_verified") @db.Timestamptz
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  role           UserRole?
+  accounts       Account[]
+  sessions       Session[]
   bookmarks      Bookmark[]
   favorites      Favorite[]
   progress       UserProgress[]
@@ -169,16 +173,37 @@ model Bookmark {
   @@map("bookmarks")
 }
 
-model UserRole {
-  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  userId    String   @unique @map("user_id") @db.Uuid
-  role      String   @default("public")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+model Account {
+  id                String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId            String  @map("user_id") @db.Uuid
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("user_roles")
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id") @db.Uuid
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
 }
 
 model UserProgress {

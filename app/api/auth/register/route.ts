@@ -4,18 +4,16 @@
  * Key responsibilities:
  * - Validates registration input using Zod schema
  * - Checks for duplicate email addresses
- * - Creates user and associated UserRole records in a single transaction
- * - Signs and sets JWT access and refresh token cookies
+ * - Creates user with hashed password and default 'public' role
  * - Returns created user data (excluding password hash)
+ * - Client handles sign-in via NextAuth after registration
  *
  * Dependencies:
  * - next/server (NextResponse)
  * - @/lib/schemas/user (registerSchema)
  * - @/lib/auth/password (hashPassword)
- * - @/lib/auth/jwt (signAccessToken, signRefreshToken)
- * - @/lib/auth/cookies (setAuthCookies)
  * - @/lib/db (prisma)
- * - @/lib/api/errors (badRequest, validationFailed, internalError, createErrorResponse)
+ * - @/lib/api/errors (badRequest, validationFailed, createErrorResponse)
  *
  * @route POST /api/auth/register
  * @body { email: string, password: string, displayName?: string }
@@ -25,8 +23,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { registerSchema } from '@/lib/schemas/user';
 import { hashPassword } from '@/lib/auth/password';
-import { signAccessToken, signRefreshToken } from '@/lib/auth/jwt';
-import { setAuthCookies } from '@/lib/auth/cookies';
 import { prisma } from '@/lib/db';
 import { badRequest, validationFailed, createErrorResponse } from '@/lib/api/errors';
 import { withRequestLogging } from '@/lib/api/request-logging-middleware';
@@ -35,16 +31,15 @@ import { withRequestLogging } from '@/lib/api/request-logging-middleware';
  * Handles user registration.
  *
  * Validates input, checks for duplicate emails, creates the user with a
- * default 'public' role, signs JWT tokens, and sets HttpOnly cookies.
- * Wrapped with request logging for security audit trail.
+ * default 'public' role and hashed password. The client is responsible for
+ * signing in via NextAuth after a successful registration.
  *
  * @param request - The incoming POST request with registration data.
- * @returns JSON response with user data and auth cookies, or an error response.
+ * @returns JSON response with user data, or an error response.
  */
 export const POST = withRequestLogging(async (request: NextRequest): Promise<NextResponse> => {
   const body: unknown = await request.json();
 
-  // Validate request body against registration schema
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {
     return createErrorResponse(validationFailed(parsed.error.issues));
@@ -52,7 +47,6 @@ export const POST = withRequestLogging(async (request: NextRequest): Promise<Nex
 
   const { email, password, displayName } = parsed.data;
 
-  // Check for duplicate email
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
@@ -61,7 +55,6 @@ export const POST = withRequestLogging(async (request: NextRequest): Promise<Nex
     return createErrorResponse(badRequest('A user with this email already exists'));
   }
 
-  // Hash the password and create user + role in a transaction
   const passwordHash = await hashPassword(password);
 
   const user = await prisma.user.create({
@@ -69,45 +62,20 @@ export const POST = withRequestLogging(async (request: NextRequest): Promise<Nex
       email,
       passwordHash,
       displayName: displayName ?? null,
-      role: {
-        create: {
-          role: 'public',
-        },
-      },
-    },
-    include: {
-      role: true,
+      role: 'public',
     },
   });
 
-  const userRole = user.role?.role ?? 'public';
-
-  // Sign JWT tokens
-  const jwtPayload = {
-    userId: user.id,
-    email: user.email,
-    role: userRole,
-  };
-
-  const accessToken = signAccessToken(jwtPayload);
-  const refreshToken = signRefreshToken(jwtPayload);
-
-  // Build response with user data (no password hash)
-  const response = NextResponse.json(
+  return NextResponse.json(
     {
       user: {
         id: user.id,
         email: user.email,
         displayName: user.displayName,
-        role: userRole,
+        role: user.role,
         createdAt: user.createdAt,
       },
     },
     { status: 201 }
   );
-
-  // Set HttpOnly auth cookies
-  setAuthCookies(response, accessToken, refreshToken);
-
-  return response;
 });

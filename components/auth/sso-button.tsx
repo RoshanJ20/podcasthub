@@ -15,6 +15,7 @@
 'use client';
 
 import { useState } from 'react';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 
 /**
@@ -53,11 +54,9 @@ function MicrosoftLogo() {
 export function SsoButton({ redirectTo }: SsoButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const href = `/api/auth/sso/authorize?redirectTo=${encodeURIComponent(redirectTo)}`;
-
   const handleClick = () => {
     setIsLoading(true);
-    window.location.href = href;
+    signIn('azure-ad', { callbackUrl: redirectTo });
   };
 
   return (

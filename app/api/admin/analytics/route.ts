@@ -8,7 +8,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { requireAuth, requireRole } from '@/lib/auth/api-helpers';
+import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { ApiError, createErrorResponse, internalError } from '@/lib/api/errors';
 
 /**
@@ -97,7 +97,7 @@ async function resolveTopTopics(
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const user = requireAuth(request);
+    const user = await requireAuth();
     requireRole(user, ['admin', 'superadmin']);
 
     const url = new URL(request.url);
@@ -152,9 +152,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       topTopics: topTopicsFormatted,
     });
   } catch (error) {
+    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
-      return createErrorResponse(error);
+      return createErrorResponse(error, requestId);
     }
-    return createErrorResponse(internalError());
+    return createErrorResponse(internalError(), requestId);
   }
 }

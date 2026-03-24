@@ -4,7 +4,7 @@
  * Verifies:
  * - Renders user name and role in expanded mode
  * - Falls back to initials in the avatar when no avatarUrl is provided
- * - Shows settings link pointing to /profile
+ * - Shows a logout button
  * - In collapsed mode renders the avatar but not the name text
  * - Tooltip wraps the avatar in collapsed mode
  * - getInitials derivation (tested through rendered output)
@@ -48,10 +48,10 @@ describe('SidebarUserProfile', () => {
       expect(container.textContent).toContain('MS');
     });
 
-    it('renders a link to /profile for the settings icon', () => {
+    it('renders a logout button', () => {
       const { container } = render(<SidebarUserProfile name="Jane Doe" role="Admin" />);
-      const settingsLink = container.querySelector('a[aria-label="Profile settings"]');
-      expect(settingsLink?.getAttribute('href')).toBe('/profile');
+      const logoutButton = container.querySelector('button[aria-label="Logout"]');
+      expect(logoutButton).not.toBeNull();
     });
 
     it('renders without error when avatarUrl is provided', () => {
@@ -68,9 +68,6 @@ describe('SidebarUserProfile', () => {
   describe('collapsed mode (collapsed=true)', () => {
     it('does not render the user name text in collapsed mode', () => {
       const { container } = render(<SidebarUserProfile name="Jane Doe" role="Admin" collapsed />);
-      // The name text should be absent from visible DOM content.
-      const profileLink = container.querySelector('a[href="/profile"]');
-      expect(profileLink).not.toBeNull();
       // The settings link with aria-label should not exist in collapsed mode.
       const settingsLink = container.querySelector('a[aria-label="Profile settings"]');
       expect(settingsLink).toBeNull();
@@ -88,10 +85,10 @@ describe('SidebarUserProfile', () => {
       expect(container.firstChild?.nodeName).not.toBe('A');
     });
 
-    it('links to /profile in collapsed mode', () => {
+    it('renders the avatar in collapsed mode', () => {
       const { container } = render(<SidebarUserProfile name="Jane Doe" role="Admin" collapsed />);
-      const profileLink = container.querySelector('a[href="/profile"]');
-      expect(profileLink).not.toBeNull();
+      const avatar = container.querySelector('[data-slot="avatar"]');
+      expect(avatar).not.toBeNull();
     });
   });
 });
