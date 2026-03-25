@@ -4,7 +4,6 @@
  * Key responsibilities:
  * - Provides a single PrismaClient instance across the application
  * - Prevents connection exhaustion in development (Next.js hot reloading)
- * - Configures the PostgreSQL driver adapter for Prisma v6
  * - Instruments all queries with slow query detection via $extends
  *
  * @example
@@ -12,8 +11,6 @@
  * const auditBriefs = await prisma.auditBrief.findMany();
  */
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import type pg from 'pg';
 import { createLogger } from '@/lib/logger';
 import { logSlowQuery } from '@/lib/db-instrumentation';
 
@@ -24,17 +21,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const poolConfig: pg.PoolConfig = {
-    connectionString: process.env.DATABASE_URL,
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
-  };
-  // Pass config directly to PrismaPg so it can create both query and transaction
-  // connections with the full connection string (including password for SASL auth).
-  const adapter = new PrismaPg(poolConfig);
   const baseClient = new PrismaClient({
-    adapter,
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   });
 
