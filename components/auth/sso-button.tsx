@@ -17,6 +17,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
+import { BASE_PATH } from '@/lib/config/base-path';
 
 /**
  * Props for the SsoButton component.
@@ -56,7 +57,8 @@ export function SsoButton({ redirectTo }: SsoButtonProps) {
 
   const handleClick = () => {
     setIsLoading(true);
-    signIn('azure-ad', { callbackUrl: redirectTo });
+    const fullCallbackUrl = redirectTo.startsWith(BASE_PATH) ? redirectTo : BASE_PATH + redirectTo;
+    signIn('azure-ad', { callbackUrl: fullCallbackUrl });
   };
 
   return (
