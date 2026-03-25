@@ -79,7 +79,7 @@ function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean 
   return (
     <p
       className={cn(
-        'px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-muted-foreground'
+        'px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-tertiary'
       )}
     >
       {label}
@@ -256,7 +256,7 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
   );
 
   const baseClassName =
-    'hidden md:flex md:flex-col border-r border-sidebar-border bg-sidebar/95 backdrop-blur-sm overflow-hidden shrink-0 sticky top-0 h-screen';
+    'hidden md:flex md:flex-col border-r border-sidebar-border bg-sidebar/95 backdrop-blur-sm overflow-hidden shrink-0 sticky top-0 h-screen transition-[border-color] duration-150';
 
   // Use a plain aside when the user prefers reduced motion to avoid
   // any Motion overhead or janky zero-duration spring physics.

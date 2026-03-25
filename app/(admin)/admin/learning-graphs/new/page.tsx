@@ -62,7 +62,7 @@ export default function NewLearningPathPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <section className="rounded-2xl border border-border/70 bg-card/85 p-5 shadow-[0_10px_35px_-30px_oklch(45.6%_0.311_264.1/.65)]">
+      <section className="rounded-2xl border border-border-default dark:border-border-subtle bg-elevated/85 p-5 shadow-card">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={handleBack} aria-label="Go back">
             <ArrowLeft className="h-4 w-4" />

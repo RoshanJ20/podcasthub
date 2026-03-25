@@ -97,7 +97,7 @@ export function AnalyticsCharts() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Card className="rounded-xl border border-border/70 bg-card">
+        <Card className="rounded-xl border border-border-default dark:border-border-subtle bg-card">
           <CardContent className="p-5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Total Listens
@@ -107,7 +107,7 @@ export function AnalyticsCharts() {
             </p>
           </CardContent>
         </Card>
-        <Card className="rounded-xl border border-border/70 bg-card">
+        <Card className="rounded-xl border border-border-default dark:border-border-subtle bg-card">
           <CardContent className="p-5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Unique Listeners
@@ -117,7 +117,7 @@ export function AnalyticsCharts() {
             </p>
           </CardContent>
         </Card>
-        <Card className="rounded-xl border border-border/70 bg-card">
+        <Card className="rounded-xl border border-border-default dark:border-border-subtle bg-card">
           <CardContent className="p-5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Total Audit Briefs
@@ -127,7 +127,7 @@ export function AnalyticsCharts() {
             </p>
           </CardContent>
         </Card>
-        <Card className="rounded-xl border border-border/70 bg-card">
+        <Card className="rounded-xl border border-border-default dark:border-border-subtle bg-card">
           <CardContent className="p-5">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Learning Paths
@@ -140,8 +140,8 @@ export function AnalyticsCharts() {
       </div>
 
       {/* Domain Pie Chart */}
-      <Card className="rounded-xl border border-border/70 bg-card">
-        <CardHeader className="border-b border-border/70 px-5 py-3.5">
+      <Card className="rounded-xl border border-border-default dark:border-border-subtle bg-card">
+        <CardHeader className="border-b border-border-default dark:border-border-subtle px-5 py-3.5">
           <CardTitle className="text-sm font-semibold">Listens by Domain</CardTitle>
         </CardHeader>
         <CardContent className="p-5">
@@ -172,8 +172,8 @@ export function AnalyticsCharts() {
       </Card>
 
       {/* Monthly Trends */}
-      <Card className="rounded-xl border border-border/70 bg-card">
-        <CardHeader className="border-b border-border/70 px-5 py-3.5">
+      <Card className="rounded-xl border border-border-default dark:border-border-subtle bg-card">
+        <CardHeader className="border-b border-border-default dark:border-border-subtle px-5 py-3.5">
           <CardTitle className="text-sm font-semibold">Monthly Trends</CardTitle>
         </CardHeader>
         <CardContent className="p-5">
@@ -200,8 +200,8 @@ export function AnalyticsCharts() {
       </Card>
 
       {/* Top Topics */}
-      <Card className="rounded-xl border border-border/70 bg-card">
-        <CardHeader className="border-b border-border/70 px-5 py-3.5">
+      <Card className="rounded-xl border border-border-default dark:border-border-subtle bg-card">
+        <CardHeader className="border-b border-border-default dark:border-border-subtle px-5 py-3.5">
           <CardTitle className="text-sm font-semibold">Top Topics</CardTitle>
         </CardHeader>
         <CardContent className="p-5">

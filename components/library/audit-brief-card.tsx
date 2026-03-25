@@ -55,7 +55,7 @@ export function AuditBriefCard({
 
   return (
     <Link href={`/audit-brief/${id}`} className="group block" data-testid="audit-brief-card-link">
-      <div className="flex h-full overflow-hidden rounded-xl border border-border/70 bg-card transition-[box-shadow,border-color] duration-200 hover:border-primary/25 hover:shadow-[0_10px_30px_-26px_oklch(45.6%_0.311_264.1/.6)]">
+      <div className="flex h-full overflow-hidden rounded-xl border border-border-default bg-elevated shadow-card transition-[box-shadow,border-color] duration-200 hover:border-brand-500/25 hover:shadow-card-hover dark:border-border-subtle dark:hover:border-brand-400/25">
         {/* Domain-colored left strip — expands on hover to reveal arrow */}
         <div
           className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"
@@ -69,7 +69,7 @@ export function AuditBriefCard({
         </div>
 
         {/* Square thumbnail */}
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden bg-muted sm:h-28 sm:w-28">
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden bg-surface-muted sm:h-28 sm:w-28">
           <Image
             src={resolveStorageUrl(thumbnailUrl)}
             alt={title}
@@ -89,14 +89,14 @@ export function AuditBriefCard({
               >
                 {domain}
               </span>
-              <span className="text-[11px] text-muted-foreground tabular-nums">{year}</span>
+              <span className="text-[11px] text-tertiary tabular-nums">{year}</span>
             </div>
             {onToggleFavorite && (
               <FavoriteButton isFavorite={isFavorite ?? false} onToggle={onToggleFavorite} />
             )}
           </div>
-          <p className="line-clamp-1 text-sm font-medium leading-snug">{title}</p>
-          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{description}</p>
+          <p className="line-clamp-1 text-sm font-medium leading-snug text-primary-text">{title}</p>
+          <p className="mt-0.5 line-clamp-1 text-xs text-secondary-text">{description}</p>
         </div>
       </div>
     </Link>

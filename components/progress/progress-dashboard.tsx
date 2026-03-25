@@ -107,7 +107,7 @@ export function ProgressDashboard() {
 
   return (
     <Tabs defaultValue="in-progress" className="w-full">
-      <TabsList className="grid h-10 w-full grid-cols-4 rounded-xl border border-border/70 bg-card p-1">
+      <TabsList className="grid h-10 w-full grid-cols-4 rounded-xl border border-border-default bg-elevated dark:border-border-subtle p-1">
         <TabsTrigger value="in-progress">In Progress</TabsTrigger>
         <TabsTrigger value="completed">Completed</TabsTrigger>
         <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>

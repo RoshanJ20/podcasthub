@@ -41,7 +41,13 @@ export default function RootLayout({
               <CommandPalette />
               <GlobalAudioPlayer />
               {children}
-              <Toaster richColors position="bottom-right" />
+              <Toaster
+                richColors
+                position="bottom-right"
+                toastOptions={{
+                  className: 'shadow-elevated border-border-default dark:border-border-subtle',
+                }}
+              />
             </AudioProvider>
           </ThemeProvider>
         </SessionProvider>

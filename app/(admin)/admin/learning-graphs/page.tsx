@@ -17,7 +17,7 @@ export default async function AdminLearningGraphsPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl border border-border/70 bg-card/85 p-5 shadow-[0_10px_35px_-30px_oklch(45.6%_0.311_264.1/.65)]">
+      <section className="rounded-2xl border border-border-default dark:border-border-subtle bg-elevated/85 p-5 shadow-card">
         <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
           Admin Console
         </p>

@@ -27,7 +27,7 @@ export default function GlobalError({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[radial-gradient(circle_at_top,oklch(95%_0.02_264/.4),transparent_52%),var(--background)] p-8">
-      <p className="rounded-full border border-border/80 bg-secondary/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+      <p className="rounded-full border border-border-default dark:border-border-subtle bg-secondary/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
         System Alert
       </p>
       <h1 className="text-2xl font-bold tracking-tight">Something went wrong</h1>

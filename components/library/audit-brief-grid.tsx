@@ -27,7 +27,7 @@ export function AuditBriefGrid({ auditBriefs }: AuditBriefGridProps) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border p-16 text-muted-foreground">
         <FileAudio className="size-12 text-primary/80" />
-        <p className="text-lg font-medium text-foreground">No audit briefs found</p>
+        <p className="text-lg font-medium text-primary-text">No audit briefs found</p>
         <p className="text-sm">Try adjusting your filters or check back later.</p>
       </div>
     );
