@@ -66,15 +66,16 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="container py-8 max-w-3xl">
-      <h1 className="text-xl font-semibold tracking-tight mb-1">Search</h1>
-      <p className="text-sm text-muted-foreground mt-1 mb-6">
-        Find bulletins by keyword or semantic query.
-      </p>
+    <div className="mx-auto max-w-4xl space-y-6 py-2">
+      <section className="rounded-2xl border border-border-default bg-elevated/85 p-5 shadow-card dark:border-border-subtle">
+        <p className="label-caps">Search</p>
+        <h1 className="mt-1 text-xl font-semibold tracking-tight text-primary-text">Find Knowledge Fast</h1>
+        <p className="mt-2 text-sm text-secondary-text">Find bulletins by keyword or semantic query.</p>
+      </section>
       <SearchInput onSearch={handleSearch} isLoading={isLoading} />
-      <div className="mt-6">
+      <div className="rounded-2xl border border-border-default bg-elevated/70 p-4 dark:border-border-subtle">
         {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">Searching...</div>
+          <div className="text-center py-8 text-secondary-text">Searching...</div>
         ) : hasSearched ? (
           searchMode === 'basic' ? (
             <BasicResults results={results as BasicResult[]} />

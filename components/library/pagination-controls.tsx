@@ -59,7 +59,7 @@ export function PaginationControls({ page, totalPages }: PaginationControlsProps
         <ChevronLeft className="size-4" />
         Previous
       </Button>
-      <span className="text-sm text-muted-foreground">
+      <span className="rounded-md bg-secondary px-2 py-1 text-sm text-muted-foreground">
         Page {page} of {totalPages}
       </span>
       <Button

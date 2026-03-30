@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
  */
 export default function LibraryLoading() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 py-2">
       <Skeleton className="h-8 w-48" />
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Array.from({ length: 8 }).map((_, i) => (

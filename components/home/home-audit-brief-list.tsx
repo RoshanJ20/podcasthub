@@ -40,7 +40,9 @@ export function HomeAuditBriefList({ auditBriefs }: HomeAuditBriefListProps) {
 
   if (auditBriefs.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-muted-foreground">No technical content yet.</p>
+      <p className="rounded-xl border border-dashed border-border py-8 text-center text-sm text-muted-foreground">
+        No technical content yet.
+      </p>
     );
   }
 

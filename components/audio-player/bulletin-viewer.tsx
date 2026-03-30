@@ -91,17 +91,44 @@ export function BulletinViewer({
     setNumPages(numPages);
   }, []);
 
-  /* Track container width via ResizeObserver for responsive page sizing. */
+  /**
+   * Track container width via ResizeObserver for responsive page sizing.
+   *
+   * Uses requestAnimationFrame to batch updates and skips the first 350ms
+   * after mount so the drawer slide-in animation can settle before the PDF
+   * re-renders with the final width. This prevents the jitter caused by
+   * width changes during the mercuryFade + panel transition.
+   */
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+
+    let rafId: number | null = null;
+    const mountTime = Date.now();
+    const SETTLE_DELAY_MS = 350;
+
     const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setContainerWidth(entry.contentRect.width);
-      }
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const elapsed = Date.now() - mountTime;
+        if (elapsed < SETTLE_DELAY_MS) return;
+        for (const entry of entries) {
+          setContainerWidth(entry.contentRect.width);
+        }
+      });
     });
+
+    // Measure initial width after the animation settles
+    const initialTimer = setTimeout(() => {
+      if (el) setContainerWidth(el.clientWidth);
+    }, SETTLE_DELAY_MS);
+
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      clearTimeout(initialTimer);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   /* Close viewer when user presses the Escape key. */

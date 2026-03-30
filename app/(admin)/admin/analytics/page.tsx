@@ -23,10 +23,11 @@ import { AnalyticsCharts } from '@/components/admin/analytics-charts';
 export default function AdminAnalyticsPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Analytics</h1>
-        <p className="text-sm text-muted-foreground mt-1">Platform usage and engagement metrics.</p>
-      </div>
+      <section className="rounded-2xl border border-border-default dark:border-border-subtle bg-elevated/85 p-5 shadow-card">
+        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Admin Console</p>
+        <h1 className="mt-1 text-xl font-semibold tracking-tight">Analytics</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Platform usage and engagement metrics.</p>
+      </section>
       <AnalyticsCharts />
     </div>
   );

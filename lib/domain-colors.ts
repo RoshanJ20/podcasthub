@@ -100,3 +100,27 @@ const FALLBACK_COLOR: DomainColor = {
 export function getDomainColor(domain: string): DomainColor {
   return DOMAIN_COLORS[domain] ?? FALLBACK_COLOR;
 }
+
+/** Vertical CSS gradients for the card accent line, keyed by domain. */
+const DOMAIN_GRADIENTS: Record<string, string> = {
+  'Audit Methodology': 'linear-gradient(180deg, #3b82f6, #6366f1, #8b5cf6)',
+  'Accounting and Reporting': 'linear-gradient(180deg, #10b981, #059669, #0d9488)',
+  'Audit Technology': 'linear-gradient(180deg, #8b5cf6, #a855f7, #d946ef)',
+  'Quality and Risk': 'linear-gradient(180deg, #f59e0b, #f97316, #ef4444)',
+  LEAP: 'linear-gradient(180deg, #ef4444, #f43f5e, #ec4899)',
+  Auditing: 'linear-gradient(180deg, #14b8a6, #06b6d4, #3b82f6)',
+};
+
+const FALLBACK_GRADIENT = 'linear-gradient(180deg, #6b7280, #9ca3af, #6b7280)';
+
+/**
+ * Returns a vertical CSS gradient string for the given domain.
+ *
+ * Used for the thick left accent line on audit brief cards.
+ *
+ * @param domain - The domain string.
+ * @returns A CSS linear-gradient value.
+ */
+export function getDomainGradient(domain: string): string {
+  return DOMAIN_GRADIENTS[domain] ?? FALLBACK_GRADIENT;
+}

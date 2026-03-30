@@ -47,7 +47,7 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -60,12 +60,19 @@ export default function UploadPage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={handleBack} aria-label="Go back">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-xl font-semibold tracking-tight">Upload New Audit Brief</h1>
-      </div>
+      <section className="rounded-2xl border border-border-default dark:border-border-subtle bg-elevated/85 p-5 shadow-card">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={handleBack} aria-label="Go back">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+              Admin Console
+            </p>
+            <h1 className="text-xl font-semibold tracking-tight">Upload New Audit Brief</h1>
+          </div>
+        </div>
+      </section>
 
       <AuditBriefUploadWizard
         ref={wizardRef}

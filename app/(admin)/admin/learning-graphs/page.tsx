@@ -17,12 +17,15 @@ export default async function AdminLearningGraphsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">Learning Series</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+      <section className="rounded-2xl border border-border-default dark:border-border-subtle bg-elevated/85 p-5 shadow-card">
+        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+          Admin Console
+        </p>
+        <h1 className="mt-1 text-xl font-semibold tracking-tight">Learning Series</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Create and manage structured learning journeys.
         </p>
-      </div>
+      </section>
       <LearningGraphsTable graphs={graphs} />
     </div>
   );

@@ -44,12 +44,12 @@ export default async function PublicLayout({ children }: { children: React.React
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
       <UnifiedSidebar userName={userName} userRole={userRole} isAdmin={isAdmin} />
       <div className="flex flex-1 flex-col">
         <MobileTopBar userName={userName} userRole={userRole} isAdmin={isAdmin} />
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
-          <PageTransition>{children}</PageTransition>
+        <main className="flex-1 gradient-brand-light p-4 md:p-6 lg:p-8">
+          <PageTransition className="mx-auto w-full max-w-[1200px]">{children}</PageTransition>
         </main>
         <MobileBottomPlayer />
       </div>

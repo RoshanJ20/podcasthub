@@ -10,6 +10,9 @@
 
 import { useState, useCallback } from 'react';
 import { signIn } from 'next-auth/react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface RegisterFormProps {
   redirectTo: string;
@@ -65,7 +68,7 @@ export function RegisterForm({ redirectTo }: RegisterFormProps) {
   );
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
         <div role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {error}
@@ -73,26 +76,25 @@ export function RegisterForm({ redirectTo }: RegisterFormProps) {
       )}
 
       <div className="space-y-2">
-        <label htmlFor="displayName" className="block text-sm font-medium text-foreground">
+        <Label htmlFor="displayName" className="text-sm text-foreground">
           Display Name
-        </label>
-        <input
+        </Label>
+        <Input
           id="displayName"
           name="displayName"
           type="text"
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           placeholder="Your name"
           disabled={isLoading}
         />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="email" className="block text-sm font-medium text-foreground">
+        <Label htmlFor="email" className="text-sm text-foreground">
           Email
-        </label>
-        <input
+        </Label>
+        <Input
           id="email"
           name="email"
           type="email"
@@ -100,17 +102,16 @@ export function RegisterForm({ redirectTo }: RegisterFormProps) {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           placeholder="you@example.com"
           disabled={isLoading}
         />
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="password" className="block text-sm font-medium text-foreground">
+        <Label htmlFor="password" className="text-sm text-foreground">
           Password
-        </label>
-        <input
+        </Label>
+        <Input
           id="password"
           name="password"
           type="password"
@@ -119,19 +120,18 @@ export function RegisterForm({ redirectTo }: RegisterFormProps) {
           minLength={12}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           placeholder="Minimum 12 characters"
           disabled={isLoading}
         />
       </div>
 
-      <button
+      <Button
         type="submit"
         disabled={isLoading}
-        className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full"
       >
         {isLoading ? 'Creating account...' : 'Create account'}
-      </button>
+      </Button>
     </form>
   );
 }

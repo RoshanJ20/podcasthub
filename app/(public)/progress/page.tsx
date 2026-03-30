@@ -13,13 +13,14 @@ export const metadata = {
 
 export default function ProgressPage() {
   return (
-    <div className="container mx-auto max-w-4xl py-8 px-4">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">My Progress</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+    <div className="mx-auto max-w-5xl space-y-6 py-2">
+      <section className="rounded-2xl border border-border-default dark:border-border-subtle bg-elevated/85 p-5 shadow-card">
+        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Personal</p>
+        <h1 className="mt-1 text-xl font-semibold tracking-tight">My Progress</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Track your learning activity and completions.
         </p>
-      </div>
+      </section>
       <ProgressDashboard />
     </div>
   );

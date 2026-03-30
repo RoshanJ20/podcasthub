@@ -62,7 +62,7 @@ export function MobileBottomPlayer() {
   return (
     <div
       data-testid="mobile-bottom-player"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border-default bg-canvas/95 backdrop-blur-sm dark:border-border-subtle md:hidden"
     >
       {/* ── Slim progress bar ─────────────────────────────────────────── */}
       <div
@@ -71,10 +71,10 @@ export function MobileBottomPlayer() {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="Playback progress"
-        className="h-0.5 w-full bg-secondary"
+        className="h-0.5 w-full bg-surface-muted"
       >
         <div
-          className="h-full bg-primary transition-[width] duration-150 ease-out"
+          className="h-full bg-interactive transition-[width] duration-150 ease-out"
           style={{ width: `${progressPercent}%` }}
         />
       </div>
@@ -86,7 +86,7 @@ export function MobileBottomPlayer() {
         aria-label={`Now playing: ${currentAuditBrief.title}. Tap to open.`}
       >
         {/* Thumbnail */}
-        <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-muted">
+        <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-surface-muted">
           <Image
             src={thumbnailUrl}
             alt={currentAuditBrief.title}
@@ -97,13 +97,13 @@ export function MobileBottomPlayer() {
         </div>
 
         {/* Title — truncated to one line */}
-        <p className="min-w-0 flex-1 truncate text-sm font-medium">{currentAuditBrief.title}</p>
+        <p className="min-w-0 flex-1 truncate text-sm font-medium text-primary-text">{currentAuditBrief.title}</p>
 
         {/* Play / Pause toggle */}
         <button
           onClick={handleTogglePlay}
           aria-label={isPlaying ? 'Pause' : 'Play'}
-          className="shrink-0 rounded-full p-2 transition-colors hover:bg-secondary"
+          className="shrink-0 rounded-full p-2 text-primary-text transition-colors hover:bg-subtle"
         >
           {isPlaying ? <Pause className="size-5" /> : <Play className="size-5" />}
         </button>

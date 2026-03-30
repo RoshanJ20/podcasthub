@@ -11,6 +11,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { Search, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -72,35 +74,36 @@ export function LibraryFilters() {
   return (
     <div className="flex flex-wrap items-center gap-3">
       {/* Favorites filter toggle */}
-      <button
+      <Button
         type="button"
         onClick={toggleFavorites}
         aria-label={showFavorites ? 'Show all' : 'Show favorites only'}
+        size="sm"
         className={cn(
-          'inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-[color,background-color,border-color] duration-150',
+          'h-9 gap-1.5 rounded-lg border px-3 text-sm font-medium transition-[color,background-color,border-color] duration-150',
           showFavorites
-            ? 'border-red-200 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400'
-            : 'border-border bg-background text-muted-foreground hover:border-red-200 hover:text-red-500 dark:hover:border-red-500/30'
+            ? 'border-primary/25 bg-primary/12 text-primary'
+            : 'border-border bg-background text-muted-foreground hover:border-primary/25 hover:text-primary'
         )}
       >
         <Heart
           className={cn(
             'size-3.5',
-            showFavorites ? 'fill-red-500 text-red-500' : 'fill-transparent'
+            showFavorites ? 'fill-primary text-primary' : 'fill-transparent'
           )}
         />
         Favorites
-      </button>
+      </Button>
 
       {/* Search input */}
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
+        <Input
           type="text"
           value={searchValue}
           onChange={(e) => setSearchValue(e.target.value)}
           placeholder="Search..."
-          className="h-9 w-56 rounded-lg border border-border bg-background pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground/60 focus:ring-1 focus:ring-ring"
+          className="h-9 w-56 pl-9"
         />
       </div>
       <Select value={currentDomain} onValueChange={(val) => updateParams('domain', val ?? 'all')}>

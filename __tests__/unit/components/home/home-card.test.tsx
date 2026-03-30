@@ -18,7 +18,7 @@ vi.mock('next/link', () => ({
 
 describe('HomeCard', () => {
   describe('audit brief variant', () => {
-    it('renders title, description, domain badge, and year', () => {
+    it('renders title, description, domain badge, year, and primary action label', () => {
       render(
         <HomeCard
           variant="auditBrief"
@@ -35,6 +35,7 @@ describe('HomeCard', () => {
       expect(screen.getByText('Overview of tools')).toBeDefined();
       expect(screen.getByText('Audit Technology')).toBeDefined();
       expect(screen.getByText('2026')).toBeDefined();
+      expect(screen.getByText('Open bulletin')).toBeDefined();
     });
 
     it('links to /audit-brief/[id]', () => {
@@ -85,14 +86,12 @@ describe('HomeCard', () => {
       );
 
       expect(screen.getByText('No Description Card')).toBeDefined();
-      // No description paragraph should be rendered
-      const descriptions = container.querySelectorAll('.line-clamp-1');
-      expect(descriptions.length).toBe(0);
+      expect(container.querySelector('p.text-sm.leading-relaxed')).toBeNull();
     });
   });
 
   describe('series variant', () => {
-    it('renders title, description, domain badge, and episode count', () => {
+    it('renders title, description, domain badge, episode count, completion status, and action label', () => {
       render(
         <HomeCard
           variant="series"
@@ -108,7 +107,9 @@ describe('HomeCard', () => {
       expect(screen.getByText('Revenue Series')).toBeDefined();
       expect(screen.getByText('ASC 606 deep dive')).toBeDefined();
       expect(screen.getByText('Accounting and Reporting')).toBeDefined();
-      expect(screen.getByText(/5 episodes/)).toBeDefined();
+      expect(screen.getByText('5 episodes')).toBeDefined();
+      expect(screen.getByText('2 complete')).toBeDefined();
+      expect(screen.getByText('Continue path')).toBeDefined();
     });
 
     it('links to /learning-path/[id]', () => {
@@ -128,7 +129,7 @@ describe('HomeCard', () => {
       expect(link?.getAttribute('href')).toBe('/learning-path/s1');
     });
 
-    it('renders episode count with completedCount prop provided', () => {
+    it('renders episode count and completed count metadata', () => {
       render(
         <HomeCard
           variant="series"
@@ -141,7 +142,8 @@ describe('HomeCard', () => {
         />
       );
 
-      expect(screen.getByText(/4 episodes/)).toBeDefined();
+      expect(screen.getByText('4 episodes')).toBeDefined();
+      expect(screen.getByText('1 complete')).toBeDefined();
     });
 
     it('handles zero episodes without division error', () => {
@@ -157,7 +159,8 @@ describe('HomeCard', () => {
         />
       );
 
-      expect(within(container).getByText(/0 episodes/)).toBeDefined();
+      expect(within(container).getByText('0 episodes')).toBeDefined();
+      expect(within(container).getByText('0 complete')).toBeDefined();
     });
   });
 });
