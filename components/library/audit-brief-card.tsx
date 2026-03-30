@@ -16,10 +16,12 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+
 import { ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
-import { resolveStorageUrl } from '@/lib/storage-url';
+
 import { getDomainColor } from '@/lib/domain-colors';
+import { resolveStorageUrl } from '@/lib/storage-url';
 import { FavoriteButton } from '@/components/ui/favorite-button';
 
 export interface AuditBriefCardProps {
@@ -54,34 +56,22 @@ export function AuditBriefCard({
   const badgeText = isDark ? color.darkText : color.text;
 
   return (
-    <Link href={`/audit-brief/${id}`} className="group block" data-testid="audit-brief-card-link">
-      <div className="flex h-full overflow-hidden rounded-xl border border-border-default bg-elevated shadow-card transition-[box-shadow,border-color] duration-200 hover:border-brand-500/25 hover:shadow-card-hover dark:border-border-subtle dark:hover:border-brand-400/25">
-        {/* Domain-colored left strip — expands on hover to reveal arrow */}
-        <div
-          className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"
-          style={{ backgroundColor: color.border }}
-        >
-          <ChevronRight
-            className="absolute text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-            size={18}
-            strokeWidth={2.5}
-          />
-        </div>
-
-        {/* Square thumbnail */}
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden bg-surface-muted sm:h-28 sm:w-28">
+    <Link href={`/audit-brief/${id}`} className="group block h-full" data-testid="audit-brief-card-link">
+      <div className="press-scale flex h-full min-h-[88px] overflow-hidden rounded-xl border border-border-default bg-elevated shadow-card transition-[box-shadow,border-color,transform] duration-200 ease-[var(--ease-out)] hover:border-brand-500/20 hover:shadow-card-hover dark:border-border-subtle dark:hover:border-brand-400/20">
+        {/* Gradient image accent line — uses the real gradient thumbnail */}
+        <div className="relative w-2 shrink-0 overflow-hidden rounded-l-xl">
           <Image
             src={resolveStorageUrl(thumbnailUrl)}
-            alt={title}
+            alt=""
             fill
             className="object-cover"
-            sizes="112px"
+            sizes="8px"
           />
         </div>
 
         {/* Text content */}
-        <div className="flex min-w-0 flex-1 flex-col justify-center p-3.5">
-          <div className="mb-1.5 flex items-center justify-between">
+        <div className="flex min-w-0 flex-1 flex-col justify-center px-4 py-3">
+          <div className="mb-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span
                 className="inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium"
@@ -95,8 +85,19 @@ export function AuditBriefCard({
               <FavoriteButton isFavorite={isFavorite ?? false} onToggle={onToggleFavorite} />
             )}
           </div>
-          <p className="line-clamp-1 text-sm font-medium leading-snug text-primary-text">{title}</p>
-          <p className="mt-0.5 line-clamp-1 text-xs text-secondary-text">{description}</p>
+          <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-primary-text">{title}</p>
+        </div>
+
+        {/* Domain-colored accent strip — reveals on hover */}
+        <div
+          className="relative flex w-0 shrink-0 items-center justify-center opacity-0 transition-[width,opacity] duration-200 ease-[var(--ease-out)] group-hover:w-9 group-hover:opacity-100"
+          style={{ backgroundColor: color.border }}
+        >
+          <ChevronRight
+            className="absolute text-white"
+            size={18}
+            strokeWidth={2.5}
+          />
         </div>
       </div>
     </Link>

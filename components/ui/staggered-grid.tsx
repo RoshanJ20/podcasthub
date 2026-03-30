@@ -82,7 +82,7 @@ interface StaggeredGridItemProps {
  */
 export function StaggeredGridItem({ children, className }: StaggeredGridItemProps) {
   return (
-    <motion.div className={className} variants={variants.fadeUp} transition={transitions.normal}>
+    <motion.div className={cn('h-full', className)} variants={variants.fadeUp} transition={transitions.normal}>
       {children}
     </motion.div>
   );

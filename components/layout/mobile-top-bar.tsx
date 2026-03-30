@@ -137,21 +137,25 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
                 />
               ))}
 
-              <div className="my-1" />
-
-              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-tertiary">
-                Personal
-              </p>
-              {personalLinks.map((link) => (
-                <SidebarNavItem
-                  key={link.href}
-                  href={link.href}
-                  label={link.label}
-                  icon={link.icon}
-                  isActive={isRouteActive(link.href, pathname)}
-                  onClick={closeDrawer}
-                />
-              ))}
+              {/* Personal section — only rendered when personal links exist */}
+              {personalLinks.length > 0 && (
+                <>
+                  <div className="my-1" />
+                  <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-tertiary">
+                    Personal
+                  </p>
+                  {personalLinks.map((link) => (
+                    <SidebarNavItem
+                      key={link.href}
+                      href={link.href}
+                      label={link.label}
+                      icon={link.icon}
+                      isActive={isRouteActive(link.href, pathname)}
+                      onClick={closeDrawer}
+                    />
+                  ))}
+                </>
+              )}
 
               {/* Admin section — conditional on isAdmin prop */}
               {isAdmin && (

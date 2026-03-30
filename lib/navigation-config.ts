@@ -40,7 +40,7 @@ export const libraryLinks: NavLink[] = [
 /**
  * Personal links scoped to the current user's account.
  */
-export const personalLinks: NavLink[] = [{ href: '/progress', label: 'Progress', icon: BarChart3 }];
+export const personalLinks: NavLink[] = [];
 
 /**
  * Admin-only navigation links. Rendered only when the user holds an admin role.

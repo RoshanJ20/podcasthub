@@ -172,19 +172,23 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
           />
         ))}
 
-        <div className="my-1" />
-
-        <SectionLabel label="Personal" collapsed={collapsed} />
-        {personalLinks.map((link) => (
-          <SidebarNavItem
-            key={link.href}
-            href={link.href}
-            label={link.label}
-            icon={link.icon}
-            isActive={isRouteActive(link.href, pathname)}
-            collapsed={collapsed}
-          />
-        ))}
+        {/* Personal section — only rendered when personal links exist */}
+        {personalLinks.length > 0 && (
+          <>
+            <div className="my-1" />
+            <SectionLabel label="Personal" collapsed={collapsed} />
+            {personalLinks.map((link) => (
+              <SidebarNavItem
+                key={link.href}
+                href={link.href}
+                label={link.label}
+                icon={link.icon}
+                isActive={isRouteActive(link.href, pathname)}
+                collapsed={collapsed}
+              />
+            ))}
+          </>
+        )}
 
         {/* Admin section — only rendered for admin users */}
         {isAdmin && (
