@@ -53,7 +53,7 @@ export function HomeCard(props: HomeCardProps) {
 
   return (
     <Link href={href} className="group block">
-      <article className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/95 p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_10px_30px_-24px_oklch(45.6%_0.311_264.1/.55)]">
+      <article className="relative overflow-hidden rounded-2xl border border-border-default bg-elevated/95 p-5 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-500/25 hover:shadow-card-hover dark:border-border-subtle dark:hover:border-brand-400/25">
         <div
           className="absolute inset-x-0 top-0 h-1"
           style={{ background: `linear-gradient(90deg, ${color.border}, transparent)` }}
@@ -75,20 +75,20 @@ export function HomeCard(props: HomeCardProps) {
           )}
         </header>
 
-        <h3 className="line-clamp-2 text-base font-semibold leading-tight tracking-tight text-foreground">
+        <h3 className="line-clamp-2 text-base font-semibold leading-tight tracking-tight text-primary-text">
           {title}
         </h3>
 
         {description && (
-          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-secondary-text">
             {description}
           </p>
         )}
 
-        <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="mt-4 flex items-center gap-2 text-xs text-secondary-text">
           {variant === 'auditBrief' ? (
             <>
-              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1">
+              <span className="inline-flex items-center gap-1 rounded-md bg-surface-muted px-2 py-1 dark:bg-surface-muted/50">
                 <CalendarDays className="size-3" />
                 {props.year}
               </span>
@@ -96,11 +96,11 @@ export function HomeCard(props: HomeCardProps) {
             </>
           ) : (
             <>
-              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1">
+              <span className="inline-flex items-center gap-1 rounded-md bg-surface-muted px-2 py-1 dark:bg-surface-muted/50">
                 <Layers3 className="size-3" />
                 {props.episodeCount} episodes
               </span>
-              <span className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1">
+              <span className="inline-flex items-center gap-1 rounded-md bg-surface-muted px-2 py-1 dark:bg-surface-muted/50">
                 <CheckCircle2 className="size-3" />
                 {props.completedCount} complete
               </span>
@@ -109,7 +109,7 @@ export function HomeCard(props: HomeCardProps) {
           )}
         </div>
 
-        <div className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-foreground/80 transition-colors group-hover:text-foreground">
+        <div className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-secondary-text transition-colors group-hover:text-primary-text">
           View details
           <ArrowUpRight className="size-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </div>

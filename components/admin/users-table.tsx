@@ -140,8 +140,8 @@ export function UsersTable({ currentUserId }: UsersTableProps) {
         <div className="text-center py-8 text-muted-foreground">Loading users...</div>
       ) : (
         <>
-          <div className="overflow-hidden rounded-xl border border-border/70 bg-card">
-            <div className="border-b border-border/70 px-5 py-3.5">
+          <div className="overflow-hidden rounded-xl border border-border-default dark:border-border-subtle bg-card">
+            <div className="border-b border-border-default dark:border-border-subtle px-5 py-3.5">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 {total} user{total !== 1 ? 's' : ''} total
               </p>
@@ -227,7 +227,7 @@ export function UsersTable({ currentUserId }: UsersTableProps) {
       {/* Role change confirmation dialog */}
       {pendingRoleChange && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
-          <div className="mx-4 max-w-md rounded-xl border border-border/70 bg-card p-6">
+          <div className="mx-4 max-w-md rounded-xl border border-border-default dark:border-border-subtle bg-card p-6">
             <h3 className="text-lg font-semibold mb-2">Confirm Role Change</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Are you sure you want to change this user&apos;s role to{' '}

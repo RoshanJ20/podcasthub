@@ -14,7 +14,7 @@ export const metadata = {
 export default function ProgressPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6 py-2">
-      <section className="rounded-2xl border border-border/70 bg-card/85 p-5 shadow-[0_10px_35px_-30px_oklch(45.6%_0.311_264.1/.65)]">
+      <section className="rounded-2xl border border-border-default dark:border-border-subtle bg-elevated/85 p-5 shadow-card">
         <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">Personal</p>
         <h1 className="mt-1 text-xl font-semibold tracking-tight">My Progress</h1>
         <p className="mt-1 text-sm text-muted-foreground">

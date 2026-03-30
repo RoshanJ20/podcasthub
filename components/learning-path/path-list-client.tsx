@@ -66,7 +66,7 @@ export function PathListClient({ paths }: PathListClientProps) {
   return (
     <>
       {/* Header: title left, search right — matches bulletins page */}
-      <section className="mb-8 rounded-2xl border border-border/70 bg-card/85 p-5 shadow-[0_10px_35px_-30px_oklch(45.6%_0.311_264.1/.65)]">
+      <section className="mb-8 rounded-2xl border border-border-default dark:border-border-subtle bg-elevated/85 p-5 shadow-card">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">

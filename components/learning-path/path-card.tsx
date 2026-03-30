@@ -44,7 +44,7 @@ export function PathCard({
 
   return (
     <Link href={`/learning-path/${id}` as string}>
-      <div className="group flex overflow-hidden rounded-xl border border-border/70 bg-card transition-[box-shadow,border-color] duration-200 hover:border-primary/25 hover:shadow-[0_10px_30px_-26px_oklch(45.6%_0.311_264.1/.6)]">
+      <div className="group flex overflow-hidden rounded-xl border border-border-default dark:border-border-subtle bg-elevated transition-[box-shadow,border-color] duration-200 hover:border-primary/25 hover:shadow-card-hover">
         {/* Domain-colored left strip — expands on hover to reveal chevron */}
         <div
           className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"

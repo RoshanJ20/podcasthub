@@ -60,8 +60,8 @@ export function SidebarNavItem({
   const linkClassName = cn(
     'flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-[background-color,color,border-color] duration-150',
     isActive
-      ? 'border border-primary/20 bg-primary/10 text-primary shadow-[0_1px_0_0_oklch(100%_0_0/.25)_inset]'
-      : 'border border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground',
+      ? 'border border-brand-500/20 bg-interactive-soft text-link dark:border-brand-400/20 dark:text-brand-400'
+      : 'border border-transparent text-secondary-text hover:bg-subtle hover:text-primary-text',
     collapsed && 'justify-center px-2'
   );
 

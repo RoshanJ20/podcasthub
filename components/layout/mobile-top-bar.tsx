@@ -77,7 +77,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
   return (
     <header
       data-testid="mobile-top-bar"
-      className="flex h-12 items-center justify-between border-b border-border/80 bg-background/95 px-3 backdrop-blur-sm md:hidden"
+      className="flex h-12 items-center justify-between border-b border-border-default bg-canvas/95 px-3 backdrop-blur-sm dark:border-border-subtle md:hidden"
     >
       {/* ── Left: hamburger drawer trigger ─────────────────────────────── */}
       <Sheet open={open} onOpenChange={setOpen}>
@@ -123,7 +123,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
               <div className="my-1" />
 
               {/* Library section */}
-              <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-tertiary">
                 Library
               </p>
               {libraryLinks.map((link) => (
@@ -137,27 +137,31 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
                 />
               ))}
 
-              <div className="my-1" />
-
-              <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-muted-foreground">
-                Personal
-              </p>
-              {personalLinks.map((link) => (
-                <SidebarNavItem
-                  key={link.href}
-                  href={link.href}
-                  label={link.label}
-                  icon={link.icon}
-                  isActive={isRouteActive(link.href, pathname)}
-                  onClick={closeDrawer}
-                />
-              ))}
+              {/* Personal section — only rendered when personal links exist */}
+              {personalLinks.length > 0 && (
+                <>
+                  <div className="my-1" />
+                  <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-tertiary">
+                    Personal
+                  </p>
+                  {personalLinks.map((link) => (
+                    <SidebarNavItem
+                      key={link.href}
+                      href={link.href}
+                      label={link.label}
+                      icon={link.icon}
+                      isActive={isRouteActive(link.href, pathname)}
+                      onClick={closeDrawer}
+                    />
+                  ))}
+                </>
+              )}
 
               {/* Admin section — conditional on isAdmin prop */}
               {isAdmin && (
                 <>
                   <div className="my-1" />
-                  <p className="px-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-tertiary">
                     Admin
                   </p>
                   {adminLinks

@@ -20,7 +20,7 @@ import Link from 'next/link';
 export default function UnauthorizedPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,oklch(95%_0.02_264/.4),transparent_50%),var(--background)] px-4">
-      <div className="space-y-4 rounded-2xl border border-border/70 bg-card/95 p-8 text-center shadow-[0_8px_30px_-24px_oklch(45.6%_0.311_264.1/.65)]">
+      <div className="space-y-4 rounded-2xl border border-border-default dark:border-border-subtle bg-elevated/95 p-8 text-center shadow-card">
         <h1 className="text-6xl font-bold text-muted-foreground">403</h1>
         <h2 className="text-2xl font-semibold tracking-tight">Access Denied</h2>
         <p className="max-w-md text-muted-foreground">

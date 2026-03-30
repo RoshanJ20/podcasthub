@@ -32,7 +32,7 @@ export function CategoryGrid({ domains }: CategoryGridProps) {
       {domains.map(({ name, count }) => (
         <StaggeredGridItem key={name}>
           <Link href={`/bulletins?domain=${encodeURIComponent(name)}`}>
-            <div className="rounded-xl border border-border bg-card p-4 transition-colors duration-150 hover:bg-secondary/30">
+            <div className="rounded-xl border border-border bg-elevated p-4 transition-colors duration-150 hover:bg-secondary/30">
               <p className="text-sm font-medium">{name}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 {`${count} ${count === 1 ? 'auditBrief' : 'auditBriefs'}`}

@@ -23,7 +23,7 @@ import { motion } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import { usePlayerStore } from '@/stores/player-store';
-import { useHlsPlayer } from '@/hooks/use-hls-player';
+import { useSeekTo } from '@/hooks/use-seek-to';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { variants, transitions, sectionStagger } from '@/lib/animation';
 import { getDomainColor } from '@/lib/domain-colors';
@@ -81,7 +81,7 @@ interface AuditBriefDetailLayoutProps {
  * @param props.relatedAuditBriefs - Optional list of related audit briefs (reserved for future use).
  */
 export function AuditBriefDetailLayout({ auditBrief }: AuditBriefDetailLayoutProps) {
-  const { seekTo } = useHlsPlayer();
+  const seekTo = useSeekTo();
   const reducedMotion = useReducedMotion();
   const { isFavorite, toggleFavorite } = useFavorites();
   const { resolvedTheme } = useTheme();

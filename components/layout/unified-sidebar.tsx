@@ -79,7 +79,7 @@ function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean 
   return (
     <p
       className={cn(
-        'px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-muted-foreground'
+        'px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-tertiary'
       )}
     >
       {label}
@@ -172,19 +172,23 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
           />
         ))}
 
-        <div className="my-1" />
-
-        <SectionLabel label="Personal" collapsed={collapsed} />
-        {personalLinks.map((link) => (
-          <SidebarNavItem
-            key={link.href}
-            href={link.href}
-            label={link.label}
-            icon={link.icon}
-            isActive={isRouteActive(link.href, pathname)}
-            collapsed={collapsed}
-          />
-        ))}
+        {/* Personal section — only rendered when personal links exist */}
+        {personalLinks.length > 0 && (
+          <>
+            <div className="my-1" />
+            <SectionLabel label="Personal" collapsed={collapsed} />
+            {personalLinks.map((link) => (
+              <SidebarNavItem
+                key={link.href}
+                href={link.href}
+                label={link.label}
+                icon={link.icon}
+                isActive={isRouteActive(link.href, pathname)}
+                collapsed={collapsed}
+              />
+            ))}
+          </>
+        )}
 
         {/* Admin section — only rendered for admin users */}
         {isAdmin && (
@@ -256,7 +260,7 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
   );
 
   const baseClassName =
-    'hidden md:flex md:flex-col border-r border-sidebar-border bg-sidebar/95 backdrop-blur-sm overflow-hidden shrink-0 sticky top-0 h-screen';
+    'hidden md:flex md:flex-col border-r border-sidebar-border bg-sidebar/95 backdrop-blur-sm overflow-hidden shrink-0 sticky top-0 h-screen transition-[border-color] duration-150';
 
   // Use a plain aside when the user prefers reduced motion to avoid
   // any Motion overhead or janky zero-duration spring physics.
