@@ -1,0 +1,15 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- dev
+
+pool:
+  name: UNOVM-AGENT-POOL
+
+steps:
+- script: |
+    cd ~/unodeploymentscripts && ./auditbrief_deployment.sh
+  displayName: 'Run AuditBrief Deployment'
