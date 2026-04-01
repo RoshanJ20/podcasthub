@@ -50,6 +50,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     ? (ERROR_MESSAGES[params.error] ?? ERROR_MESSAGES.Default)
     : undefined;
   const isSsoConfigured = Boolean(process.env.AZURE_AD_CLIENT_ID);
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,oklch(from_var(--brand-500)_95%_0.02_h_/_0.4),transparent_46%),var(--bg-canvas)] px-4 py-10 dark:bg-[radial-gradient(circle_at_top,oklch(from_var(--brand-500)_27%_0.06_h_/_0.35),transparent_46%),var(--bg-canvas)]">
@@ -70,28 +71,28 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </div>
         )}
 
-        {isSsoConfigured && (
-          <>
-            <SsoButton redirectTo={redirectTo} />
+        {isSsoConfigured && <SsoButton redirectTo={redirectTo} />}
 
-            <div className="relative flex items-center justify-center">
-              <span className="w-full border-t border-border-default dark:border-border-subtle" />
-              <span className="absolute bg-elevated px-2 text-xs text-tertiary">or</span>
-            </div>
-          </>
+        {isSsoConfigured && isDevelopment && (
+          <div className="relative flex items-center justify-center">
+            <span className="w-full border-t border-border-default dark:border-border-subtle" />
+            <span className="absolute bg-elevated px-2 text-xs text-tertiary">or</span>
+          </div>
         )}
 
-        <LoginForm redirectTo={redirectTo} />
+        {isDevelopment && <LoginForm redirectTo={redirectTo} />}
 
-        <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{' '}
-          <Link
-            href="/register"
-            className="font-medium text-link underline-offset-4 hover:text-link-hover hover:underline dark:text-brand-400 dark:hover:text-link-hover"
-          >
-            Create one
-          </Link>
-        </p>
+        {isDevelopment && (
+          <p className="text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{' '}
+            <Link
+              href="/register"
+              className="font-medium text-link underline-offset-4 hover:text-link-hover hover:underline dark:text-brand-400 dark:hover:text-link-hover"
+            >
+              Create one
+            </Link>
+          </p>
+        )}
       </LoginPageCard>
     </main>
   );

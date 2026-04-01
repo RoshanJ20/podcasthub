@@ -49,45 +49,50 @@ if (process.env.NODE_ENV !== 'test') {
  */
 function buildProviders(): NextAuthOptions['providers'] {
   const providers: NextAuthOptions['providers'] = [];
+  const isProduction = process.env.NODE_ENV === 'production';
 
-  providers.push(
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
+  /* Credentials provider is only available outside production (defense in depth).
+   * In production, only Azure AD SSO is permitted for authentication. */
+  if (!isProduction) {
+    providers.push(
+      CredentialsProvider({
+        name: 'Credentials',
+        credentials: {
+          email: { label: 'Email', type: 'email' },
+          password: { label: 'Password', type: 'password' },
+        },
 
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
+        async authorize(credentials) {
+          if (!credentials?.email || !credentials?.password) {
+            return null;
+          }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+          });
 
-        if (!user) return null;
+          if (!user) return null;
 
-        if (!user.passwordHash) {
-          log.warn({ email: credentials.email }, 'SSO-only user attempted password login');
-          return null;
-        }
+          if (!user.passwordHash) {
+            log.warn({ email: credentials.email }, 'SSO-only user attempted password login');
+            return null;
+          }
 
-        const isValid = await verifyPassword(credentials.password, user.passwordHash);
-        if (!isValid) return null;
+          const isValid = await verifyPassword(credentials.password, user.passwordHash);
+          if (!isValid) return null;
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.displayName,
-          image: user.image,
-          role: user.role,
-          displayName: user.displayName,
-        };
-      },
-    })
-  );
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.displayName,
+            image: user.image,
+            role: user.role,
+            displayName: user.displayName,
+          };
+        },
+      })
+    );
+  }
 
   if (
     process.env.AZURE_AD_CLIENT_ID &&
