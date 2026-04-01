@@ -55,7 +55,7 @@ export function AuditBriefCard({
 
   return (
     <Link href={`/audit-brief/${id}`} className="group block" data-testid="audit-brief-card-link">
-      <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-md">
+      <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-card-hover">
         {/* Domain-colored left strip — expands on hover to reveal arrow */}
         <div
           className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"

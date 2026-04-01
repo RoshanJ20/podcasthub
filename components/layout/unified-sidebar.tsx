@@ -73,7 +73,7 @@ function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean 
   return (
     <p
       className={cn(
-        'px-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground'
+        'px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-muted-foreground'
       )}
     >
       {label}
@@ -122,7 +122,7 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className={cn('flex items-center gap-2 px-3 py-4', collapsed && 'justify-center px-2')}>
         {/* Logo mark */}
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-orange-500">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary">
           <Library className="size-4 text-white" />
         </div>
 
@@ -234,7 +234,7 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
   );
 
   const baseClassName =
-    'hidden md:flex md:flex-col border-r border-border bg-sidebar overflow-hidden shrink-0 sticky top-0 h-screen';
+    'hidden md:flex md:flex-col border-r border-sidebar-border bg-sidebar/95 backdrop-blur-sm overflow-hidden shrink-0 sticky top-0 h-screen transition-[border-color] duration-150';
 
   // Use a plain aside when the user prefers reduced motion to avoid
   // any Motion overhead or janky zero-duration spring physics.

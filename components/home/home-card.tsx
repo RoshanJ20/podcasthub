@@ -68,7 +68,7 @@ export function HomeCard(props: HomeCardProps) {
 
   return (
     <Link href={href as string}>
-      <div className="group flex overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-md">
+      <div className="group flex overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-card-hover">
         {/* Domain-colored strip — expands on hover to show arrow */}
         <div
           className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"

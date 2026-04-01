@@ -72,7 +72,7 @@ export function SidebarNowPlaying({ collapsed = false }: SidebarNowPlayingProps)
           aria-label={isPlaying ? 'Pause' : 'Play'}
           className={cn(
             'flex size-8 items-center justify-center rounded-full transition-colors',
-            'bg-accent text-accent-foreground hover:bg-accent/80'
+            'bg-primary/12 text-primary hover:bg-primary/18'
           )}
         >
           {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
@@ -84,7 +84,7 @@ export function SidebarNowPlaying({ collapsed = false }: SidebarNowPlayingProps)
   return (
     <div
       data-testid="now-playing-widget"
-      className="mx-2 rounded-lg border bg-card p-3 text-card-foreground"
+      className="mx-2 rounded-xl border border-border-default dark:border-border-subtle bg-card p-3 text-card-foreground shadow-[0_1px_0_0_oklch(100%_0_0/.3)_inset]"
     >
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Now Playing

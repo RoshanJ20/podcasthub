@@ -108,7 +108,10 @@ export function SidebarUserProfile({
   }
 
   return (
-    <div data-testid="sidebar-user-profile" className="flex items-center gap-2.5 px-3 py-2">
+    <div
+      data-testid="sidebar-user-profile"
+      className="flex items-center gap-2.5 rounded-lg border border-transparent px-3 py-2 transition-colors hover:border-border-default dark:hover:border-border-subtle hover:bg-secondary/55"
+    >
       <Avatar className="size-7 text-[11px]">
         {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
         <AvatarFallback aria-label={initials} className="text-[11px]">
@@ -124,7 +127,7 @@ export function SidebarUserProfile({
       <button
         onClick={handleLogout}
         aria-label="Logout"
-        className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+        className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
       >
         <LogOut className="size-4" />
       </button>
