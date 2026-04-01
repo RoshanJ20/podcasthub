@@ -122,6 +122,7 @@ describe('AudioPlayer', () => {
       darkText: '#bfdbfe',
       glow: 'rgba(147, 197, 253, 0.15)',
       chart: '#2563eb',
+      cardGradient: 'linear-gradient(180deg, #3b82f6, #6366f1, #8b5cf6)',
     };
     const { container } = render(<AudioPlayer domainColor={color} />);
     const strip = container.querySelector('[style*="background-color"]');

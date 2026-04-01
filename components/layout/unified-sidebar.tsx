@@ -71,11 +71,7 @@ function SectionLabel({ label, collapsed }: { label: string; collapsed: boolean 
   if (collapsed) return null;
 
   return (
-    <p
-      className={cn(
-        'px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-muted-foreground'
-      )}
-    >
+    <p className={cn('px-3 text-[10px] font-semibold uppercase tracking-[0.11em] text-tertiary')}>
       {label}
     </p>
   );

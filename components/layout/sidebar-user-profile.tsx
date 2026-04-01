@@ -127,7 +127,7 @@ export function SidebarUserProfile({
       <button
         onClick={handleLogout}
         aria-label="Logout"
-        className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+        className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-background hover:text-primary-text"
       >
         <LogOut className="size-4" />
       </button>

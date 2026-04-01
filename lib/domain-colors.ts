@@ -25,6 +25,8 @@ export interface DomainColor {
   border: string;
   /** Dark mode glow shadow color (rgba with low opacity) */
   glow: string;
+  /** Vertical gradient for card accent strips */
+  cardGradient: string;
 }
 
 /** Palette definitions keyed by domain name. */
@@ -36,6 +38,7 @@ const DOMAIN_COLORS: Record<string, DomainColor> = {
     darkText: '#93c5fd',
     border: '#3b82f6',
     glow: 'rgba(59, 130, 246, 0.15)',
+    cardGradient: 'linear-gradient(180deg, #3b82f6, #6366f1, #8b5cf6)',
   },
   'Accounting and Reporting': {
     bg: 'rgba(16, 185, 129, 0.12)',
@@ -44,6 +47,7 @@ const DOMAIN_COLORS: Record<string, DomainColor> = {
     darkText: '#6ee7b7',
     border: '#10b981',
     glow: 'rgba(16, 185, 129, 0.15)',
+    cardGradient: 'linear-gradient(180deg, #10b981, #059669, #0d9488)',
   },
   'Audit Technology': {
     bg: 'rgba(139, 92, 246, 0.12)',
@@ -52,6 +56,7 @@ const DOMAIN_COLORS: Record<string, DomainColor> = {
     darkText: '#c4b5fd',
     border: '#8b5cf6',
     glow: 'rgba(139, 92, 246, 0.15)',
+    cardGradient: 'linear-gradient(180deg, #8b5cf6, #a855f7, #d946ef)',
   },
   'Quality and Risk': {
     bg: 'rgba(245, 158, 11, 0.12)',
@@ -60,6 +65,7 @@ const DOMAIN_COLORS: Record<string, DomainColor> = {
     darkText: '#fcd34d',
     border: '#f59e0b',
     glow: 'rgba(245, 158, 11, 0.15)',
+    cardGradient: 'linear-gradient(180deg, #f59e0b, #f97316, #ef4444)',
   },
   LEAP: {
     bg: 'rgba(239, 68, 68, 0.12)',
@@ -68,6 +74,7 @@ const DOMAIN_COLORS: Record<string, DomainColor> = {
     darkText: '#fca5a5',
     border: '#ef4444',
     glow: 'rgba(239, 68, 68, 0.15)',
+    cardGradient: 'linear-gradient(180deg, #ef4444, #f43f5e, #ec4899)',
   },
   Auditing: {
     bg: 'rgba(20, 184, 166, 0.12)',
@@ -76,6 +83,7 @@ const DOMAIN_COLORS: Record<string, DomainColor> = {
     darkText: '#5eead4',
     border: '#14b8a6',
     glow: 'rgba(20, 184, 166, 0.15)',
+    cardGradient: 'linear-gradient(180deg, #14b8a6, #06b6d4, #3b82f6)',
   },
 };
 
@@ -87,6 +95,7 @@ const FALLBACK_COLOR: DomainColor = {
   darkText: '#d1d5db',
   border: '#6b7280',
   glow: 'rgba(107, 114, 128, 0.15)',
+  cardGradient: 'linear-gradient(180deg, #6b7280, #9ca3af, #6b7280)',
 };
 
 /**

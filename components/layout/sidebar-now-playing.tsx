@@ -84,7 +84,7 @@ export function SidebarNowPlaying({ collapsed = false }: SidebarNowPlayingProps)
   return (
     <div
       data-testid="now-playing-widget"
-      className="mx-2 rounded-xl border border-border-default dark:border-border-subtle bg-card p-3 text-card-foreground shadow-[0_1px_0_0_oklch(100%_0_0/.3)_inset]"
+      className="mx-2 rounded-xl border border-border-default dark:border-border-subtle bg-elevated p-3 text-card-foreground shadow-[0_1px_0_0_oklch(100%_0_0/.3)_inset]"
     >
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         Now Playing
@@ -110,7 +110,7 @@ export function SidebarNowPlaying({ collapsed = false }: SidebarNowPlayingProps)
         <button
           onClick={handleTogglePlay}
           aria-label={isPlaying ? 'Pause' : 'Play'}
-          className="shrink-0 rounded-full p-1.5 transition-colors hover:bg-secondary"
+          className="shrink-0 rounded-full p-1.5 text-primary transition-colors hover:bg-secondary"
         >
           {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
         </button>
