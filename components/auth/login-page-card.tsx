@@ -34,7 +34,7 @@ export function LoginPageCard({ children }: LoginPageCardProps) {
 
   if (reducedMotion) {
     return (
-      <div className="w-full max-w-md rounded-xl border border-border bg-card p-8 space-y-8">
+      <div className="w-full max-w-md space-y-7 rounded-2xl border border-border-default bg-elevated/95 p-8 shadow-elevated backdrop-blur-sm dark:border-border-subtle">
         {children}
       </div>
     );
@@ -42,7 +42,7 @@ export function LoginPageCard({ children }: LoginPageCardProps) {
 
   return (
     <motion.div
-      className="w-full max-w-md rounded-xl border border-border bg-card p-8 space-y-8"
+      className="w-full max-w-md space-y-7 rounded-2xl border border-border-default bg-elevated/95 p-8 shadow-elevated backdrop-blur-sm dark:border-border-subtle"
       initial="hidden"
       animate="visible"
       variants={variants.scaleIn}

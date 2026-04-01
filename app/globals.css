@@ -108,6 +108,25 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
 
+  /* Surface shorthands (readable aliases for style-guide classes) */
+  --color-canvas: var(--bg-canvas);
+  --color-subtle: var(--bg-subtle);
+  --color-elevated: var(--bg-elevated);
+  --color-surface-muted: var(--bg-muted);
+
+  /* Text shorthands */
+  --color-primary-text: var(--text-primary);
+  --color-secondary-text: var(--text-secondary);
+  --color-tertiary: var(--text-tertiary);
+  --color-on-brand: var(--text-on-brand);
+
+  /* Interactive shorthands */
+  --color-interactive: var(--interactive-primary);
+  --color-interactive-hover: var(--interactive-primary-hover);
+  --color-interactive-soft: var(--interactive-primary-soft);
+  --color-link: var(--interactive-link);
+  --color-link-hover: var(--interactive-link-hover);
+
   /* Shadows */
   --shadow-card: var(--shadow-card);
   --shadow-card-hover: var(--shadow-card-hover);

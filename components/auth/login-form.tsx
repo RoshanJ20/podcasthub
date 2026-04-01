@@ -18,6 +18,8 @@
 import { useState, useCallback } from 'react';
 import { signIn } from 'next-auth/react';
 import { BASE_PATH } from '@/lib/config/base-path';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 /**
  * Props for the LoginForm component.
@@ -92,7 +94,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         <label htmlFor="email" className="block text-sm font-medium text-foreground">
           Email
         </label>
-        <input
+        <Input
           id="email"
           name="email"
           type="email"
@@ -100,7 +102,6 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           placeholder="you@example.com"
           disabled={isLoading}
         />
@@ -110,7 +111,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         <label htmlFor="password" className="block text-sm font-medium text-foreground">
           Password
         </label>
-        <input
+        <Input
           id="password"
           name="password"
           type="password"
@@ -119,19 +120,14 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           placeholder="Enter your password"
           disabled={isLoading}
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+      <Button type="submit" disabled={isLoading} size="lg" className="w-full">
         {isLoading ? 'Signing in...' : 'Sign in'}
-      </button>
+      </Button>
     </form>
   );
 }
