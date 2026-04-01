@@ -21,7 +21,7 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { transitions } from '@/lib/animation';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, BookmarkPlus } from 'lucide-react';
 import { formatTime } from '@/lib/format-time';
 import type { DomainColor } from '@/lib/domain-colors';
 
@@ -33,9 +33,11 @@ interface AudioPlayerProps {
   domainColor?: DomainColor;
   /** Seek function from the parent layout's audio element. */
   onSeek?: (time: number) => void;
+  /** Called when the user clicks the bookmark button. Receives the current playback time (floored). */
+  onBookmark?: (timestampSeconds: number) => void;
 }
 
-export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
+export function AudioPlayer({ domainColor, onSeek, onBookmark }: AudioPlayerProps) {
   const {
     currentAuditBrief,
     isPlaying,
@@ -137,20 +139,35 @@ export function AudioPlayer({ domainColor, onSeek }: AudioPlayerProps) {
           {playbackRate}x
         </Button>
 
-        {/* Audio type toggle */}
-        {hasLongVersion && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleAudioType}
-            aria-label={
-              audioType === 'short' ? 'Brief Summary version' : 'Detailed Overview version'
-            }
-            className="text-xs"
-          >
-            {audioType === 'short' ? 'Brief Summary' : 'Detailed Overview'}
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {/* Quick bookmark */}
+          {onBookmark && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onBookmark(Math.floor(currentTime))}
+              aria-label="Bookmark"
+              className="text-xs"
+            >
+              <BookmarkPlus className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Audio type toggle */}
+          {hasLongVersion && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleAudioType}
+              aria-label={
+                audioType === 'short' ? 'Brief Summary version' : 'Detailed Overview version'
+              }
+              className="text-xs"
+            >
+              {audioType === 'short' ? 'Brief Summary' : 'Detailed Overview'}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

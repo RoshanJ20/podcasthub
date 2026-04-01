@@ -37,6 +37,8 @@ export interface SidebarBookmarksProps {
   onSeek: (time: number) => void;
   /** Domain color tokens used to accent timestamp chips. */
   domainColor: ReturnType<typeof getDomainColor>;
+  /** Incremented by the parent after a quick-bookmark to trigger a refetch. */
+  refreshKey?: number;
 }
 
 /**
@@ -47,12 +49,22 @@ export interface SidebarBookmarksProps {
  * @param props.domainColor - Domain color tokens for timestamp accent styling.
  * @returns A compact list of bookmarks with an inline add form.
  */
-export function SidebarBookmarks({ auditBriefId, onSeek, domainColor }: SidebarBookmarksProps) {
+export function SidebarBookmarks({
+  auditBriefId,
+  onSeek,
+  domainColor,
+  refreshKey,
+}: SidebarBookmarksProps) {
   const [bookmarks, setBookmarks] = useState<SidebarBookmark[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [newNote, setNewNote] = useState('');
   const currentTime = usePlayerStore((s) => s.currentTime);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  /** Reset bookmarks when switching audit briefs to prevent stale data flash. */
+  useEffect(() => {
+    setBookmarks([]);
+  }, [auditBriefId]);
 
   const fetchBookmarks = useCallback(() => {
     fetch(withBasePath(`/api/bookmarks?auditBriefId=${auditBriefId}`))
@@ -68,6 +80,13 @@ export function SidebarBookmarks({ auditBriefId, onSeek, domainColor }: SidebarB
   useEffect(() => {
     fetchBookmarks();
   }, [fetchBookmarks]);
+
+  /** Refetch when a quick bookmark is added from the player controls. */
+  useEffect(() => {
+    if (refreshKey !== undefined && refreshKey > 0) {
+      fetchBookmarks();
+    }
+  }, [refreshKey, fetchBookmarks]);
 
   useEffect(() => {
     if (isAdding && inputRef.current) inputRef.current.focus();

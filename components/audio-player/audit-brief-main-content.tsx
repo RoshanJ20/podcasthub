@@ -53,6 +53,10 @@ export interface AuditBriefMainContentProps {
   domainColor: ReturnType<typeof getDomainColor>;
   /** Callback invoked when the user clicks a transcript cue or bookmark timestamp. */
   onSeek: (time: number) => void;
+  /** Called when the user clicks the quick-bookmark button in the player. */
+  onBookmark?: (timestampSeconds: number) => void;
+  /** Incremented after a quick bookmark so BookmarkPanel refetches its list. */
+  bookmarkVersion?: number;
   /** Motion props for the blur-to-clear entrance animation. */
   mercuryIn: Pick<HTMLMotionProps<'div'>, 'initial' | 'animate' | 'exit' | 'transition'>;
 }
@@ -83,26 +87,29 @@ export function AuditBriefMainContent({
   fullText,
   domainColor,
   onSeek,
+  onBookmark,
+  bookmarkVersion,
   mercuryIn,
 }: AuditBriefMainContentProps) {
   if (compact) {
     return (
       <motion.div key="compact" {...mercuryIn}>
-        <CompactPlayer domainColor={domainColor} onSeek={onSeek} />
+        <CompactPlayer domainColor={domainColor} onSeek={onSeek} onBookmark={onBookmark} />
+
+        <div className="mt-3 overflow-hidden rounded-xl border border-border bg-card">
+          <BookmarkPanel
+            auditBriefId={auditBriefId}
+            onSeek={onSeek}
+            domainColor={domainColor}
+            refreshKey={bookmarkVersion}
+            compact
+          />
+        </div>
 
         <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
           <TranscriptViewer
             segments={segments}
             fullText={fullText}
-            onSeek={onSeek}
-            domainColor={domainColor}
-            compact
-          />
-        </div>
-
-        <div className="mt-3">
-          <BookmarkPanel
-            auditBriefId={auditBriefId}
             onSeek={onSeek}
             domainColor={domainColor}
             compact
@@ -135,9 +142,19 @@ export function AuditBriefMainContent({
             </div>
           </div>
           <div className="w-full lg:w-100 lg:shrink-0">
-            <AudioPlayer domainColor={domainColor} onSeek={onSeek} />
+            <AudioPlayer domainColor={domainColor} onSeek={onSeek} onBookmark={onBookmark} />
           </div>
         </div>
+      </div>
+
+      {/* Bookmarks — positioned between hero card and transcript for easy access */}
+      <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
+        <BookmarkPanel
+          auditBriefId={auditBriefId}
+          onSeek={onSeek}
+          domainColor={domainColor}
+          refreshKey={bookmarkVersion}
+        />
       </div>
 
       <div className="mt-6 overflow-hidden rounded-xl border border-border bg-card">

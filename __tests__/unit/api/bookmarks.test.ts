@@ -23,6 +23,9 @@ vi.mock('@/lib/db', () => ({
     auditBrief: {
       findUnique: vi.fn(),
     },
+    episode: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 
@@ -48,6 +51,7 @@ const mockBookmark = {
   id: 'bm-1',
   userId: 'user-1',
   auditBriefId: '550e8400-e29b-41d4-a716-446655440000',
+  episodeId: null,
   timestampSeconds: 120.5,
   note: 'Great point here',
   createdAt: new Date('2025-01-01'),
@@ -104,6 +108,24 @@ describe('GET /api/bookmarks', () => {
         where: expect.objectContaining({
           userId: 'user-1',
           auditBriefId,
+        }),
+      })
+    );
+  });
+
+  it('filters by episodeId when query param is provided', async () => {
+    vi.mocked(prisma.bookmark.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.bookmark.count).mockResolvedValue(0);
+
+    const episodeId = '660e8400-e29b-41d4-a716-446655440000';
+    const req = createRequest(`/api/bookmarks?episodeId=${episodeId}`);
+    await GET(req);
+
+    expect(prisma.bookmark.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'user-1',
+          episodeId,
         }),
       })
     );
@@ -179,6 +201,76 @@ describe('POST /api/bookmarks', () => {
     const res = await POST(req);
 
     expect(res.status).toBe(401);
+  });
+
+  it('creates a bookmark with episodeId and returns 201', async () => {
+    const episodeId = '660e8400-e29b-41d4-a716-446655440000';
+    vi.mocked(prisma.episode.findUnique).mockResolvedValue({ id: episodeId } as never);
+    const created = {
+      ...mockBookmark,
+      auditBriefId: null,
+      episodeId,
+      timestampSeconds: 45,
+      userId: 'user-1',
+    };
+    vi.mocked(prisma.bookmark.create).mockResolvedValue(created as never);
+
+    const req = createRequest('/api/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify({ episodeId, timestampSeconds: 45 }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(201);
+    expect(prisma.bookmark.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'user-1',
+        episodeId,
+        auditBriefId: null,
+        timestampSeconds: 45,
+      }),
+    });
+  });
+
+  it('returns 400 when both auditBriefId and episodeId are provided', async () => {
+    const req = createRequest('/api/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify({
+        auditBriefId: '550e8400-e29b-41d4-a716-446655440000',
+        episodeId: '660e8400-e29b-41d4-a716-446655440000',
+        timestampSeconds: 60,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when neither auditBriefId nor episodeId is provided', async () => {
+    const req = createRequest('/api/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify({ timestampSeconds: 60 }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when episode is not found', async () => {
+    const episodeId = '660e8400-e29b-41d4-a716-446655440000';
+    vi.mocked(prisma.episode.findUnique).mockResolvedValue(null);
+
+    const req = createRequest('/api/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify({ episodeId, timestampSeconds: 30 }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
   });
 
   it('returns 400 for invalid body', async () => {

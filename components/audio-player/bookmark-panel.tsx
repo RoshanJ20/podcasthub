@@ -37,6 +37,8 @@ interface BookmarkPanelProps {
   domainColor?: DomainColor;
   /** When true, renders a collapsed header with bookmark count badge, expandable on click. */
   compact?: boolean;
+  /** Incremented by the parent after a quick-bookmark to trigger a refetch. */
+  refreshKey?: number;
 }
 
 export function BookmarkPanel({
@@ -44,6 +46,7 @@ export function BookmarkPanel({
   onSeek,
   domainColor,
   compact = false,
+  refreshKey,
 }: BookmarkPanelProps) {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +58,12 @@ export function BookmarkPanel({
   const reducedMotion = useReducedMotion();
 
   const currentTime = usePlayerStore((s) => s.currentTime);
+
+  /** Reset state when switching between audit briefs to prevent stale data flash. */
+  useEffect(() => {
+    setBookmarks([]);
+    setLoading(true);
+  }, [auditBriefId]);
 
   const fetchBookmarks = useCallback(async () => {
     try {
@@ -77,6 +86,13 @@ export function BookmarkPanel({
   useEffect(() => {
     fetchBookmarks();
   }, [fetchBookmarks]);
+
+  /** Refetch when a quick bookmark is added from the player controls. */
+  useEffect(() => {
+    if (refreshKey !== undefined && refreshKey > 0) {
+      fetchBookmarks();
+    }
+  }, [refreshKey, fetchBookmarks]);
 
   /** Add a bookmark at the current playback time. */
   const handleAdd = async () => {
@@ -191,16 +207,14 @@ export function BookmarkPanel({
     ? {}
     : { variants: staggerContainer, initial: 'hidden' as const, animate: 'visible' as const };
 
-  const itemMotionProps = (id: string) =>
-    reducedMotion
-      ? {}
-      : {
-          key: id,
-          layout: true as const,
-          variants: variants.fadeUp,
-          transition: transitions.normal,
-          exit: { opacity: 0, x: -20, transition: transitions.fast },
-        };
+  const itemMotionProps = reducedMotion
+    ? {}
+    : {
+        layout: true as const,
+        variants: variants.fadeUp,
+        transition: transitions.normal,
+        exit: { opacity: 0, x: -20, transition: transitions.fast },
+      };
 
   return (
     <div className="space-y-4 p-4">
@@ -255,7 +269,7 @@ export function BookmarkPanel({
                   key={bm.id}
                   bookmark={bm}
                   ItemEl={ItemEl}
-                  itemProps={itemMotionProps(bm.id)}
+                  itemProps={itemMotionProps}
                   editingId={editingId}
                   editNote={editNote}
                   domainColor={domainColor}

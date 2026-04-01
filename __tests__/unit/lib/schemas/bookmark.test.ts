@@ -27,7 +27,7 @@ describe('createBookmarkSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects missing auditBriefId', () => {
+  it('rejects when neither auditBriefId nor episodeId is provided', () => {
     const result = createBookmarkSchema.safeParse({
       timestampSeconds: 120,
     });
@@ -98,6 +98,40 @@ describe('createBookmarkSchema', () => {
       note: '',
     });
     expect(result.success).toBe(true);
+  });
+
+  it('accepts valid input with episodeId instead of auditBriefId', () => {
+    const result = createBookmarkSchema.safeParse({
+      episodeId: validUuid,
+      timestampSeconds: 60,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts episodeId with optional note', () => {
+    const result = createBookmarkSchema.safeParse({
+      episodeId: validUuid,
+      timestampSeconds: 30,
+      note: 'Episode note',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects when both auditBriefId and episodeId are provided', () => {
+    const result = createBookmarkSchema.safeParse({
+      auditBriefId: validUuid,
+      episodeId: validUuid,
+      timestampSeconds: 60,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects invalid episodeId (not uuid)', () => {
+    const result = createBookmarkSchema.safeParse({
+      episodeId: 'not-a-uuid',
+      timestampSeconds: 60,
+    });
+    expect(result.success).toBe(false);
   });
 });
 

@@ -14,17 +14,23 @@
  */
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { ArrowLeft, CheckCircle2, Circle, ChevronDown } from 'lucide-react';
+import { toast } from 'sonner';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { variants, transitions, sectionStagger } from '@/lib/animation';
 import { getDomainColor } from '@/lib/domain-colors';
+import { formatTime } from '@/lib/format-time';
 import { cn } from '@/lib/utils';
 import { EpisodePlayer } from './episode-player';
+import { EpisodeBookmarks } from './episode-bookmarks';
 import { withBasePath } from '@/lib/config/base-path';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('path-viewer-wrapper');
 
 interface Episode {
   id: string;
@@ -60,6 +66,8 @@ export function PathViewerWrapper({
 }: PathViewerWrapperProps) {
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [bookmarkVersion, setBookmarkVersion] = useState(0);
+  const episodeSeekRef = useRef<((time: number) => void) | null>(null);
   const reducedMotion = useReducedMotion();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -93,6 +101,29 @@ export function PathViewerWrapper({
       next.add(episodeId);
       return next;
     });
+  }, []);
+
+  /** Quick-add a bookmark for an episode at the given timestamp. */
+  const handleEpisodeBookmark = useCallback(async (episodeId: string, timestampSeconds: number) => {
+    try {
+      const res = await fetch(withBasePath('/api/bookmarks'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ episodeId, timestampSeconds }),
+      });
+      if (!res.ok) {
+        toast.error('Failed to add bookmark');
+        return;
+      }
+      toast.success(`Bookmark added at ${formatTime(timestampSeconds)}`);
+      setBookmarkVersion((v) => v + 1);
+    } catch (error) {
+      log.warn(
+        { error: error instanceof Error ? error.message : String(error) },
+        'Failed to add bookmark'
+      );
+      toast.error('Failed to add bookmark');
+    }
   }, []);
 
   const sortedEpisodes = [...episodes].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -243,18 +274,28 @@ export function PathViewerWrapper({
                   >
                     <div className="border-t border-border px-4 pb-4 pt-3">
                       {ep.audioUrl ? (
-                        <EpisodePlayer
-                          episodeId={ep.id}
-                          title={ep.title}
-                          description={ep.description}
-                          audioUrl={ep.audioUrl}
-                          thumbnailUrl={ep.thumbnailUrl}
-                          transcript={ep.transcript}
-                          isCompleted={isCompleted}
-                          graphId={graphId}
-                          onComplete={() => handleComplete(ep.id)}
-                          domainColor={domainColor}
-                        />
+                        <>
+                          <EpisodePlayer
+                            episodeId={ep.id}
+                            title={ep.title}
+                            description={ep.description}
+                            audioUrl={ep.audioUrl}
+                            thumbnailUrl={ep.thumbnailUrl}
+                            transcript={ep.transcript}
+                            isCompleted={isCompleted}
+                            graphId={graphId}
+                            onComplete={() => handleComplete(ep.id)}
+                            domainColor={domainColor}
+                            onBookmark={(ts) => handleEpisodeBookmark(ep.id, ts)}
+                            seekRef={episodeSeekRef}
+                          />
+                          <EpisodeBookmarks
+                            episodeId={ep.id}
+                            onSeek={(t) => episodeSeekRef.current?.(t)}
+                            domainColor={domainColor}
+                            refreshKey={bookmarkVersion}
+                          />
+                        </>
                       ) : (
                         <div>
                           {ep.description && (

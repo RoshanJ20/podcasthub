@@ -27,7 +27,8 @@ import type { DomainColor } from '@/lib/domain-colors';
 /** Shape of a single bookmark record returned from the API. */
 export interface Bookmark {
   id: string;
-  auditBriefId: string;
+  auditBriefId?: string | null;
+  episodeId?: string | null;
   timestampSeconds: number;
   note: string | null;
   createdAt: string;
@@ -87,11 +88,7 @@ export function BookmarkListItem({
   const isEditing = editingId === bookmark.id;
 
   return (
-    <ItemEl
-      key={bookmark.id}
-      className="flex items-start gap-2 rounded-md border p-2 text-sm"
-      {...itemProps}
-    >
+    <ItemEl className="flex items-start gap-2 rounded-md border p-2 text-sm" {...itemProps}>
       {/* Timestamp — domain-colored, clickable to seek */}
       <button
         onClick={() => onSeek?.(bookmark.timestampSeconds)}

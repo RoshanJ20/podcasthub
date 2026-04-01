@@ -18,7 +18,7 @@
  */
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { resolveStorageUrl } from '@/lib/storage-url';
@@ -30,13 +30,18 @@ import { getDomainColor } from '@/lib/domain-colors';
 import { extractAttachmentName } from '@/lib/attachment-utils';
 import { useListenTracker } from '@/hooks/use-listen-tracker';
 import dynamic from 'next/dynamic';
-import { BookmarkPanel } from './bookmark-panel';
+import { toast } from 'sonner';
+import { formatTime } from '@/lib/format-time';
+import { withBasePath } from '@/lib/config/base-path';
+import { createLogger } from '@/lib/logger';
 import { SidebarBookmarks } from './sidebar-bookmarks';
 import { AttachmentSidebar } from './attachment-sidebar';
 import { BulletinViewerSkeleton } from './bulletin-viewer-skeleton';
 import { AuditBriefDetailHeader } from './audit-brief-detail-header';
 import { AuditBriefMainContent } from './audit-brief-main-content';
 import { useFavorites } from '@/hooks/use-favorites';
+
+const log = createLogger('audit-brief-detail-layout');
 
 /** Dynamically import BulletinViewer to avoid SSR issues with react-pdf (DOMMatrix). */
 const BulletinViewer = dynamic(() => import('./bulletin-viewer').then((m) => m.BulletinViewer), {
@@ -91,6 +96,35 @@ export function AuditBriefDetailLayout({ auditBrief }: AuditBriefDetailLayoutPro
   const badgeText = isDark ? domainColor.darkText : domainColor.text;
 
   const hasAttachments = auditBrief.bulletinUrls.length > 0;
+
+  /** Counter incremented after a quick bookmark so BookmarkPanel can refetch. */
+  const [bookmarkVersion, setBookmarkVersion] = useState(0);
+
+  /** Quick-add a bookmark at the given timestamp (no note). */
+  const handleQuickBookmark = useCallback(
+    async (timestampSeconds: number) => {
+      try {
+        const response = await fetch(withBasePath('/api/bookmarks'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ auditBriefId: auditBrief.id, timestampSeconds }),
+        });
+        if (!response.ok) {
+          toast.error('Failed to add bookmark');
+          return;
+        }
+        toast.success(`Bookmark added at ${formatTime(timestampSeconds)}`);
+        setBookmarkVersion((v) => v + 1);
+      } catch (error) {
+        log.warn(
+          { error: error instanceof Error ? error.message : String(error) },
+          'Failed to add bookmark'
+        );
+        toast.error('Failed to add bookmark');
+      }
+    },
+    [auditBrief.id]
+  );
 
   /** Track listen events for analytics. */
   useListenTracker(auditBrief.id);
@@ -204,6 +238,8 @@ export function AuditBriefDetailLayout({ auditBrief }: AuditBriefDetailLayoutPro
     fullText: activeTranscript?.fullText,
     domainColor,
     onSeek: seekTo,
+    onBookmark: handleQuickBookmark,
+    bookmarkVersion,
     mercuryIn,
   };
 
@@ -247,9 +283,6 @@ export function AuditBriefDetailLayout({ auditBrief }: AuditBriefDetailLayoutPro
       <Wrapper className="mx-auto max-w-5xl px-4 py-8 lg:py-12" {...wrapperProps}>
         <AuditBriefDetailHeader {...headerProps} />
         <AuditBriefMainContent compact={false} {...mainContentProps} />
-        <div className="mt-4 overflow-hidden rounded-xl border border-border bg-card">
-          <BookmarkPanel auditBriefId={auditBrief.id} onSeek={seekTo} domainColor={domainColor} />
-        </div>
       </Wrapper>
     );
   }
@@ -297,6 +330,7 @@ export function AuditBriefDetailLayout({ auditBrief }: AuditBriefDetailLayoutPro
                 auditBriefId={auditBrief.id}
                 onSeek={seekTo}
                 domainColor={domainColor}
+                refreshKey={bookmarkVersion}
               />
             </div>
           </div>

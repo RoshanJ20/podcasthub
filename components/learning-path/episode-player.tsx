@@ -16,7 +16,7 @@ import { usePlayerStore } from '@/stores/player-store';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, Volume2, VolumeX, CheckCircle2 } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, CheckCircle2, BookmarkPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatTime } from '@/lib/format-time';
 import type { DomainColor } from '@/lib/domain-colors';
@@ -34,6 +34,10 @@ export interface EpisodePlayerProps {
   onComplete: () => void;
   /** Domain color for accent theming. */
   domainColor?: DomainColor;
+  /** Called when the user clicks the bookmark button. Receives the current playback time (floored). */
+  onBookmark?: (timestampSeconds: number) => void;
+  /** Ref that the parent can use to seek this episode's audio from outside (e.g. bookmark clicks). */
+  seekRef?: React.MutableRefObject<((time: number) => void) | null>;
 }
 
 export function EpisodePlayer({
@@ -47,6 +51,8 @@ export function EpisodePlayer({
   graphId,
   onComplete,
   domainColor,
+  onBookmark,
+  seekRef,
 }: EpisodePlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -85,6 +91,14 @@ export function EpisodePlayer({
     audio.currentTime = val;
     setCurrentTime(val);
   }, []);
+
+  /** Expose seek function to the parent so bookmark clicks can seek this player. */
+  useEffect(() => {
+    if (seekRef) seekRef.current = seekTo;
+    return () => {
+      if (seekRef) seekRef.current = null;
+    };
+  }, [seekRef, seekTo]);
 
   const changeVolume = useCallback((val: number) => {
     const audio = audioRef.current;
@@ -195,6 +209,17 @@ export function EpisodePlayer({
             >
               {volume === 0 ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
             </button>
+
+            {/* Quick bookmark */}
+            {onBookmark && (
+              <button
+                onClick={() => onBookmark(Math.floor(currentTime))}
+                aria-label="Bookmark"
+                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <BookmarkPlus className="size-4" />
+              </button>
+            )}
           </div>
 
           {/* Mark complete — inline */}

@@ -119,6 +119,7 @@ model Episode {
   targetEdges LearningPathEdge[] @relation("TargetEpisode")
   progress    UserProgress[]
   activity    UserActivity[]     @relation("ActivityEpisode")
+  bookmarks   Bookmark[]
 
   @@index([graphId])
   @@map("episodes")
@@ -160,17 +161,20 @@ model Favorite {
 model Bookmark {
   id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   userId           String   @map("user_id") @db.Uuid
-  auditBriefId        String   @map("audit_brief_id") @db.Uuid
+  auditBriefId     String?  @map("audit_brief_id") @db.Uuid
+  episodeId        String?  @map("episode_id") @db.Uuid
   timestampSeconds Float    @map("timestamp_seconds") @db.Real
   note             String?
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  auditBrief AuditBrief @relation(fields: [auditBriefId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  auditBrief AuditBrief? @relation(fields: [auditBriefId], references: [id], onDelete: Cascade)
+  episode    Episode?    @relation(fields: [episodeId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([auditBriefId])
+  @@index([episodeId])
   @@map("bookmarks")
 }
 

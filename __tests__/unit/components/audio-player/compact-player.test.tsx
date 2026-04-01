@@ -104,9 +104,24 @@ describe('CompactPlayer', () => {
     expect(container.querySelector('button[aria-label="Skip backward"]')).toBeNull();
   });
 
-  it('does NOT render bookmark button', () => {
+  it('does NOT render bookmark button when onBookmark is not provided', () => {
     const { container } = render(<CompactPlayer />);
-    expect(container.querySelector('button[aria-label="Add bookmark"]')).toBeNull();
+    expect(container.querySelector('button[aria-label="Bookmark"]')).toBeNull();
+  });
+
+  it('renders bookmark button when onBookmark is provided', () => {
+    const { container } = render(<CompactPlayer onBookmark={vi.fn()} />);
+    expect(container.querySelector('button[aria-label="Bookmark"]')).not.toBeNull();
+  });
+
+  it('calls onBookmark with floored currentTime when bookmark button is clicked', async () => {
+    usePlayerStore.setState({ currentTime: 45.7 });
+    const onBookmark = vi.fn();
+    const { container } = render(<CompactPlayer onBookmark={onBookmark} />);
+    const user = userEvent.setup();
+    const btn = container.querySelector('button[aria-label="Bookmark"]')!;
+    await user.click(btn);
+    expect(onBookmark).toHaveBeenCalledWith(45);
   });
 
   it('renders audio type toggle when long version is available', () => {

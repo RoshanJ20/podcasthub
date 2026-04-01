@@ -27,7 +27,7 @@ import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { transitions } from '@/lib/animation';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { Play, Pause } from 'lucide-react';
+import { Play, Pause, BookmarkPlus } from 'lucide-react';
 import { formatTime } from '@/lib/format-time';
 import type { DomainColor } from '@/lib/domain-colors';
 
@@ -43,6 +43,8 @@ interface CompactPlayerProps {
   domainColor?: DomainColor;
   /** Seek function from the parent layout's audio element. */
   onSeek?: (time: number) => void;
+  /** Called when the user clicks the bookmark button. Receives the current playback time (floored). */
+  onBookmark?: (timestampSeconds: number) => void;
 }
 
 /**
@@ -53,7 +55,7 @@ interface CompactPlayerProps {
  * @param props - Component props containing optional domain color.
  * @returns The compact player React element.
  */
-export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
+export function CompactPlayer({ domainColor, onSeek, onBookmark }: CompactPlayerProps) {
   const {
     currentAuditBrief,
     isPlaying,
@@ -130,7 +132,7 @@ export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
         </div>
       </div>
 
-      {/* Speed + audio type row */}
+      {/* Speed + bookmark + audio type row */}
       <div className="flex items-center justify-between">
         <Button
           variant="ghost"
@@ -141,19 +143,32 @@ export function CompactPlayer({ domainColor, onSeek }: CompactPlayerProps) {
         >
           {playbackRate}x
         </Button>
-        {currentAuditBrief?.audioLongUrl && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleAudioType}
-            aria-label={
-              audioType === 'short' ? 'Brief Summary version' : 'Detailed Overview version'
-            }
-            className="h-7 text-[11px]"
-          >
-            {audioType === 'short' ? 'Brief' : 'Detailed'}
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {onBookmark && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onBookmark(Math.floor(currentTime))}
+              aria-label="Bookmark"
+              className="h-7 text-xs"
+            >
+              <BookmarkPlus className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          {currentAuditBrief?.audioLongUrl && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleAudioType}
+              aria-label={
+                audioType === 'short' ? 'Brief Summary version' : 'Detailed Overview version'
+              }
+              className="h-7 text-[11px]"
+            >
+              {audioType === 'short' ? 'Brief' : 'Detailed'}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

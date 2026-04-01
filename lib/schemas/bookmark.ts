@@ -1,24 +1,38 @@
 /**
  * Zod schemas for bookmark validation.
  *
- * Provides schemas for creating and updating audit brief bookmarks.
+ * Provides schemas for creating and updating bookmarks.
+ * Bookmarks can be scoped to either an audit brief or a learning path episode.
+ * Exactly one of `auditBriefId` or `episodeId` must be provided when creating.
  */
 import { z } from 'zod';
 
 /**
  * Schema for creating a new bookmark.
  *
- * Required: auditBriefId (UUID), timestampSeconds (non-negative number).
+ * Exactly one of auditBriefId (UUID) or episodeId (UUID) is required.
+ * Required: timestampSeconds (non-negative number).
  * Optional: note (max 1000 characters).
  */
-export const createBookmarkSchema = z.object({
-  /** UUID of the audit brief being bookmarked. */
-  auditBriefId: z.uuid(),
-  /** Timestamp in seconds within the audit brief audio (non-negative). */
-  timestampSeconds: z.number().min(0),
-  /** Optional note associated with the bookmark (max 1000 characters). */
-  note: z.string().max(1000).optional(),
-});
+export const createBookmarkSchema = z
+  .object({
+    /** UUID of the audit brief being bookmarked. Mutually exclusive with episodeId. */
+    auditBriefId: z.string().uuid().optional(),
+    /** UUID of the learning path episode being bookmarked. Mutually exclusive with auditBriefId. */
+    episodeId: z.string().uuid().optional(),
+    /** Timestamp in seconds within the audio (non-negative). */
+    timestampSeconds: z.number().min(0),
+    /** Optional note associated with the bookmark (max 1000 characters). */
+    note: z.string().max(1000).optional(),
+  })
+  .refine(
+    (data) => {
+      const hasAuditBrief = data.auditBriefId !== undefined;
+      const hasEpisode = data.episodeId !== undefined;
+      return (hasAuditBrief && !hasEpisode) || (!hasAuditBrief && hasEpisode);
+    },
+    { message: 'Exactly one of auditBriefId or episodeId must be provided' }
+  );
 
 /** Inferred type for bookmark creation input. */
 export type CreateBookmarkInput = z.infer<typeof createBookmarkSchema>;
