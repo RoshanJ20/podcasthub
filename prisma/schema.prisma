@@ -25,13 +25,14 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  accounts       Account[]
-  sessions       Session[]
-  bookmarks      Bookmark[]
-  favorites      Favorite[]
-  progress       UserProgress[]
-  activity       UserActivity[]
-  learningGraphs LearningGraph[] @relation("CreatedBy")
+  accounts              Account[]
+  sessions              Session[]
+  bookmarks             Bookmark[]
+  favorites             Favorite[]
+  learningGraphFavorites LearningGraphFavorite[]
+  progress              UserProgress[]
+  activity              UserActivity[]
+  learningGraphs        LearningGraph[] @relation("CreatedBy")
 
   @@map("users")
 }
@@ -89,11 +90,12 @@ model LearningGraph {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
 
-  creator  User?              @relation("CreatedBy", fields: [createdBy], references: [id])
-  episodes Episode[]
-  edges    LearningPathEdge[]
-  progress UserProgress[]
-  activity UserActivity[]     @relation("ActivityGraph")
+  creator   User?              @relation("CreatedBy", fields: [createdBy], references: [id])
+  episodes  Episode[]
+  edges     LearningPathEdge[]
+  favorites LearningGraphFavorite[]
+  progress  UserProgress[]
+  activity  UserActivity[]     @relation("ActivityGraph")
 
   @@index([createdBy])
   @@map("learning_graphs")
@@ -156,6 +158,21 @@ model Favorite {
   @@index([userId])
   @@index([auditBriefId])
   @@map("favorites")
+}
+
+model LearningGraphFavorite {
+  id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  learningGraphId String  @map("learning_graph_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learningGraph LearningGraph @relation(fields: [learningGraphId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, learningGraphId])
+  @@index([userId])
+  @@index([learningGraphId])
+  @@map("learning_graph_favorites")
 }
 
 model Bookmark {

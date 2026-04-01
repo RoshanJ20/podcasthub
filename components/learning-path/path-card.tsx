@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { getDomainColor } from '@/lib/domain-colors';
+import { FavoriteButton } from '@/components/ui/favorite-button';
 
 interface PathCardProps {
   id: string;
@@ -25,6 +26,10 @@ interface PathCardProps {
   domain: string | null;
   episodeCount: number;
   completedCount: number;
+  /** Whether this learning graph is favorited by the current user. */
+  isFavorite?: boolean;
+  /** Callback to toggle favorite state. */
+  onToggleFavorite?: () => void;
 }
 
 export function PathCard({
@@ -34,6 +39,8 @@ export function PathCard({
   domain,
   episodeCount,
   completedCount,
+  isFavorite = false,
+  onToggleFavorite,
 }: PathCardProps) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
@@ -62,14 +69,19 @@ export function PathCard({
           <div>
             <div className="mb-1 flex items-start justify-between gap-3">
               <p className="line-clamp-1 text-sm font-medium leading-snug">{title}</p>
-              {domain && (
-                <span
-                  className="inline-flex shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium"
-                  style={{ backgroundColor: badgeBg, color: badgeText }}
-                >
-                  {domain}
-                </span>
-              )}
+              <div className="flex shrink-0 items-center gap-1">
+                {domain && (
+                  <span
+                    className="inline-flex shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium"
+                    style={{ backgroundColor: badgeBg, color: badgeText }}
+                  >
+                    {domain}
+                  </span>
+                )}
+                {onToggleFavorite && (
+                  <FavoriteButton isFavorite={isFavorite} onToggle={onToggleFavorite} />
+                )}
+              </div>
             </div>
             <p className="line-clamp-1 text-xs text-muted-foreground">{description || '\u00A0'}</p>
           </div>

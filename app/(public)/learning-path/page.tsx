@@ -6,6 +6,7 @@
  * client-side.
  */
 import { prisma } from '@/lib/db';
+import { getAuthSession } from '@/lib/auth/session-helpers';
 import { PathListClient } from '@/components/learning-path/path-list-client';
 
 export const dynamic = 'force-dynamic';
@@ -13,12 +14,28 @@ export const dynamic = 'force-dynamic';
 export default async function LearningPathsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ domain?: string }>;
+  searchParams: Promise<{ domain?: string; favorites?: string }>;
 }) {
-  const { domain } = await searchParams;
+  const { domain, favorites } = await searchParams;
+  const showFavorites = favorites === 'true';
+
+  // When favorites filter is active, get the user's favorited learning graph IDs
+  let favoriteIds: string[] = [];
+  if (showFavorites) {
+    const session = await getAuthSession();
+    const userId = session?.user?.id;
+    if (userId) {
+      const userFavorites = await prisma.learningGraphFavorite.findMany({
+        where: { userId },
+        select: { learningGraphId: true },
+      });
+      favoriteIds = userFavorites.map((f) => f.learningGraphId);
+    }
+  }
 
   const paths = await prisma.learningGraph.findMany({
     where: {
+      ...(showFavorites ? { id: { in: favoriteIds } } : {}),
       ...(domain ? { domain } : {}),
     },
     include: { _count: { select: { episodes: true } } },

@@ -6,8 +6,8 @@
  * UI with filters, audit brief grid, and pagination controls.
  */
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import { prisma } from '@/lib/db';
+import { getAuthSession } from '@/lib/auth/session-helpers';
 import { LibraryFilters } from '@/components/library/library-filters';
 import { AuditBriefGrid } from '@/components/library/audit-brief-grid';
 import { PaginationControls } from '@/components/library/pagination-controls';
@@ -44,8 +44,8 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
   // When favorites filter is active, get the user's favorited audit brief IDs
   let favoriteIds: string[] = [];
   if (showFavorites) {
-    const headerList = await headers();
-    const userId = headerList.get('x-user-id');
+    const session = await getAuthSession();
+    const userId = session?.user?.id;
     if (userId) {
       const favorites = await prisma.favorite.findMany({
         where: { userId },
