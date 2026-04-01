@@ -1,15 +1,15 @@
 /**
  * Unit tests for the EpisodePlayer component.
  *
- * Covers transcript rendering behaviour:
- * - Renders transcript text when present
- * - Does not render transcript section when absent
- * - Does not render transcript section when empty string
+ * Covers:
+ * - Transcript rendering behaviour
+ * - Playback mutex: pauses global player when episode plays and vice versa
  */
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { render, screen, cleanup, fireEvent, act } from '@testing-library/react';
 import type { EpisodePlayerProps } from '@/components/learning-path/episode-player';
 import { EpisodePlayer } from '@/components/learning-path/episode-player';
+import { usePlayerStore } from '@/stores/player-store';
 
 // Mock resolveStorageUrl to return input unchanged
 vi.mock('@/lib/storage-url', () => ({
@@ -29,6 +29,20 @@ const DEFAULT_PROPS: EpisodePlayerProps = {
 };
 
 describe('EpisodePlayer', () => {
+  beforeEach(() => {
+    /** Reset global player store to initial state before each test. */
+    usePlayerStore.setState({
+      currentAuditBrief: null,
+      isPlaying: false,
+      currentTime: 0,
+      duration: 0,
+      volume: 1,
+      playbackRate: 1,
+      audioType: 'short',
+      isMiniPlayerVisible: false,
+    });
+  });
+
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();
@@ -61,6 +75,44 @@ describe('EpisodePlayer', () => {
 
       expect(screen.getByText('Transcript')).toBeInTheDocument();
       expect(screen.getByText(/Line one/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Playback mutex — global player coordination', () => {
+    it('pauses global player when episode play is triggered', () => {
+      /**
+       * Spy on the store's pause action by replacing it with a tracked mock.
+       * usePlayerStore.getState().pause is called directly in togglePlay,
+       * so we patch the store's state to capture the call.
+       */
+      const pauseMock = vi.fn();
+      usePlayerStore.setState({ pause: pauseMock } as never);
+
+      render(<EpisodePlayer {...DEFAULT_PROPS} />);
+
+      const playButton = screen.getByRole('button', { name: /play/i });
+      fireEvent.click(playButton);
+
+      expect(pauseMock).toHaveBeenCalled();
+    });
+
+    it('pauses episode audio when global player starts playing', () => {
+      render(<EpisodePlayer {...DEFAULT_PROPS} />);
+
+      /**
+       * Get the audio element and spy on its pause method.
+       * The audio element is rendered inside EpisodePlayer with the test id.
+       */
+      const container = screen.getByTestId('episode-player-ep-1');
+      const audioElement = container.querySelector('audio') as HTMLAudioElement;
+      const pauseSpy = vi.spyOn(audioElement, 'pause');
+
+      /** Simulate global player starting — e.g. user clicks play in sidebar. */
+      act(() => {
+        usePlayerStore.setState({ isPlaying: true });
+      });
+
+      expect(pauseSpy).toHaveBeenCalled();
     });
   });
 });

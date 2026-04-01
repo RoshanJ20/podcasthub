@@ -12,6 +12,7 @@
 'use client';
 
 import { useRef, useState, useEffect, useCallback } from 'react';
+import { usePlayerStore } from '@/stores/player-store';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -57,12 +58,23 @@ export function EpisodePlayer({
   const resolvedUrl = resolveStorageUrl(audioUrl);
   const resolvedThumbnail = thumbnailUrl ? resolveStorageUrl(thumbnailUrl) : null;
 
+  /** Subscribe to global player state so we can pause when it starts. */
+  const globalIsPlaying = usePlayerStore((s) => s.isPlaying);
+
+  /** Pause this episode's audio whenever the global player starts playing. */
+  useEffect(() => {
+    if (globalIsPlaying) {
+      audioRef.current?.pause();
+    }
+  }, [globalIsPlaying]);
+
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (isPlaying) {
       audio.pause();
     } else {
+      usePlayerStore.getState().pause();
       audio.play();
     }
   }, [isPlaying]);
