@@ -38,6 +38,8 @@ function createRequest(url: string, options?: RequestInit): NextRequest {
 type RouteContext = { params: Promise<{ id: string }> };
 
 const graphId = '550e8400-e29b-41d4-a716-446655440010';
+const missingGraphId = '550e8400-e29b-41d4-a716-446655440099';
+const invalidGraphId = 'new';
 
 const mockGraphWithRelations = {
   id: graphId,
@@ -110,10 +112,20 @@ describe('GET /api/learning-graphs/[id]', () => {
   it('returns 404 for non-existent graph', async () => {
     vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue(null);
 
-    const req = createRequest('/api/learning-graphs/non-existent');
-    const res = await GET(req, { params: Promise.resolve({ id: 'non-existent' }) });
+    const req = createRequest(`/api/learning-graphs/${missingGraphId}`);
+    const res = await GET(req, { params: Promise.resolve({ id: missingGraphId }) });
 
     expect(res.status).toBe(404);
+  });
+
+  it('returns 400 without calling Prisma when id is not a UUID', async () => {
+    const req = createRequest(`/api/learning-graphs/${invalidGraphId}`);
+    const res = await GET(req, { params: Promise.resolve({ id: invalidGraphId }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error_code).toBe('BAD_REQUEST');
+    expect(prisma.learningGraph.findUnique).not.toHaveBeenCalled();
   });
 
   it('returns graph regardless of isPublished status for any user', async () => {
@@ -206,6 +218,21 @@ describe('PUT /api/learning-graphs/[id]', () => {
 
     expect(res.status).toBe(403);
   });
+
+  it('returns 400 without touching Prisma when id is not a UUID', async () => {
+    const req = createRequest(`/api/learning-graphs/${invalidGraphId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ title: 'X' }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await PUT(req, { params: Promise.resolve({ id: invalidGraphId }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error_code).toBe('BAD_REQUEST');
+    expect(prisma.learningGraph.findUnique).not.toHaveBeenCalled();
+    expect(prisma.learningGraph.update).not.toHaveBeenCalled();
+  });
 });
 
 // ─── DELETE /api/learning-graphs/[id] ───────────────────────────────────────
@@ -241,10 +268,21 @@ describe('DELETE /api/learning-graphs/[id]', () => {
   it('returns 404 for non-existent graph', async () => {
     vi.mocked(prisma.learningGraph.findUnique).mockResolvedValue(null);
 
-    const req = createRequest(`/api/learning-graphs/non-existent`, { method: 'DELETE' });
-    const res = await DELETE(req, { params: Promise.resolve({ id: 'non-existent' }) });
+    const req = createRequest(`/api/learning-graphs/${missingGraphId}`, { method: 'DELETE' });
+    const res = await DELETE(req, { params: Promise.resolve({ id: missingGraphId }) });
 
     expect(res.status).toBe(404);
+  });
+
+  it('returns 400 without touching Prisma when id is not a UUID', async () => {
+    const req = createRequest(`/api/learning-graphs/${invalidGraphId}`, { method: 'DELETE' });
+    const res = await DELETE(req, { params: Promise.resolve({ id: invalidGraphId }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error_code).toBe('BAD_REQUEST');
+    expect(prisma.learningGraph.findUnique).not.toHaveBeenCalled();
+    expect(prisma.learningGraph.delete).not.toHaveBeenCalled();
   });
 
   it('returns 401 when not authenticated', async () => {

@@ -11,6 +11,7 @@ import { GraphEditor } from '@/components/learning-path/graph-editor';
 import { LinearEditor } from '@/components/learning-path/linear-editor';
 import { GraphEditorInitializer } from '@/components/learning-path/graph-editor-initializer';
 import { EditorTabs } from '@/components/learning-path/editor-tabs';
+import { isUuid } from '@/lib/schemas/common';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,8 @@ export default async function AdminLearningGraphEditorPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
+
   const graph = await prisma.learningGraph.findUnique({
     where: { id },
     include: {

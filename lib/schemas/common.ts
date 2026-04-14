@@ -53,3 +53,28 @@ export const paginationSchema = z.object({
 
 /** Inferred type for pagination query parameters. */
 export type PaginationParams = z.infer<typeof paginationSchema>;
+
+/**
+ * Zod schema for validating canonical UUID strings.
+ *
+ * Enforces the standard 8-4-4-4-12 hex format accepted by PostgreSQL's
+ * UUID column type. Use at system boundaries (route params, request
+ * bodies, query strings) before passing values into Prisma queries
+ * that target UUID columns — passing a non-UUID to such a query causes
+ * the Prisma query engine to throw rather than return null.
+ */
+export const uuidSchema = z.uuid();
+
+/**
+ * Type guard that reports whether a value is a canonical UUID string.
+ *
+ * Thin wrapper over `uuidSchema.safeParse` for callsites that need a
+ * boolean check and TypeScript narrowing rather than a parse result
+ * (e.g. route handlers gating a Prisma query on a route parameter).
+ *
+ * @param value - Any value to test for UUID-ness.
+ * @returns `true` when `value` is a string matching the UUID format.
+ */
+export function isUuid(value: unknown): value is string {
+  return uuidSchema.safeParse(value).success;
+}

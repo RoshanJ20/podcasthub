@@ -23,6 +23,7 @@ import {
   internalError,
 } from '@/lib/api/errors';
 import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
+import { isUuid } from '@/lib/schemas/common';
 import { logger } from '@/lib/logger';
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -153,6 +154,13 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
     requireRole(user, ['admin', 'superadmin']);
 
     const { id } = await context.params;
+
+    if (!isUuid(id)) {
+      return createErrorResponse(
+        badRequest('Invalid learning graph id'),
+        request.headers.get('x-request-id') ?? undefined
+      );
+    }
 
     const graph = await prisma.learningGraph.findUnique({
       where: { id },

@@ -314,6 +314,25 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
     expect(res.status).toBe(403);
   });
 
+  it('returns 400 without touching Prisma when id is not a UUID', async () => {
+    vi.mocked(prisma.learningGraph.findUnique).mockReset();
+
+    const invalidGraphId = 'new';
+    const req = createRequest(`/api/learning-graphs/${invalidGraphId}/data`, {
+      method: 'PUT',
+      body: JSON.stringify(upsertPayload),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await PUT(req, { params: Promise.resolve({ id: invalidGraphId }) });
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error_code).toBe('BAD_REQUEST');
+    expect(prisma.learningGraph.findUnique).not.toHaveBeenCalled();
+    expect(prisma.episode.update).not.toHaveBeenCalled();
+    expect(prisma.episode.create).not.toHaveBeenCalled();
+  });
+
   it('handles empty edges array without creating edges', async () => {
     const payload = {
       episodes: [

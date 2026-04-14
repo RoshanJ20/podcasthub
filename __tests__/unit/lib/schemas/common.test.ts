@@ -11,6 +11,8 @@ import {
   LEARNING_SERIES_DOMAINS,
   PODCAST_DOMAINS,
   domainSchema,
+  isUuid,
+  uuidSchema,
 } from '@/lib/schemas/common';
 
 describe('common schemas', () => {
@@ -80,6 +82,57 @@ describe('common schemas', () => {
 
     it('rejects values not in DOMAINS', () => {
       expect(() => domainSchema.parse('Invalid Domain')).toThrow();
+    });
+  });
+
+  describe('uuidSchema', () => {
+    it('accepts a canonical v4 UUID', () => {
+      const value = '11111111-1111-4111-8111-111111111111';
+      expect(uuidSchema.parse(value)).toBe(value);
+    });
+
+    it('rejects non-UUID strings', () => {
+      for (const invalid of ['new', 'null', 'undefined', '', 'not-a-uuid']) {
+        expect(() => uuidSchema.parse(invalid)).toThrow();
+      }
+    });
+
+    it('rejects truncated UUIDs', () => {
+      expect(() => uuidSchema.parse('11111111-1111-4111-8111')).toThrow();
+    });
+
+    it('rejects non-string inputs', () => {
+      expect(() => uuidSchema.parse(42)).toThrow();
+      expect(() => uuidSchema.parse(null)).toThrow();
+      expect(() => uuidSchema.parse(undefined)).toThrow();
+    });
+  });
+
+  describe('isUuid', () => {
+    it('returns true for a valid v4 UUID', () => {
+      expect(isUuid('11111111-1111-4111-8111-111111111111')).toBe(true);
+    });
+
+    it('returns false for non-UUID strings', () => {
+      for (const invalid of ['new', 'null', 'undefined', '', 'not-a-uuid']) {
+        expect(isUuid(invalid)).toBe(false);
+      }
+    });
+
+    it('returns false for non-string values', () => {
+      expect(isUuid(42)).toBe(false);
+      expect(isUuid(null)).toBe(false);
+      expect(isUuid(undefined)).toBe(false);
+      expect(isUuid({})).toBe(false);
+    });
+
+    it('narrows the type to string when true', () => {
+      const value: unknown = '11111111-1111-4111-8111-111111111111';
+      if (isUuid(value)) {
+        // Compile-time check: value is narrowed to string
+        const asString: string = value;
+        expect(asString).toBe('11111111-1111-4111-8111-111111111111');
+      }
     });
   });
 });

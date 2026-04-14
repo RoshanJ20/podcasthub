@@ -16,6 +16,7 @@ import {
   internalError,
 } from '@/lib/api/errors';
 import { updateLearningGraphSchema } from '@/lib/schemas/learning-graph';
+import { isUuid } from '@/lib/schemas/common';
 import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 
 /** Route context providing the learning graph ID path parameter. */
@@ -33,6 +34,13 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function GET(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   try {
     const { id } = await context.params;
+
+    if (!isUuid(id)) {
+      return createErrorResponse(
+        badRequest('Invalid learning graph id'),
+        request.headers.get('x-request-id') ?? undefined
+      );
+    }
 
     const graph = await prisma.learningGraph.findUnique({
       where: { id },
@@ -69,6 +77,14 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
     requireRole(user, ['admin', 'superadmin']);
 
     const { id } = await context.params;
+
+    if (!isUuid(id)) {
+      return createErrorResponse(
+        badRequest('Invalid learning graph id'),
+        request.headers.get('x-request-id') ?? undefined
+      );
+    }
+
     const body = await request.json();
 
     const result = updateLearningGraphSchema.safeParse(body);
@@ -114,6 +130,13 @@ export async function DELETE(request: NextRequest, context: RouteContext): Promi
     requireRole(user, ['admin', 'superadmin']);
 
     const { id } = await context.params;
+
+    if (!isUuid(id)) {
+      return createErrorResponse(
+        badRequest('Invalid learning graph id'),
+        request.headers.get('x-request-id') ?? undefined
+      );
+    }
 
     const existing = await prisma.learningGraph.findUnique({ where: { id }, select: { id: true } });
     if (!existing) {
