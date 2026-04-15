@@ -65,6 +65,16 @@ export default withAuth(
     const { pathname } = request.nextUrl;
     const token = request.nextauth?.token;
 
+    // Bypass the large-body upload route entirely. Edge middleware buffers
+    // the request body when `NextResponse.next({ request: { headers } })`
+    // is used and has a 10 MB cap, which would corrupt files larger than
+    // that. The matcher regex below also excludes this path, but the guard
+    // here defends against a future basePath change silently reintroducing
+    // the bug. The route handler authenticates itself via requireAuth.
+    if (pathname.endsWith('/api/upload/file')) {
+      return NextResponse.next();
+    }
+
     // Admin route role enforcement
     if (isAdminRoute(pathname) && token) {
       if (token.role !== 'admin' && token.role !== 'superadmin') {
@@ -130,7 +140,10 @@ export const config = {
   // `api/upload/file` is excluded so Next.js does not buffer large multipart
   // bodies (up to 500MB for audio) through edge middleware, which caps at 10MB
   // by default. The handler authenticates itself via requireAuth + requireRole.
+  // The `(?:auditbrief/)?` prefix accounts for the production basePath —
+  // without it, the matcher is evaluated against `/auditbrief/api/upload/file`
+  // and the exclusion silently fails.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api/upload/file|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|(?:auditbrief/)?api/upload/file|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
