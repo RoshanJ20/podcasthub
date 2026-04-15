@@ -39,8 +39,10 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     localPatterns: [
       {
-        pathname: '/api/media/**',
-        search: '',
+        // Includes the basePath prefix because Next.js matches the full URL
+        // (with basePath) against this pattern. `search` is intentionally
+        // omitted so any `?key=<dynamic>` query string is allowed.
+        pathname: '/auditbrief/api/media',
       },
     ],
     remotePatterns: [

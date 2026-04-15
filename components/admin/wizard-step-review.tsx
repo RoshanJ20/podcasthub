@@ -8,13 +8,13 @@
  * - Renders a single summary card with all audit brief metadata and content info
  * - Shows "Not provided" / "None" placeholders for missing optional fields
  *
- * @dependencies shadcn Card, Badge components; next/image for thumbnail preview
+ * @dependencies shadcn Card, Badge components
  */
 'use client';
 
-import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { resolveStorageUrl } from '@/lib/storage-url';
 
 /**
  * Props for the WizardStepReview component.
@@ -86,12 +86,14 @@ export function WizardStepReview({
         <div className="flex gap-3 items-center pb-4 border-b border-border">
           {thumbnailUrl ? (
             <div className="relative shrink-0 w-14 h-10 rounded-md overflow-hidden border">
-              <Image
-                src={thumbnailUrl}
+              {/* Plain <img> because this preview can be a blob: object URL
+                  (newly-picked file), an http(s) URL, or a raw storage key.
+                  next/image's server-side optimizer rejects blob: URLs. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={resolvePreviewSrc(thumbnailUrl)}
                 alt="Thumbnail"
-                fill
-                className="object-cover"
-                sizes="56px"
+                className="w-full h-full object-cover"
               />
             </div>
           ) : (
@@ -151,6 +153,20 @@ export function WizardStepReview({
       </CardContent>
     </Card>
   );
+}
+
+/**
+ * Resolves the preview src for the thumbnail header strip.
+ *
+ * Passes through `blob:` object URLs (newly-picked files) and absolute URLs
+ * unchanged; routes raw storage keys (edit mode with no re-pick) through
+ * `resolveStorageUrl` so they become proxied `/api/media?key=…` URLs.
+ */
+function resolvePreviewSrc(value: string): string {
+  if (value.startsWith('blob:') || value.startsWith('http://') || value.startsWith('https://')) {
+    return value;
+  }
+  return resolveStorageUrl(value);
 }
 
 /** Renders a labelled field in the 2-col grid. */

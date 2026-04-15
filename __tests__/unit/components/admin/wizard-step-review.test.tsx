@@ -16,12 +16,12 @@ import {
   type WizardStepReviewProps,
 } from '@/components/admin/wizard-step-review';
 
-/** Mock next/image to render a plain <img> for test assertions */
-vi.mock('next/image', () => ({
-  default: (props: Record<string, unknown>) => {
-    // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-    return <img {...props} />;
-  },
+/**
+ * Force a deterministic basePath so `resolveStorageUrl` output is predictable
+ * regardless of the NEXT_PUBLIC_BASE_PATH value in the test environment.
+ */
+vi.mock('@/lib/config/base-path', () => ({
+  withBasePath: (path: string) => `/auditbrief${path}`,
 }));
 
 /**
@@ -159,6 +159,34 @@ describe('WizardStepReview', () => {
     const image = screen.getByRole('img', { name: /thumbnail/i });
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', 'https://storage.example.com/thumb.jpg');
+  });
+
+  it('passes through blob: object URLs without routing through /api/media', () => {
+    render(
+      <WizardStepReview
+        {...buildProps({
+          thumbnailUrl: 'blob:http://localhost:3000/abc-123',
+          thumbnailFileName: 'new-thumb.jpg',
+        })}
+      />
+    );
+
+    const image = screen.getByRole('img', { name: /thumbnail/i });
+    expect(image).toHaveAttribute('src', 'blob:http://localhost:3000/abc-123');
+  });
+
+  it('resolves raw storage keys through the /api/media proxy', () => {
+    render(
+      <WizardStepReview
+        {...buildProps({
+          thumbnailUrl: 'image/abc-uuid/file.jpg',
+          thumbnailFileName: 'file.jpg',
+        })}
+      />
+    );
+
+    const image = screen.getByRole('img', { name: /thumbnail/i });
+    expect(image).toHaveAttribute('src', '/auditbrief/api/media?key=image%2Fabc-uuid%2Ffile.jpg');
   });
 
   it('does not show thumbnail image when thumbnailUrl is null', () => {
