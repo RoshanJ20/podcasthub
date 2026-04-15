@@ -127,5 +127,10 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  // `api/upload/file` is excluded so Next.js does not buffer large multipart
+  // bodies (up to 500MB for audio) through edge middleware, which caps at 10MB
+  // by default. The handler authenticates itself via requireAuth + requireRole.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|api/upload/file|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };
