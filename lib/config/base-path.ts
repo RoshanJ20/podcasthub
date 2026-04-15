@@ -13,8 +13,12 @@
  * fetch(withBasePath('/api/search'));  // → fetch('/auditbrief/api/search')
  */
 
-/** The subpath prefix under which the app is deployed (matches next.config.ts basePath). */
-export const BASE_PATH = '/auditbrief';
+/**
+ * The subpath prefix under which the app is deployed.
+ * Sourced from `NEXT_PUBLIC_BASE_PATH` so both this constant and
+ * `next.config.ts` stay in sync from a single env var.
+ */
+export const BASE_PATH: string = process.env.NEXT_PUBLIC_BASE_PATH ?? '/auditbrief';
 
 /**
  * Prepends the deployment basePath to a URL path.

@@ -5,6 +5,7 @@
  */
 import { z } from 'zod';
 import { domainSchema } from './common';
+import { expectedUpdatedAtSchema } from './admin';
 
 /**
  * Schema for creating a new auditBrief.
@@ -41,12 +42,31 @@ export type CreateAuditBriefInput = z.infer<typeof createAuditBriefSchema>;
  *
  * All fields are optional but at least one must be provided.
  * Field constraints from createAuditBriefSchema still apply.
+ *
+ * Includes optional `isArchived` (used by unarchive UX via PUT) and
+ * optional `expectedUpdatedAt` (opt-in optimistic concurrency check). Clients
+ * that omit `expectedUpdatedAt` retain legacy last-writer-wins behavior so
+ * the edit wizard can be migrated incrementally.
  */
 export const updateAuditBriefSchema = createAuditBriefSchema
   .partial()
-  .refine((data) => Object.keys(data).length > 0, {
-    message: 'At least one field must be provided for update',
-  });
+  .extend({
+    /** Allow toggling archived state through PUT (used by the unarchive action). */
+    isArchived: z.boolean().optional(),
+    /** Optional snapshot of `updatedAt` from the last client read for concurrency. */
+    expectedUpdatedAt: expectedUpdatedAtSchema,
+  })
+  .refine(
+    (data) => {
+      // At least one *mutation* field must be provided — expectedUpdatedAt alone is not a change.
+      const { expectedUpdatedAt: _ignored, ...rest } = data;
+      void _ignored;
+      return Object.keys(rest).length > 0;
+    },
+    {
+      message: 'At least one field must be provided for update',
+    }
+  );
 
 /** Inferred type for audit brief update input. */
 export type UpdateAuditBriefInput = z.infer<typeof updateAuditBriefSchema>;

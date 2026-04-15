@@ -102,9 +102,12 @@ describe('UnifiedSidebar', () => {
       expect(uploadLink).not.toBeNull();
     });
 
-    it('renders the "Admin" section label when isAdmin={true}', () => {
+    it('renders the admin section labels when isAdmin={true}', () => {
       const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} isAdmin={true} />);
-      expect(container.textContent).toContain('Admin');
+      // Desktop sidebar now groups admin links under two sub-sections instead of a
+      // single "Admin" header, so verify both headings are present.
+      expect(container.textContent).toContain('Content Management');
+      expect(container.textContent).toContain('Insights');
     });
 
     it('does NOT render the Admin dashboard link when isAdmin is false', () => {

@@ -5,6 +5,7 @@
  */
 import { z } from 'zod';
 import { domainSchema } from './common';
+import { expectedUpdatedAtSchema } from './admin';
 
 /** Valid path types for a learning graph. */
 export const PATH_TYPES = ['linear', 'graph'] as const;
@@ -35,8 +36,13 @@ export type CreateLearningGraphInput = z.infer<typeof createLearningGraphSchema>
  * Schema for updating an existing learning graph.
  *
  * All fields are optional. Field constraints from createLearningGraphSchema still apply.
+ * Includes an opt-in `expectedUpdatedAt` for optimistic-concurrency detection —
+ * clients that omit it retain legacy last-writer-wins semantics.
  */
-export const updateLearningGraphSchema = createLearningGraphSchema.partial();
+export const updateLearningGraphSchema = createLearningGraphSchema.partial().extend({
+  /** Optional snapshot of `updatedAt` from the last client read for concurrency. */
+  expectedUpdatedAt: expectedUpdatedAtSchema,
+});
 
 /** Inferred type for learning graph update input. */
 export type UpdateLearningGraphInput = z.infer<typeof updateLearningGraphSchema>;

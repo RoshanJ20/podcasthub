@@ -1,22 +1,19 @@
 /**
- * Zustand store for the admin graph editor.
+ * Zustand store for the learning-path editor.
  *
- * Manages nodes (episodes), edges (connections), selection, dirty state,
- * dagre auto-layout, and API persistence for the learning graph editor.
+ * Manages nodes (episodes), edges (persisted connections), selection, dirty
+ * state, and API persistence for the linear learning-path editor.
  *
  * Key responsibilities:
  * - CRUD operations for nodes and edges with dirty-state tracking
- * - Dagre-based automatic layout computation
  * - Debounced auto-save to the PUT /api/learning-graphs/:id/data endpoint
  * - Reconciling server-returned IDs back into client state after save
  *
  * Dependencies:
- * - dagre (layout engine)
  * - graph-editor-helpers (pure payload/reconcile utilities)
  * - @/lib/logger (structured logging)
  */
 import { create } from 'zustand';
-import dagre from 'dagre';
 import { createLogger } from '@/lib/logger';
 import { withBasePath } from '@/lib/config/base-path';
 import {
@@ -65,7 +62,6 @@ interface GraphEditorState {
   addEdge: (edge: GraphEdge) => void;
   removeEdge: (id: string) => void;
   setSelectedNode: (id: string | null) => void;
-  setLayout: () => void;
   save: (graphId: string) => Promise<void>;
   loadFromApi: (nodes: GraphNode[], edges: GraphEdge[]) => void;
   setAutoSaveGraphId: (graphId: string | null) => void;
@@ -136,26 +132,6 @@ export const useGraphEditorStore = create<GraphEditorState>((set, get) => ({
   },
 
   setSelectedNode: (id) => set({ selectedNodeId: id }),
-
-  setLayout: () => {
-    const { nodes, edges } = get();
-    const dagreGraph = new dagre.graphlib.Graph();
-    dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({ rankdir: 'TB', nodesep: 80, ranksep: 100 });
-
-    nodes.forEach((node) => dagreGraph.setNode(node.id, { width: 200, height: 80 }));
-    edges.forEach((edge) => dagreGraph.setEdge(edge.source, edge.target));
-
-    dagre.layout(dagreGraph);
-
-    set({
-      nodes: nodes.map((node) => {
-        const pos = dagreGraph.node(node.id);
-        return { ...node, positionX: pos.x, positionY: pos.y };
-      }),
-      isDirty: true,
-    });
-  },
 
   save: async (graphId) => {
     if (get().isSaving) {

@@ -1,15 +1,16 @@
 'use client';
 
 /**
- * Admin learning graphs data table with delete actions.
+ * Admin learning graphs data table with typed-confirmation delete.
  *
- * All learning series are auto-published, so no publish/draft toggle is needed.
+ * Delete is irreversible and purges associated episode + graph blobs, so the
+ * shared ConfirmByTypingDialog requires the admin to type the graph title
+ * before the destructive button enables.
  */
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-
 import {
   Table,
   TableBody,
@@ -18,16 +19,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Edit, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+
+import { ConfirmByTypingDialog } from '@/components/admin/confirm-by-typing-dialog';
 import { withBasePath } from '@/lib/config/base-path';
 
 interface LearningGraph {
@@ -45,24 +40,29 @@ interface LearningGraphsTableProps {
 
 export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
   const router = useRouter();
-  const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<LearningGraph | null>(null);
 
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    setIsDeleting(true);
+  const handleDelete = async (): Promise<void> => {
+    if (!pendingDelete) return;
     try {
-      const res = await fetch(withBasePath(`/api/learning-graphs/${deleteId}`), {
+      const res = await fetch(withBasePath(`/api/learning-graphs/${pendingDelete.id}`), {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'DELETE' }),
       });
-      if (!res.ok) throw new Error('Failed to delete');
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        const message =
+          (payload as { message?: string }).message ?? 'Failed to delete learning series';
+        toast.error(message);
+        return;
+      }
       toast.success('Learning series deleted');
-    } catch {
-      toast.error('Failed to delete learning series');
-    } finally {
-      setDeleteId(null);
-      setIsDeleting(false);
+      setPendingDelete(null);
       router.refresh();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete learning series';
+      toast.error(message);
     }
   };
 
@@ -128,7 +128,7 @@ export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
                         <Edit className="h-4 w-4" />
                       </Button>
                     </Link>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteId(graph.id)}>
+                    <Button variant="ghost" size="icon" onClick={() => setPendingDelete(graph)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -146,26 +146,19 @@ export function LearningGraphsTable({ graphs }: LearningGraphsTableProps) {
         </Table>
       </div>
 
-      {/* Delete confirmation dialog */}
-      <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Learning Series</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this learning series? This action cannot be undone.
-              All episodes and edges will be permanently deleted.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)} disabled={isDeleting}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ConfirmByTypingDialog
+        open={!!pendingDelete}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+        title="Delete learning series permanently?"
+        description={
+          pendingDelete
+            ? `This removes "${pendingDelete.title}" and all ${pendingDelete._count?.episodes ?? 0} episode(s). Associated thumbnails and audio files are purged from storage. User progress and bookmarks are removed. This cannot be undone.`
+            : ''
+        }
+        expectedText={pendingDelete?.title ?? ''}
+        confirmLabel="Delete permanently"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

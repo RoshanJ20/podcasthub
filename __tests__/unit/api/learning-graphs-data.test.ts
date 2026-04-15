@@ -17,6 +17,7 @@ vi.mock('@/lib/db', () => ({
     episode: {
       update: vi.fn(),
       create: vi.fn(),
+      findMany: vi.fn(),
       deleteMany: vi.fn(),
     },
     learningPathEdge: {
@@ -29,6 +30,30 @@ vi.mock('@/lib/db', () => ({
 vi.mock('@/lib/auth/session-helpers', () => ({
   requireAuth: vi.fn(),
   requireRole: vi.fn(),
+}));
+
+vi.mock('@/lib/admin/audit-log', () => ({
+  writeAuditLog: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('@/lib/admin/revalidate', () => ({
+  revalidateAuditBrief: vi.fn(),
+  revalidateLearningGraph: vi.fn(),
+  CACHE_TAGS: { auditBriefsList: 'audit-briefs:list', learningGraphsList: 'learning-graphs:list' },
+}));
+
+vi.mock('@/lib/storage-cleanup', () => ({
+  collectKeys: vi.fn((source) => {
+    if (!source) return [];
+    const keys: string[] = [];
+    const add = (v: unknown) => {
+      if (typeof v === 'string' && v.length && !/^https?:/i.test(v)) keys.push(v);
+    };
+    add((source as { thumbnailUrl?: string }).thumbnailUrl);
+    add((source as { audioUrl?: string }).audioUrl);
+    return keys;
+  }),
+  deleteKeys: vi.fn().mockResolvedValue({ deleted: [], failed: [] }),
 }));
 
 import { prisma } from '@/lib/db';
@@ -132,6 +157,14 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
       id: 'real-new-1',
       title: 'Brand New Episode',
     } as never);
+    vi.mocked(prisma.episode.findMany).mockResolvedValue([
+      {
+        id: existingEpisodeId2,
+        title: 'Removed Episode',
+        thumbnailUrl: 'thumbs/removed.png',
+        audioUrl: 'audio/removed.m3u8',
+      } as never,
+    ]);
     vi.mocked(prisma.episode.deleteMany).mockResolvedValue({ count: 1 });
     vi.mocked(prisma.learningPathEdge.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.learningPathEdge.create).mockResolvedValue({
@@ -190,6 +223,23 @@ describe('PUT /api/learning-graphs/[id]/data', () => {
         title: 'Brand New Episode',
       }),
     });
+  });
+
+  it('purges blobs for episodes removed in the save payload', async () => {
+    const { deleteKeys } = await import('@/lib/storage-cleanup');
+    const { writeAuditLog } = await import('@/lib/admin/audit-log');
+
+    const req = createRequest(`/api/learning-graphs/${graphId}/data`, {
+      method: 'PUT',
+      body: JSON.stringify(upsertPayload),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await PUT(req, { params: Promise.resolve({ id: graphId }) });
+
+    expect(deleteKeys).toHaveBeenCalled();
+    expect(writeAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'episode_delete', entityType: 'episode' })
+    );
   });
 
   it('deletes episodes that were removed by the user', async () => {

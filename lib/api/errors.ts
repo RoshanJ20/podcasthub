@@ -33,6 +33,7 @@ export enum ErrorCode {
   UNAUTHORIZED = 'UNAUTHORIZED',
   FORBIDDEN = 'FORBIDDEN',
   NOT_FOUND = 'NOT_FOUND',
+  CONFLICT = 'CONFLICT',
   VALIDATION_FAILED = 'VALIDATION_FAILED',
   RATE_LIMITED = 'RATE_LIMITED',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
@@ -163,6 +164,21 @@ export function forbidden(message: string = 'Forbidden'): ApiError {
  */
 export function notFound(resource: string): ApiError {
   return new ApiError(404, ErrorCode.NOT_FOUND, `${resource} not found`);
+}
+
+/**
+ * Creates a 409 Conflict error.
+ *
+ * Used when a resource's state prevents the requested operation — for example,
+ * optimistic-concurrency failures where another actor has updated the resource
+ * since the client last loaded it.
+ *
+ * @param message - Human-readable description of the conflict
+ * @param details - Optional structured details (e.g., expected vs actual version)
+ * @returns An ApiError with status 409 and CONFLICT error code
+ */
+export function conflict(message: string, details?: unknown): ApiError {
+  return new ApiError(409, ErrorCode.CONFLICT, message, details);
 }
 
 /**

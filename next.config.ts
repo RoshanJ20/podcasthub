@@ -26,10 +26,16 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  basePath: '/auditbrief',
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH ?? '/auditbrief',
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',
+  // Pino's pretty transport spawns a worker_threads worker that requires
+  // `pino/lib/worker.js` at runtime via thread-stream. If webpack bundles
+  // these into `.next/server/vendor-chunks/`, the `require()` path breaks.
+  // Marking them external keeps them in node_modules where the worker resolver
+  // can find them.
+  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream'],
   experimental: {
     serverActions: {
       bodySizeLimit: '20mb',

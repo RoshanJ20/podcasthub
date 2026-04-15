@@ -24,7 +24,11 @@ import {
 } from '@/lib/api/errors';
 import { requireAuth, requireRole } from '@/lib/auth/session-helpers';
 import { isUuid } from '@/lib/schemas/common';
-import { logger } from '@/lib/logger';
+import { logger, createRequestLogger } from '@/lib/logger';
+import { collectKeys, deleteKeys } from '@/lib/storage-cleanup';
+import { writeAuditLog } from '@/lib/admin/audit-log';
+import { revalidateLearningGraph } from '@/lib/admin/revalidate';
+import type { Logger } from 'pino';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -65,7 +69,10 @@ function buildEpisodeData(ep: Record<string, unknown>) {
 async function upsertEpisodes(
   graphId: string,
   episodes: Array<Record<string, unknown>>,
-  existingEpisodeIds: Set<string>
+  existingEpisodeIds: Set<string>,
+  actor: { userId: string; email: string },
+  requestId: string | undefined,
+  log: Logger
 ): Promise<Map<string, string>> {
   const incomingIds = new Set<string>();
   const tempIdToRealId = new Map<string, string>();
@@ -88,9 +95,15 @@ async function upsertEpisodes(
     }
   }
 
-  // Delete episodes that were removed by the user
+  // Delete episodes that were removed by the user, then purge their blobs.
   const idsToDelete = [...existingEpisodeIds].filter((eid) => !incomingIds.has(eid));
   if (idsToDelete.length > 0) {
+    // Collect blob keys BEFORE deletion so we can purge them afterwards.
+    const episodesToDelete = await prisma.episode.findMany({
+      where: { id: { in: idsToDelete } },
+      select: { id: true, title: true, thumbnailUrl: true, audioUrl: true },
+    });
+
     await prisma.learningPathEdge.deleteMany({
       where: {
         graphId,
@@ -98,6 +111,26 @@ async function upsertEpisodes(
       },
     });
     await prisma.episode.deleteMany({ where: { id: { in: idsToDelete } } });
+
+    // Post-commit side effects: blob cleanup and audit trail per deleted episode.
+    const orphanedKeys = episodesToDelete.flatMap((ep) =>
+      collectKeys({ thumbnailUrl: ep.thumbnailUrl, audioUrl: ep.audioUrl })
+    );
+    await deleteKeys(orphanedKeys, log);
+
+    for (const ep of episodesToDelete) {
+      await writeAuditLog({
+        actorId: actor.userId,
+        actorEmail: actor.email,
+        action: 'episode_delete',
+        entityType: 'episode',
+        entityId: ep.id,
+        before: ep,
+        after: null,
+        requestId,
+        log,
+      });
+    }
   }
 
   return tempIdToRealId;
@@ -149,6 +182,8 @@ async function recreateEdges(
  * @throws ApiError 404 if the learning graph does not exist
  */
 export async function PUT(request: NextRequest, context: RouteContext): Promise<NextResponse> {
+  const log = createRequestLogger('learning-graphs-data-api', request);
+  const requestId = request.headers.get('x-request-id') ?? undefined;
   try {
     const user = await requireAuth();
     requireRole(user, ['admin', 'superadmin']);
@@ -156,10 +191,7 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
     const { id } = await context.params;
 
     if (!isUuid(id)) {
-      return createErrorResponse(
-        badRequest('Invalid learning graph id'),
-        request.headers.get('x-request-id') ?? undefined
-      );
+      return createErrorResponse(badRequest('Invalid learning graph id'), requestId);
     }
 
     const graph = await prisma.learningGraph.findUnique({
@@ -178,7 +210,14 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
     }
 
     const existingEpisodeIds = new Set(graph.episodes.map((ep: { id: string }) => ep.id));
-    const tempIdToRealId = await upsertEpisodes(id, episodes, existingEpisodeIds);
+    const tempIdToRealId = await upsertEpisodes(
+      id,
+      episodes,
+      existingEpisodeIds,
+      { userId: user.userId, email: user.email },
+      requestId,
+      log
+    );
 
     if (Array.isArray(edges) && edges.length > 0) {
       await recreateEdges(id, edges, tempIdToRealId);
@@ -191,9 +230,10 @@ export async function PUT(request: NextRequest, context: RouteContext): Promise<
       include: { episodes: { orderBy: { sortOrder: 'asc' } }, edges: true },
     });
 
+    revalidateLearningGraph(id);
+
     return NextResponse.json({ data: saved });
   } catch (error) {
-    const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) {
       return createErrorResponse(error, requestId);
     }

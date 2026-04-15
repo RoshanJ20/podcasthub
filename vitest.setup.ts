@@ -1,4 +1,15 @@
 import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
+
+/**
+ * Globally stub `server-only`.
+ *
+ * Next.js' `server-only` package throws on import in any non-server runtime,
+ * which includes Vitest's jsdom environment. Tests that transitively import
+ * any module marked server-only (e.g. lib/admin/revalidate.ts) would fail
+ * during module evaluation without this stub.
+ */
+vi.mock('server-only', () => ({}));
 
 /**
  * Global matchMedia mock for all tests.

@@ -1,16 +1,25 @@
 /**
  * Action dropdown menu for individual audit brief rows in the admin table.
  *
- * Provides Edit, View, and Archive/Unarchive actions for each auditBrief.
- * The archive action includes a confirmation dialog to prevent accidental
- * changes.
+ * Provides Edit, View, Archive/Unarchive, and Delete-permanently actions.
+ * Archive toggles isArchived via DELETE (soft) / PUT (restore). The
+ * destructive hard-delete uses the shared ConfirmByTypingDialog so the user
+ * must type the brief's title before the permanent purge is invoked.
  */
 'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { MoreHorizontal, Pencil, Eye, Archive, ArchiveRestore } from 'lucide-react';
+import {
+  MoreHorizontal,
+  Pencil,
+  Eye,
+  Archive,
+  ArchiveRestore,
+  Trash2,
+  FileText,
+} from 'lucide-react';
 
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -28,6 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { ConfirmByTypingDialog } from '@/components/admin/confirm-by-typing-dialog';
 import type { AuditBriefData } from '@/lib/types';
 import { withBasePath } from '@/lib/config/base-path';
 
@@ -41,11 +51,13 @@ interface AuditBriefTableActionsProps {
 /**
  * Renders a dropdown menu with actions for an audit brief row.
  *
- * Actions include editing, viewing, and archiving/unarchiving the auditBrief.
+ * Actions include editing, viewing, archiving/unarchiving, and permanent
+ * deletion. Destructive actions require explicit confirmation.
  */
 export function AuditBriefTableActions({ auditBrief, onRefresh }: AuditBriefTableActionsProps) {
   const [showArchiveDialog, setShowArchiveDialog] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
+  const [showHardDeleteDialog, setShowHardDeleteDialog] = useState(false);
 
   const handleArchiveToggle = async () => {
     setIsArchiving(true);
@@ -64,7 +76,7 @@ export function AuditBriefTableActions({ auditBrief, onRefresh }: AuditBriefTabl
 
         toast.success('Audit brief unarchived');
       } else {
-        // Archive: call DELETE endpoint
+        // Archive: call DELETE endpoint (default soft-archive mode).
         const response = await fetch(withBasePath(`/api/audit-briefs/${auditBrief.id}`), {
           method: 'DELETE',
         });
@@ -86,6 +98,26 @@ export function AuditBriefTableActions({ auditBrief, onRefresh }: AuditBriefTabl
     }
   };
 
+  const handleHardDelete = async (): Promise<void> => {
+    const response = await fetch(withBasePath(`/api/audit-briefs/${auditBrief.id}?hard=true`), {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirm: 'DELETE' }),
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      const message =
+        (payload as { message?: string }).message ?? 'Failed to permanently delete audit brief';
+      toast.error(message);
+      throw new Error(message);
+    }
+
+    toast.success('Audit brief permanently deleted');
+    setShowHardDeleteDialog(false);
+    onRefresh?.();
+  };
+
   return (
     <>
       <DropdownMenu>
@@ -100,6 +132,15 @@ export function AuditBriefTableActions({ auditBrief, onRefresh }: AuditBriefTabl
             <Link href={`/admin/edit/${auditBrief.id}`} className="flex items-center w-full">
               <Pencil className="mr-2 h-4 w-4" />
               Edit
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <Link
+              href={`/admin/edit/${auditBrief.id}/transcript`}
+              className="flex items-center w-full"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Edit transcript
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem>
@@ -120,6 +161,13 @@ export function AuditBriefTableActions({ auditBrief, onRefresh }: AuditBriefTabl
                 Archive
               </>
             )}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => setShowHardDeleteDialog(true)}
+            className="text-destructive focus:text-destructive"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete permanently…
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -152,6 +200,16 @@ export function AuditBriefTableActions({ auditBrief, onRefresh }: AuditBriefTabl
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmByTypingDialog
+        open={showHardDeleteDialog}
+        onOpenChange={setShowHardDeleteDialog}
+        title="Delete audit brief permanently?"
+        description={`This removes "${auditBrief.title}", its transcripts, bookmarks, and favorites. Associated thumbnails and audio files are purged from storage. This cannot be undone.`}
+        expectedText={auditBrief.title}
+        confirmLabel="Delete permanently"
+        onConfirm={handleHardDelete}
+      />
     </>
   );
 }

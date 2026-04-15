@@ -6,7 +6,6 @@
  * - Node CRUD operations (add, remove, update)
  * - Edge CRUD operations (add, remove)
  * - Node removal cascades to connected edges
- * - Dagre auto-layout
  * - Save: dirty state, error handling, concurrent save prevention, ID reconciliation
  * - Load from API and reset
  */
@@ -127,17 +126,6 @@ describe('GraphEditorStore', () => {
     expect(useGraphEditorStore.getState().selectedNodeId).toBe('n1');
     store.setSelectedNode(null);
     expect(useGraphEditorStore.getState().selectedNodeId).toBeNull();
-  });
-
-  it('applies dagre layout via setLayout', () => {
-    const store = useGraphEditorStore.getState();
-    store.addNode(makeNode({ id: 'n1', title: 'A', nodeType: 'start' }));
-    store.addNode(makeNode({ id: 'n2', title: 'B', nodeType: 'end', auditBriefId: 'p2' }));
-    store.addEdge({ id: 'e1', source: 'n1', target: 'n2' });
-    store.setLayout();
-    const state = useGraphEditorStore.getState();
-    const positions = state.nodes.map((n) => ({ x: n.positionX, y: n.positionY }));
-    expect(positions[0]).not.toEqual(positions[1]);
   });
 
   describe('save', () => {

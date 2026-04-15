@@ -1,10 +1,13 @@
 /**
  * Unit tests for toast notifications in LearningGraphsTable.
  *
- * Verifies that delete operations show success/error toasts via sonner.
+ * Delete now uses the shared ConfirmByTypingDialog, so the confirm button
+ * only enables after the user types the exact title. Each test types the
+ * title, clicks Delete permanently, and asserts the correct toast fires.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { LearningGraphsTable } from '@/components/admin/learning-graphs-table';
 
@@ -38,6 +41,20 @@ const mockGraphs = [
   },
 ];
 
+async function openDialogAndConfirm(title: string): Promise<void> {
+  const trashButton = screen
+    .getAllByRole('button')
+    .find((btn) => btn.querySelector('.text-destructive') !== null);
+  expect(trashButton).toBeDefined();
+  fireEvent.click(trashButton!);
+
+  const input = await screen.findByLabelText(/type/i);
+  await userEvent.type(input, title);
+
+  const confirmButton = await screen.findByRole('button', { name: /delete permanently/i });
+  fireEvent.click(confirmButton);
+}
+
 describe('LearningGraphsTable toast notifications', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -54,18 +71,7 @@ describe('LearningGraphsTable toast notifications', () => {
     });
 
     render(<LearningGraphsTable graphs={mockGraphs} />);
-
-    /* Open the delete confirmation dialog by clicking the trash icon */
-    const deleteButtons = screen.getAllByRole('button');
-    const trashButton = deleteButtons.find(
-      (btn) => btn.querySelector('.text-destructive') !== null
-    );
-    expect(trashButton).toBeDefined();
-    fireEvent.click(trashButton!);
-
-    /* Confirm deletion — find the destructive "Delete" button in the dialog */
-    const confirmButton = await screen.findByRole('button', { name: /^delete$/i });
-    fireEvent.click(confirmButton);
+    await openDialogAndConfirm('Test Path');
 
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith('Learning series deleted');
@@ -77,18 +83,11 @@ describe('LearningGraphsTable toast notifications', () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       status: 500,
+      json: async () => ({ message: 'Failed to delete learning series' }),
     });
 
     render(<LearningGraphsTable graphs={mockGraphs} />);
-
-    const deleteButtons = screen.getAllByRole('button');
-    const trashButton = deleteButtons.find(
-      (btn) => btn.querySelector('.text-destructive') !== null
-    );
-    fireEvent.click(trashButton!);
-
-    const confirmButton = await screen.findByRole('button', { name: /^delete$/i });
-    fireEvent.click(confirmButton);
+    await openDialogAndConfirm('Test Path');
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Failed to delete learning series');
@@ -100,18 +99,10 @@ describe('LearningGraphsTable toast notifications', () => {
     (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
 
     render(<LearningGraphsTable graphs={mockGraphs} />);
-
-    const deleteButtons = screen.getAllByRole('button');
-    const trashButton = deleteButtons.find(
-      (btn) => btn.querySelector('.text-destructive') !== null
-    );
-    fireEvent.click(trashButton!);
-
-    const confirmButton = await screen.findByRole('button', { name: /^delete$/i });
-    fireEvent.click(confirmButton);
+    await openDialogAndConfirm('Test Path');
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('Failed to delete learning series');
+      expect(toast.error).toHaveBeenCalledWith('Network error');
     });
     expect(toast.success).not.toHaveBeenCalled();
   });

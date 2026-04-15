@@ -138,12 +138,13 @@ describe('CommandPalette', () => {
   it('should not show admin section when isAdmin is false', () => {
     render(<CommandPalette />);
     fireEvent.keyDown(document, { key: 'k', metaKey: true });
-    expect(screen.queryByText('Dashboard')).toBeNull();
+    // "Analytics" is an admin-only destination; it must not appear for non-admins.
+    expect(screen.queryByText('Analytics')).toBeNull();
   });
 
   it('should show admin section when isAdmin is true', () => {
     render(<CommandPalette isAdmin />);
     fireEvent.keyDown(document, { key: 'k', metaKey: true });
-    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Analytics')).toBeInTheDocument();
   });
 });

@@ -30,7 +30,13 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarNavItem } from '@/components/layout/sidebar-nav-item';
 import { SidebarNowPlaying } from '@/components/layout/sidebar-now-playing';
 import { SidebarUserProfile } from '@/components/layout/sidebar-user-profile';
-import { mainLinks, libraryLinks, adminLinks, isRouteActive } from '@/lib/navigation-config';
+import {
+  mainLinks,
+  libraryLinks,
+  adminContentLinks,
+  adminInsightsLinks,
+  isRouteActive,
+} from '@/lib/navigation-config';
 import { transitions } from '@/lib/animation';
 import { useReducedMotion } from '@/hooks/use-reduced-motion';
 import { cn } from '@/lib/utils';
@@ -160,12 +166,25 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
           />
         ))}
 
-        {/* Admin section — only rendered for admin users */}
+        {/* Admin sections — only rendered for admin users */}
         {isAdmin && (
           <>
             <div className="my-1" />
-            <SectionLabel label="Admin" collapsed={collapsed} />
-            {adminLinks
+            <SectionLabel label="Content Management" collapsed={collapsed} />
+            {adminContentLinks.map((link) => (
+              <SidebarNavItem
+                key={link.href}
+                href={link.href}
+                label={link.label}
+                icon={link.icon}
+                isActive={isRouteActive(link.href, pathname)}
+                collapsed={collapsed}
+              />
+            ))}
+
+            <div className="my-1" />
+            <SectionLabel label="Insights" collapsed={collapsed} />
+            {adminInsightsLinks
               .filter(
                 (link) =>
                   // Only show Users link to superadmins

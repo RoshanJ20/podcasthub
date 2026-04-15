@@ -211,7 +211,10 @@ export function useWizardSubmit({
       }
 
       /* Submit to API */
-      const payload = {
+      // Include expectedUpdatedAt on edit so the server can detect concurrent
+      // edits and reject stale writes with 409. Legacy payloads without this
+      // field remain backward compatible with last-writer-wins behavior.
+      const payload: Record<string, unknown> = {
         ...data,
         tags,
         thumbnailUrl: uploadedThumbnailUrl,
@@ -219,6 +222,9 @@ export function useWizardSubmit({
         audioLongUrl: uploadedAudioLongUrl,
         bulletinUrls: uploadedBulletinUrls,
       };
+      if (mode === 'edit' && initialData?.updatedAt) {
+        payload.expectedUpdatedAt = initialData.updatedAt;
+      }
 
       const url = withBasePath(
         mode === 'edit' ? `/api/audit-briefs/${initialData?.id}` : '/api/audit-briefs'
@@ -230,6 +236,12 @@ export function useWizardSubmit({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
+      if (response.status === 409) {
+        toast.error('This audit brief was modified by someone else. Please reload and try again.');
+        setIsSubmitting(false);
+        return;
+      }
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));

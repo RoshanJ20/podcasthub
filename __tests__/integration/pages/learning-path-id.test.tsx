@@ -35,17 +35,11 @@ vi.mock('@/components/learning-path/path-viewer-wrapper', () => ({
   PathViewerWrapper: () => null,
 }));
 
-vi.mock('@/components/learning-path/graph-editor', () => ({
-  GraphEditor: () => null,
-}));
 vi.mock('@/components/learning-path/linear-editor', () => ({
   LinearEditor: () => null,
 }));
 vi.mock('@/components/learning-path/graph-editor-initializer', () => ({
   GraphEditorInitializer: () => null,
-}));
-vi.mock('@/components/learning-path/editor-tabs', () => ({
-  EditorTabs: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 import { prisma } from '@/lib/db';

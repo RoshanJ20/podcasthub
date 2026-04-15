@@ -33,6 +33,7 @@ model User {
   progress              UserProgress[]
   activity              UserActivity[]
   learningGraphs        LearningGraph[] @relation("CreatedBy")
+  adminAuditLogs        AdminAuditLog[]
 
   @@map("users")
 }
@@ -267,4 +268,23 @@ model UserActivity {
   @@index([episodeId])
   @@index([graphId])
   @@map("user_activity")
+}
+
+model AdminAuditLog {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  actorEmail String   @map("actor_email")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id") @db.Uuid
+  before     Json?
+  after      Json?
+  requestId  String?  @map("request_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt(sort: Desc)])
+  @@index([actorId, createdAt(sort: Desc)])
+  @@map("admin_audit_logs")
 }
