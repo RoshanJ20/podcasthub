@@ -11,8 +11,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { Readable } from 'stream';
 import { streamObject } from '@/lib/storage';
-import { createErrorResponse, badRequest, internalError } from '@/lib/api/errors';
+import { createErrorResponse, badRequest, internalError, notFound } from '@/lib/api/errors';
 import { createLogger } from '@/lib/logger';
+import { classifyStorageError } from '@/lib/storage-errors';
 
 const log = createLogger('media-api');
 
@@ -69,7 +70,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       headers,
     });
   } catch (error) {
-    log.error({ error }, 'Media proxy failed');
+    const errorInfo = classifyStorageError(error);
+    log.error({ blob_key: key, ...errorInfo }, 'Media proxy failed');
+
+    if (errorInfo.category === 'blob_not_found') {
+      return createErrorResponse(notFound('Media file'));
+    }
     return createErrorResponse(internalError('Failed to retrieve file'));
   }
 }

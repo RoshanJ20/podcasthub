@@ -45,7 +45,8 @@ const {
   };
 });
 
-vi.mock('@azure/storage-blob', () => {
+vi.mock('@azure/storage-blob', async (importOriginal) => {
+  const original = (await importOriginal()) as Record<string, unknown>;
   const BlobServiceClient = {
     fromConnectionString: vi.fn().mockReturnValue({
       getContainerClient: mockGetContainerClient,
@@ -64,6 +65,8 @@ vi.mock('@azure/storage-blob', () => {
     BlobSASPermissions,
     generateBlobSASQueryParameters,
     StorageSharedKeyCredential,
+    // Required by storage-errors.ts (transitively via storage-logger.ts)
+    RestError: original.RestError,
   };
 });
 
