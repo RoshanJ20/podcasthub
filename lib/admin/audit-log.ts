@@ -41,10 +41,16 @@ export type AuditAction =
   | 'hard_delete'
   | 'transcript_update'
   | 'episode_delete'
-  | 'blob_cleanup';
+  | 'blob_cleanup'
+  | 'blob_sweep';
 
 /** Entity types that admin actions can target. */
-export type AuditEntityType = 'audit_brief' | 'learning_graph' | 'transcript' | 'episode';
+export type AuditEntityType =
+  | 'audit_brief'
+  | 'learning_graph'
+  | 'transcript'
+  | 'episode'
+  | 'blob_storage';
 
 /** Parameters accepted by `writeAuditLog`. */
 export interface WriteAuditLogParams {
