@@ -357,3 +357,23 @@ export async function streamObject(key: string, range?: string | null): Promise<
     acceptRanges: response.acceptRanges,
   };
 }
+
+/**
+ * Lists all blob names in the configured container.
+ *
+ * Used by the orphan sweep to enumerate every object in storage for
+ * cross-referencing against database records. At <1,000 blobs the full
+ * list fits comfortably in memory.
+ *
+ * @returns Array of blob names (storage keys) in the container
+ */
+export async function listAllBlobKeys(): Promise<string[]> {
+  const containerClient = getBlobServiceClient().getContainerClient(CONTAINER);
+  const keys: string[] = [];
+
+  for await (const blob of containerClient.listBlobsFlat()) {
+    keys.push(blob.name);
+  }
+
+  return keys;
+}

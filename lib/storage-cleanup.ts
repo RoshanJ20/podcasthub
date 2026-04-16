@@ -50,7 +50,7 @@ export interface OrphanSource {
  * @param input - A blob key, absolute URL, or nullish value.
  * @returns The bare key, or null if the input is not a key we can delete.
  */
-function toKey(input: string | null | undefined): string | null {
+export function toKey(input: string | null | undefined): string | null {
   if (!input) return null;
   const trimmed = input.trim();
   if (trimmed.length === 0) return null;

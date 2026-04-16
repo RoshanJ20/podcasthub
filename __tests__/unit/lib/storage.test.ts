@@ -74,6 +74,7 @@ import {
   uploadBuffer,
   downloadObject,
   streamObject,
+  listAllBlobKeys,
   CONTAINER,
   _resetForTesting,
 } from '@/lib/storage';
@@ -288,6 +289,44 @@ describe('Azure Blob Storage Client', () => {
       });
 
       await expect(streamObject('missing/key')).rejects.toThrow('No readable stream');
+    });
+  });
+
+  describe('listAllBlobKeys', () => {
+    it('returns all blob names in the container', async () => {
+      const mockIter = {
+        async *[Symbol.asyncIterator]() {
+          yield { name: 'audio/uuid1/file.mp3' };
+          yield { name: 'image/uuid2/thumb.jpg' };
+          yield { name: 'pdf/uuid3/doc.pdf' };
+        },
+      };
+      mockGetContainerClient.mockReturnValue({
+        getBlockBlobClient: mockGetBlockBlobClient,
+        createIfNotExists: mockCreateIfNotExists,
+        listBlobsFlat: vi.fn().mockReturnValue(mockIter),
+      });
+
+      const keys = await listAllBlobKeys();
+
+      expect(keys).toEqual(['audio/uuid1/file.mp3', 'image/uuid2/thumb.jpg', 'pdf/uuid3/doc.pdf']);
+    });
+
+    it('returns empty array when container has no blobs', async () => {
+      const mockIter = {
+        async *[Symbol.asyncIterator]() {
+          // yields nothing
+        },
+      };
+      mockGetContainerClient.mockReturnValue({
+        getBlockBlobClient: mockGetBlockBlobClient,
+        createIfNotExists: mockCreateIfNotExists,
+        listBlobsFlat: vi.fn().mockReturnValue(mockIter),
+      });
+
+      const keys = await listAllBlobKeys();
+
+      expect(keys).toEqual([]);
     });
   });
 });
