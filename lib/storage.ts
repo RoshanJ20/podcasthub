@@ -244,6 +244,26 @@ export interface DownloadResult {
 }
 
 /**
+ * Result of a blob stream operation.
+ *
+ * Returns the raw Node.js ReadableStream from the Azure SDK without buffering
+ * any content into memory. Suitable for piping large files directly to an
+ * HTTP response.
+ */
+export interface StreamResult {
+  /** The raw Node.js readable stream from Azure Blob Storage. */
+  stream: NodeJS.ReadableStream;
+  /** The MIME type of the blob, if available. */
+  contentType?: string;
+  /** The size of the returned content in bytes. */
+  contentLength?: number;
+  /** The content range header for partial responses. */
+  contentRange?: string;
+  /** Whether the blob accepts range requests. */
+  acceptRanges?: string;
+}
+
+/**
  * Parses an HTTP Range header into offset and count for Azure Blob download.
  *
  * @param range - HTTP Range header value (e.g., "bytes=0-1023")
@@ -294,6 +314,43 @@ export async function downloadObject(key: string, range?: string | null): Promis
 
   return {
     body,
+    contentType: response.contentType,
+    contentLength: response.contentLength,
+    contentRange: response.contentRange,
+    acceptRanges: response.acceptRanges,
+  };
+}
+
+/**
+ * Streams a blob from Azure Blob Storage without buffering it into memory.
+ *
+ * Returns the raw Node.js ReadableStream from the Azure SDK, suitable for
+ * piping directly to an HTTP response. Unlike downloadObject(), this avoids
+ * loading the entire blob into a Buffer — critical for large audio files.
+ *
+ * Supports optional HTTP Range header for partial content (audio seeking).
+ *
+ * @param key - The blob name (path) to stream
+ * @param range - Optional HTTP Range header value (e.g., "bytes=0-1023")
+ * @returns StreamResult with the raw stream and metadata
+ * @throws Error if the blob cannot be downloaded or the stream is unavailable
+ */
+export async function streamObject(key: string, range?: string | null): Promise<StreamResult> {
+  const containerClient = getBlobServiceClient().getContainerClient(CONTAINER);
+  const blobClient = containerClient.getBlockBlobClient(key);
+
+  const parsed = range ? parseRange(range) : undefined;
+  const response = parsed
+    ? await blobClient.download(parsed.offset, parsed.count)
+    : await blobClient.download();
+
+  const stream = response.readableStreamBody;
+  if (!stream) {
+    throw new Error(`No readable stream for blob: ${key}`);
+  }
+
+  return {
+    stream,
     contentType: response.contentType,
     contentLength: response.contentLength,
     contentRange: response.contentRange,

@@ -73,6 +73,7 @@ import {
   deleteObject,
   uploadBuffer,
   downloadObject,
+  streamObject,
   CONTAINER,
   _resetForTesting,
 } from '@/lib/storage';
@@ -238,6 +239,55 @@ describe('Azure Blob Storage Client', () => {
       });
 
       await expect(downloadObject('missing/key')).rejects.toThrow('No readable stream');
+    });
+  });
+
+  describe('streamObject', () => {
+    /**
+     * Helper to create a mock Node.js ReadableStream from a Uint8Array.
+     * Azure Blob SDK returns NodeJS.ReadableStream, not Web ReadableStream.
+     */
+    function createMockNodeStream(data: Uint8Array) {
+      return Readable.from([Buffer.from(data)]);
+    }
+
+    it('returns a readable stream with metadata for full download', async () => {
+      const mockStream = createMockNodeStream(new Uint8Array([1, 2, 3]));
+      mockDownload.mockResolvedValue({
+        readableStreamBody: mockStream,
+        contentType: 'audio/mpeg',
+        contentLength: 3,
+        acceptRanges: 'bytes',
+      });
+
+      const result = await streamObject('audio/test.mp3');
+
+      expect(result.stream).toBe(mockStream);
+      expect(result.contentType).toBe('audio/mpeg');
+      expect(result.contentLength).toBe(3);
+      expect(result.acceptRanges).toBe('bytes');
+    });
+
+    it('passes offset and count for range requests', async () => {
+      const mockStream = createMockNodeStream(new Uint8Array([1]));
+      mockDownload.mockResolvedValue({
+        readableStreamBody: mockStream,
+        contentType: 'audio/mpeg',
+        contentLength: 1,
+        contentRange: 'bytes 0-0/3',
+      });
+
+      await streamObject('audio/test.mp3', 'bytes=0-0');
+
+      expect(mockDownload).toHaveBeenCalledWith(0, 1);
+    });
+
+    it('throws when no readable stream is available', async () => {
+      mockDownload.mockResolvedValue({
+        readableStreamBody: undefined,
+      });
+
+      await expect(streamObject('missing/key')).rejects.toThrow('No readable stream');
     });
   });
 });
