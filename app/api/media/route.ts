@@ -1,31 +1,31 @@
 /**
  * Media proxy endpoint for The Audit Brief.
  *
- * Proxies file requests from Azure Blob Storage to avoid browser security restrictions
- * on loading media from private/localhost IPs. Supports range requests for
+ * Streams file responses from Azure Blob Storage to avoid buffering large files
+ * (up to 500 MB audio) into server memory. Supports range requests for
  * audio seeking.
  *
  * @route GET /api/media?key=audio/uuid/file.m4a
  */
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { downloadObject } from '@/lib/storage';
+import { Readable } from 'stream';
+import { streamObject } from '@/lib/storage';
 import { createErrorResponse, badRequest, internalError } from '@/lib/api/errors';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('media-api');
 
 /**
- * Handles GET requests to proxy media files from Azure Blob Storage.
+ * Handles GET requests to stream media files from Azure Blob Storage.
  *
  * Retrieves the file identified by the 'key' query parameter from the Azure Blob container
- * and streams it back to the client. Supports HTTP range requests for audio seeking.
- * Infers content type from the file extension when Azure Blob does not provide one.
+ * and streams it to the client without buffering. Supports HTTP range requests for audio
+ * seeking.
  *
  * @param request - The incoming Next.js request object with a 'key' query parameter
- * @returns Binary response with appropriate Content-Type, Content-Length, and range headers
+ * @returns Streaming response with appropriate Content-Type, Content-Length, and range headers
  * @throws {ApiError} 400 if the 'key' query parameter is missing
- * @throws {ApiError} 404 if the file is not found in Azure Blob Storage
  * @throws {ApiError} 500 if the retrieval fails
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   try {
     const range = request.headers.get('range');
-    const result = await downloadObject(key, range);
+    const result = await streamObject(key, range);
 
     const contentType =
       result.contentType && result.contentType !== 'application/octet-stream'
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       'Cache-Control': 'public, max-age=3600',
     };
 
-    if (result.contentLength) {
+    if (result.contentLength !== undefined) {
       headers['Content-Length'] = String(result.contentLength);
     }
     if (result.contentRange) {
@@ -58,7 +58,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       headers['Accept-Ranges'] = result.acceptRanges;
     }
 
-    return new NextResponse(new Uint8Array(result.body), {
+    // Convert Node.js ReadableStream to Web ReadableStream for NextResponse.
+    // Readable.toWeb() is available in Node 20 LTS.
+    const webStream = Readable.toWeb(
+      result.stream instanceof Readable ? result.stream : Readable.from(result.stream)
+    );
+
+    return new NextResponse(webStream as ReadableStream, {
       status: range && result.contentRange ? 206 : 200,
       headers,
     });
@@ -82,6 +88,12 @@ const MIME_MAP: Record<string, string> = {
   '.svg': 'image/svg+xml',
 };
 
+/**
+ * Infers the MIME content type from a blob key's file extension.
+ *
+ * @param key - The blob key (e.g., "audio/uuid/file.m4a")
+ * @returns The inferred MIME type, or 'application/octet-stream' as fallback
+ */
 function inferContentType(key: string): string {
   const ext = key.substring(key.lastIndexOf('.')).toLowerCase();
   return MIME_MAP[ext] || 'application/octet-stream';
