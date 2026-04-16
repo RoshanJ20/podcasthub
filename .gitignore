@@ -3,6 +3,9 @@
 # Superpowers brainstorm artifacts
 .superpowers/
 
+# Git worktrees
+.worktrees/
+
 # dependencies
 /node_modules
 /.pnp
