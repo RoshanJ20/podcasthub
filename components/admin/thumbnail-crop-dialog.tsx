@@ -11,6 +11,7 @@
 import { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
+import { toast } from 'sonner';
 
 import {
   Dialog,
@@ -22,6 +23,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { createLogger } from '@/lib/logger';
+
+const log = createLogger('thumbnail-crop-dialog');
 
 /**
  * Props for ThumbnailCropDialog.
@@ -50,9 +54,13 @@ const MAX_OUTPUT_PX = 512;
 
 async function getCroppedFile(imageSrc: string, cropArea: Area): Promise<File> {
   const image = new Image();
-  image.src = imageSrc;
-  await new Promise<void>((resolve) => {
+  // Listeners must be attached BEFORE setting src to avoid missing a synchronous
+  // load event when the browser serves the blob from cache.
+  await new Promise<void>((resolve, reject) => {
     image.onload = () => resolve();
+    image.onerror = () => reject(new Error('Failed to load image for cropping'));
+    image.src = imageSrc;
+    if (image.complete && image.naturalWidth > 0) resolve();
   });
 
   const size = Math.min(cropArea.width, cropArea.height, MAX_OUTPUT_PX);
@@ -61,13 +69,18 @@ async function getCroppedFile(imageSrc: string, cropArea: Area): Promise<File> {
   canvas.width = size;
   canvas.height = size;
 
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Could not acquire 2D canvas context');
   ctx.drawImage(image, cropArea.x, cropArea.y, cropArea.width, cropArea.height, 0, 0, size, size);
 
-  return new Promise<File>((resolve) => {
+  return new Promise<File>((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
-        resolve(new File([blob!], 'thumbnail.jpg', { type: 'image/jpeg' }));
+        if (!blob) {
+          reject(new Error('Canvas encoding failed'));
+          return;
+        }
+        resolve(new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' }));
       },
       'image/jpeg',
       0.92
@@ -90,18 +103,27 @@ export function ThumbnailCropDialog({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedPixels: Area) => {
     setCroppedAreaPixels(croppedPixels);
   }, []);
 
   const handleConfirm = useCallback(async () => {
-    if (!imageSrc || !croppedAreaPixels) return;
-    const file = await getCroppedFile(imageSrc, croppedAreaPixels);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    onCrop(file);
-  }, [imageSrc, croppedAreaPixels, onCrop]);
+    if (!imageSrc || !croppedAreaPixels || isProcessing) return;
+    try {
+      setIsProcessing(true);
+      const file = await getCroppedFile(imageSrc, croppedAreaPixels);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      onCrop(file);
+    } catch (error) {
+      log.error({ err: error }, 'Thumbnail crop failed');
+      toast.error(error instanceof Error ? error.message : 'Could not crop the thumbnail');
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [imageSrc, croppedAreaPixels, isProcessing, onCrop]);
 
   const handleCancel = useCallback(() => {
     setCrop({ x: 0, y: 0 });
@@ -116,7 +138,14 @@ export function ThumbnailCropDialog({
           <DialogTitle>Crop Thumbnail</DialogTitle>
         </DialogHeader>
 
-        <div className="relative w-full aspect-square bg-muted rounded-lg overflow-hidden">
+        {/*
+         * Explicit height (h-80 = 20rem). Do NOT use `aspect-square` here —
+         * react-easy-crop renders absolutely-positioned children, so it cannot
+         * grow this box. Inside the dialog's `display: grid` parent the row
+         * would collapse to 0px and the Cropper would render invisibly,
+         * preventing onCropComplete from ever firing.
+         */}
+        <div className="relative w-full h-80 bg-muted rounded-lg overflow-hidden">
           {imageSrc && (
             <Cropper
               image={imageSrc}
@@ -142,10 +171,12 @@ export function ThumbnailCropDialog({
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={handleCancel}>
+          <Button variant="outline" onClick={handleCancel} disabled={isProcessing}>
             Cancel
           </Button>
-          <Button onClick={handleConfirm}>Crop</Button>
+          <Button onClick={handleConfirm} disabled={!croppedAreaPixels || isProcessing}>
+            {isProcessing ? 'Cropping…' : 'Crop'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
