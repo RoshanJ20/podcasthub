@@ -14,6 +14,7 @@ Internal enterprise audio platform for managing, distributing, and tracking audi
 - [Testing](#testing)
 - [Project Structure](#project-structure)
 - [Deployment](#deployment)
+- [Content Security Policy](#content-security-policy)
 - [Contributing](#contributing)
 
 ## Tech Stack
@@ -312,6 +313,128 @@ pm2 start ecosystem.config.js
 ```
 
 For the complete step-by-step deployment guide, see [docs/deployment-guide.md](docs/deployment-guide.md).
+
+### Required Nginx Configuration
+
+The app generates its own per-request, nonce-based `Content-Security-Policy` header in middleware (see [Content Security Policy](#content-security-policy) below for why). For the nonce mechanism to work end-to-end, **nginx must not add its own `Content-Security-Policy` header for the `/auditbrief` location**, otherwise the browser intersects the two policies and drops the nonce.
+
+Add `proxy_hide_header Content-Security-Policy;` to **both** `/auditbrief` location blocks. The full diff against the current production config:
+
+```nginx
+# location = /auditbrief  (exact-match block)
+location = /auditbrief {
+    proxy_pass http://cs_audit_upstream;
+    proxy_http_version 1.1;
+
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Let the upstream Next.js app set its own per-request CSP with a nonce.
+    # The server-level CSP applied above is strict but lacks a nonce, which
+    # would block the framework's inline RSC/hydration scripts.
+    proxy_hide_header Content-Security-Policy;
+}
+
+# location ^~ /auditbrief/  (prefix-match block)
+location ^~ /auditbrief/ {
+    proxy_pass http://cs_audit_upstream;
+    proxy_http_version 1.1;
+
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # See note in `location = /auditbrief` above.
+    proxy_hide_header Content-Security-Policy;
+}
+```
+
+This is **not** a relaxation of the security policy. The app emits a strict policy that:
+
+- forbids inline scripts and styles by default,
+- only permits the framework's own RSC/hydration scripts via a per-request, cryptographically-random `nonce`,
+- adds `'strict-dynamic'` so chunk loaders work without an explicit allowlist,
+- keeps `default-src`, `connect-src`, `img-src`, `font-src`, `worker-src`, `frame-ancestors` at least as strict as nginx's.
+
+The other server-level VAPT headers (HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Cache-Control: no-store, etc.) **must remain in place** at the nginx server block — they are unaffected by this change and still apply to the `/auditbrief` location because nginx `add_header` directives at the server block flow through to all locations that don't define their own.
+
+After applying, validate from a workstation:
+
+```bash
+# Should show exactly ONE Content-Security-Policy header, with `nonce-…` in script-src + style-src
+curl -sI https://uat.uno.wcgt.in/auditbrief/login | grep -i 'content-security-policy'
+
+# Two consecutive requests must return DIFFERENT nonce values
+curl -sI https://uat.uno.wcgt.in/auditbrief/login | grep -oE 'nonce-[A-Za-z0-9+/=]+' | head -1
+curl -sI https://uat.uno.wcgt.in/auditbrief/login | grep -oE 'nonce-[A-Za-z0-9+/=]+' | head -1
+```
+
+If you see two CSP headers in the response, or only the strict no-nonce one, the nginx change has not taken effect (`nginx -t && systemctl reload nginx` after editing).
+
+## Content Security Policy
+
+The app runs under a strict, nonce-based CSP. This section documents the architecture so future contributors do not unknowingly add inline content that the policy will block.
+
+### How it works
+
+1. [middleware.ts](middleware.ts) runs on every HTML/API request. It generates a random nonce per request via [lib/security/csp.ts](lib/security/csp.ts) (`generateNonce()`).
+2. The nonce is propagated to the render pipeline via the `x-nonce` request header. Next.js's App Router automatically stamps that nonce onto every framework-emitted `<script>` tag (the inline RSC payload chunks `self.__next_f.push(...)`, the hydration bootstrap, Suspense flush boundaries) and `<link rel="stylesheet">` tag.
+3. The same middleware sets the matching `Content-Security-Policy` response header. The policy assembled by `buildContentSecurityPolicy(nonce)` enforces:
+
+   ```text
+   default-src 'self';
+   script-src 'self' 'nonce-<random>' 'strict-dynamic';
+   style-src 'self' 'nonce-<random>';
+   style-src-attr 'unsafe-inline';
+   img-src 'self' data: blob:;
+   media-src 'self' blob:;
+   font-src 'self' data:;
+   connect-src 'self';
+   worker-src 'self' blob:;
+   frame-ancestors 'self';
+   base-uri 'self';
+   form-action 'self';
+   object-src 'none';
+   upgrade-insecure-requests
+   ```
+
+4. [app/layout.tsx](app/layout.tsx) reads the nonce via `headers()` and:
+   - emits `<meta name="csp-nonce" content="…">` so `motion/react` picks it up;
+   - injects a small bootstrap `<script nonce="…">` at the top of `<body>` that monkey-patches `Document.prototype.createElement` so any `<style>` element a third-party library (sonner, motion, recharts, @dnd-kit) creates at runtime gets the nonce stamped on it before insertion;
+   - passes `nonce={nonce}` to `<ThemeProvider>` so `next-themes` applies it to its FOUC-prevention inline script.
+
+### `style-src-attr 'unsafe-inline'` — what it is and why it's safe
+
+CSP nonces apply to `<style>` _tags_ only. Inline `style="…"` _attributes_ (React `style={{}}` props, motion transforms, dnd-kit drag previews, recharts tooltips, resizable-panels) cannot carry a nonce by spec. Allowing them via `style-src-attr 'unsafe-inline'` is **qualitatively very different** from `script-src 'unsafe-inline'`:
+
+- `script-src 'unsafe-inline'` — catastrophic. Any reflected XSS becomes RCE.
+- `style-src-attr 'unsafe-inline'` — low risk. An attacker who can already inject HTML can affect appearance but cannot execute code or exfiltrate data beyond very limited CSS-side-channel attacks. OWASP and the CSP3 spec explicitly model this split for exactly this reason.
+
+### Rules for contributors
+
+- **Do not add new inline `<style>{...}</style>` JSX nodes.** Move static CSS (e.g. `@keyframes`) to [app/globals.css](app/globals.css). React `style={{}}` props are fine — they're inline attributes covered by `style-src-attr`.
+- **Do not introduce `dangerouslySetInnerHTML` for scripts.** The only such usage is the bootstrap nonce-patcher in `app/layout.tsx`, which is server-rendered with a known-safe nonce string.
+- **Do not load scripts/styles/fonts/images from external CDNs.** Use the local package or vendor the asset under `public/` / `node_modules` (Next.js will bundle it). The PDF.js worker in [components/audio-player/bulletin-viewer.tsx](components/audio-player/bulletin-viewer.tsx) is a reference example: `new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()`.
+- **Do not call `eval`, `new Function`, or string-form `setTimeout`/`setInterval`.** `script-src` does not include `'unsafe-eval'`.
+- **Do not hard-code Azure Blob, Sentry ingest, or other external hostnames into client code.** `connect-src 'self'` blocks them; proxy through `/api/...` instead (the `/api/media` proxy is the reference example).
+
+### Adding a new third-party UI library
+
+If a new library injects styles or scripts at runtime, the bootstrap nonce-patcher in `app/layout.tsx` will catch any `<style>` it creates via `document.createElement('style')` (which is the common pattern). Verify by running `npm run build && node .next/standalone/server.js`, opening the app in Chrome with DevTools Console, and exercising the library's UI. Any `Refused to apply inline style` / `Refused to execute inline script` message is a regression.
+
+If a library uses a different injection mechanism (e.g. `innerHTML`, `insertAdjacentHTML`, or a dedicated CSSOM API like `CSSStyleSheet.replaceSync`), and it does not accept a `nonce` prop, prefer:
+
+1. importing the library's static CSS file in `app/layout.tsx` (`import 'pkg/dist/styles.css'`) so Next.js bundles it into a same-origin stylesheet — no nonce needed; or
+2. replacing the library with a nonce-aware alternative.
 
 ## Contributing
 

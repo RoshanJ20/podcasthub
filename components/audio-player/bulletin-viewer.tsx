@@ -27,7 +27,14 @@ import { resolveStorageUrl } from '@/lib/storage-url';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+// Self-hosted worker — Next.js bundles pdf.worker.min.mjs from the
+// installed pdfjs-dist package and emits it under /_next/static/. CSP
+// `script-src 'self'` and `worker-src 'self'` cover the resolved URL,
+// so no external CDN allowlist is required.
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url
+).toString();
 
 /** Estimated height for each PDF page before measurement. */
 const ESTIMATED_PAGE_HEIGHT = 800;

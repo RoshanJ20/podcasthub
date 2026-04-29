@@ -5,6 +5,9 @@ import { Slider as SliderPrimitive } from '@base-ui/react/slider';
 
 import { cn } from '@/lib/utils';
 
+// Note: Slider.Thumb emits a server-rendered prehydration `<script>` tag.
+// The per-request CSP nonce is stamped on it via the `<CSPProvider nonce>`
+// wrapper in `app/layout.tsx`; no per-component wiring needed here.
 function Slider({
   className,
   defaultValue,

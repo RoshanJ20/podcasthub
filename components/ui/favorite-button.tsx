@@ -97,7 +97,9 @@ export function FavoriteButton({ isFavorite, onToggle, className }: FavoriteButt
         />
       )}
 
-      {/* Burst mini-hearts */}
+      {/* Burst mini-hearts. Keyframes `fav-card-ring` and `fav-card-burst`
+          are defined in app/globals.css (moved out of an inline <style>
+          block to comply with strict CSP `style-src 'self' 'nonce-…'`). */}
       {showSplash &&
         BURST_HEARTS.map((h, i) => (
           <Heart
@@ -113,18 +115,6 @@ export function FavoriteButton({ isFavorite, onToggle, className }: FavoriteButt
             }
           />
         ))}
-
-      <style>{`
-        @keyframes fav-card-ring {
-          0% { transform: scale(0.3); opacity: 1; }
-          100% { transform: scale(2); opacity: 0; }
-        }
-        @keyframes fav-card-burst {
-          0% { transform: translate(0, 0) scale(0); opacity: 1; }
-          60% { opacity: 1; }
-          100% { transform: translate(var(--burst-x), var(--burst-y)) scale(var(--burst-scale)); opacity: 0; }
-        }
-      `}</style>
     </button>
   );
 }

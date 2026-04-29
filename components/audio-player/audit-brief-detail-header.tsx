@@ -230,17 +230,10 @@ function FavoriteToggleButton({
           ))}
       </span>
       Add to favorites
-      <style>{`
-        @keyframes favorite-ring {
-          0% { transform: scale(0.3); opacity: 1; }
-          100% { transform: scale(1.8); opacity: 0; }
-        }
-        @keyframes favorite-burst {
-          0% { transform: translate(0, 0) scale(0); opacity: 1; }
-          60% { opacity: 1; }
-          100% { transform: translate(var(--burst-x), var(--burst-y)) scale(var(--burst-scale)); opacity: 0; }
-        }
-      `}</style>
     </button>
   );
 }
+
+/* Keyframes `favorite-ring` and `favorite-burst` live in app/globals.css —
+   moved out of an inline <style> block to comply with strict CSP
+   `style-src 'self' 'nonce-…'`. */

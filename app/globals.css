@@ -409,3 +409,56 @@
     color: var(--text-secondary);
   }
 }
+
+/* Favorite-button burst animations.
+   Keyframes were previously inline <style> blocks inside the components
+   themselves; moved here so they load via the static stylesheet bundle and
+   do not require a CSP nonce on a runtime <style> element. The animation
+   names are referenced by the `style={{ animation: ... }}` props on the
+   heart elements, which are permitted by `style-src-attr 'unsafe-inline'`. */
+@keyframes fav-card-ring {
+  0% {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+@keyframes fav-card-burst {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--burst-x), var(--burst-y)) scale(var(--burst-scale));
+    opacity: 0;
+  }
+}
+@keyframes favorite-ring {
+  0% {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+@keyframes favorite-burst {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--burst-x), var(--burst-y)) scale(var(--burst-scale));
+    opacity: 0;
+  }
+}
