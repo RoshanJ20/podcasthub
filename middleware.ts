@@ -28,7 +28,11 @@
  */
 import { NextResponse, type NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { buildContentSecurityPolicy, generateNonce } from '@/lib/security/csp';
+import {
+  buildContentSecurityPolicy,
+  buildContentSecurityPolicyDev,
+  generateNonce,
+} from '@/lib/security/csp';
 
 /**
  * Checks whether the pathname is a public page route that does not require authentication.
@@ -85,7 +89,13 @@ export default async function middleware(request: NextRequest) {
   const requestId = crypto.randomUUID();
   const requestStart = Date.now().toString();
   const nonce = generateNonce();
-  const csp = buildContentSecurityPolicy(nonce);
+  // Dev mode needs 'unsafe-inline', 'unsafe-eval', and ws:// for HMR / Fast
+  // Refresh / error overlay. Production stays strict. See lib/security/csp.ts
+  // for the per-directive rationale.
+  const csp =
+    process.env.NODE_ENV === 'development'
+      ? buildContentSecurityPolicyDev(nonce)
+      : buildContentSecurityPolicy(nonce);
   const { pathname } = request.nextUrl;
   const method = request.method;
 
