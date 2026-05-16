@@ -27,14 +27,13 @@ describe('HomeCard', () => {
           description="Overview of tools"
           domain="Audit Technology"
           year={2026}
-          tags={['analytics', 'data']}
         />
       );
 
       expect(screen.getByText('Analytics Intro')).toBeDefined();
       expect(screen.getByText('Overview of tools')).toBeDefined();
       expect(screen.getByText('Audit Technology')).toBeDefined();
-      expect(screen.getByText('2026')).toBeDefined();
+      expect(screen.getByText(/2026/)).toBeDefined();
     });
 
     it('links to /audit-brief/[id]', () => {
@@ -46,29 +45,11 @@ describe('HomeCard', () => {
           description={null}
           domain="LEAP"
           year={2026}
-          tags={[]}
         />
       );
 
       const link = container.querySelector('a');
       expect(link?.getAttribute('href')).toBe('/audit-brief/p1');
-    });
-
-    it('accepts tags prop without rendering them on the card', () => {
-      render(
-        <HomeCard
-          variant="auditBrief"
-          id="p1"
-          title="Test"
-          description={null}
-          domain="LEAP"
-          year={2026}
-          tags={['search', 'ai']}
-        />
-      );
-
-      expect(screen.queryByText('search')).toBeNull();
-      expect(screen.queryByText('ai')).toBeNull();
     });
 
     it('handles null description', () => {
@@ -80,7 +61,6 @@ describe('HomeCard', () => {
           description={null}
           domain="LEAP"
           year={2026}
-          tags={[]}
         />
       );
 
@@ -101,7 +81,6 @@ describe('HomeCard', () => {
           description="ASC 606 deep dive"
           domain="Accounting and Reporting"
           episodeCount={5}
-          completedCount={2}
         />
       );
 
@@ -120,28 +99,11 @@ describe('HomeCard', () => {
           description={null}
           domain="Auditing"
           episodeCount={0}
-          completedCount={0}
         />
       );
 
       const link = container.querySelector('a');
       expect(link?.getAttribute('href')).toBe('/learning-path/s1');
-    });
-
-    it('renders episode count with completedCount prop provided', () => {
-      render(
-        <HomeCard
-          variant="series"
-          id="s1"
-          title="Progress Test"
-          description={null}
-          domain="Auditing"
-          episodeCount={4}
-          completedCount={1}
-        />
-      );
-
-      expect(screen.getByText(/4 episodes/)).toBeDefined();
     });
 
     it('handles zero episodes without division error', () => {
@@ -153,7 +115,6 @@ describe('HomeCard', () => {
           description={null}
           domain="Auditing"
           episodeCount={0}
-          completedCount={0}
         />
       );
 

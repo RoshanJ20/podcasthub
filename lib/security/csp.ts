@@ -89,3 +89,53 @@ export function buildContentSecurityPolicy(nonce: string): string {
   ];
   return directives.join('; ');
 }
+
+/**
+ * Builds the development-mode CSP header value.
+ *
+ * Mirrors {@link buildContentSecurityPolicy} but applies four targeted
+ * relaxations required for `npm run dev` to function. The production policy
+ * intentionally forbids each of these; they are only acceptable here because
+ * dev-mode traffic is local-only and is never served to end users.
+ *
+ * Relaxations vs. production:
+ * 1. `script-src` adds `'unsafe-inline' 'unsafe-eval'` — Next.js Fast Refresh
+ *    injects inline `<script>` tags without a nonce, and the webpack dev
+ *    runtime uses `eval()` for module transformation and source maps.
+ * 2. `'strict-dynamic'` is **removed** in dev — when `'strict-dynamic'` is
+ *    present in `script-src`, modern browsers (Chrome, Firefox, Safari)
+ *    ignore `'unsafe-inline'` per the CSP3 spec. Dropping it lets the
+ *    `'unsafe-inline'` token actually take effect for HMR scripts.
+ * 3. `style-src` adds `'unsafe-inline'` — HMR style updates can bypass the
+ *    `Document.createElement` nonce-patcher in `app/layout.tsx` when libraries
+ *    construct style elements through other paths (`new CSSStyleSheet`, etc.).
+ * 4. `connect-src` adds `ws://localhost:*` and `ws://127.0.0.1:*` — the HMR
+ *    client opens a WebSocket to `/_next/webpack-hmr` for live updates.
+ * 5. `upgrade-insecure-requests` is omitted — local dev runs on plain `http://`
+ *    and would otherwise be force-upgraded to `https://localhost`, which has
+ *    no certificate.
+ *
+ * This function is only invoked from `middleware.ts` when
+ * `process.env.NODE_ENV === 'development'`. Production builds never call it.
+ *
+ * @param nonce - The per-request nonce returned by {@link generateNonce}.
+ * @returns A single-line CSP header value suitable for dev-server responses.
+ */
+export function buildContentSecurityPolicyDev(nonce: string): string {
+  const directives: string[] = [
+    `default-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline' 'unsafe-eval'`,
+    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`,
+    `style-src-attr 'unsafe-inline'`,
+    `img-src 'self' data: blob:`,
+    `media-src 'self' blob:`,
+    `font-src 'self' data:`,
+    `connect-src 'self' ws://localhost:* ws://127.0.0.1:*`,
+    `worker-src 'self' blob:`,
+    `frame-ancestors 'self'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `object-src 'none'`,
+  ];
+  return directives.join('; ');
+}

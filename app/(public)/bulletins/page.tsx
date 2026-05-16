@@ -3,15 +3,21 @@
  *
  * Server Component that reads domain, sort, and page filters from
  * URL search params, queries the database, and renders the library
- * UI with filters, audit brief grid, and pagination controls.
+ * UI with an editorial masthead, an optional featured-brief hero on
+ * page 1 (when no filters are active), the audit-brief grid, and
+ * pagination controls.
  */
+import type { CSSProperties } from 'react';
 import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Headphones, ArrowRight } from 'lucide-react';
 import { prisma } from '@/lib/db';
 import { getAuthSession } from '@/lib/auth/session-helpers';
 import { LibraryFilters } from '@/components/library/library-filters';
 import { AuditBriefGrid } from '@/components/library/audit-brief-grid';
 import { PaginationControls } from '@/components/library/pagination-controls';
 import { DOMAINS } from '@/lib/schemas/common';
+import { getDomainColor } from '@/lib/domain-colors';
 import type { AuditBriefData } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -124,14 +130,78 @@ export default async function LibraryPage({ searchParams }: LibraryPageProps) {
     updatedAt: p.updatedAt.toISOString(),
   }));
 
+  /** Promote the first card to a featured hero on page 1 with no filters. */
+  const showFeatured =
+    page === 1 && !domain && !searchQuery && !showFavorites && auditBriefData.length > 0;
+  const featured = showFeatured ? auditBriefData[0] : null;
+  const gridBriefs = showFeatured ? auditBriefData.slice(1) : auditBriefData;
+
+  const featuredColor = featured ? getDomainColor(featured.domain) : null;
+  const featuredVars = featuredColor
+    ? ({ '--domain-color': featuredColor.border } as CSSProperties)
+    : undefined;
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Technical Content</h1>
+    <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      {/* ─── Masthead ───────────────────────────────────────────────── */}
+      <header className="flex items-end justify-between gap-4 border-b border-border-subtle pb-6 pt-10 sm:pt-14">
+        <div>
+          <p className="label-eyebrow">
+            The <span className="text-brand-500">·</span>
+          </p>
+          <h1 className="text-mast mt-1 text-foreground">Library</h1>
+        </div>
+        <p className="label-eyebrow mb-1 hidden sm:block">
+          {totalCount} <span className="text-brand-500">·</span>{' '}
+          {totalCount === 1 ? 'Brief' : 'Briefs'}
+        </p>
+      </header>
+
+      {/* ─── Featured hero (page 1, no filters) ─────────────────────── */}
+      {featured && (
+        <section className="mt-8" aria-label="Latest brief">
+          <Link href={`/audit-brief/${featured.id}`} className="group block" style={featuredVars}>
+            <article className="gradient-domain relative overflow-hidden rounded-2xl border border-border-subtle p-6 transition-shadow duration-200 hover:shadow-card-hover sm:p-10">
+              <div className="flex flex-col gap-5 sm:max-w-3xl">
+                <span className="label-eyebrow">Latest brief</span>
+                <div className="flex items-center gap-2">
+                  <span className="domain-dot size-2 shrink-0 rounded-full" />
+                  <span className="text-xs font-medium text-foreground/80">{featured.domain}</span>
+                  <span className="text-xs text-muted-foreground">· {featured.year}</span>
+                </div>
+                <h2 className="text-display-lg text-foreground sm:text-[clamp(22px,3vw,32px)]">
+                  {featured.title}
+                </h2>
+                {featured.description && (
+                  <p className="line-clamp-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                    {featured.description}
+                  </p>
+                )}
+                <div className="mt-1 flex items-center gap-3">
+                  <span className="inline-flex items-center gap-2 rounded-lg bg-interactive px-4 py-2 text-sm font-medium text-on-brand shadow-sm transition-colors group-hover:bg-interactive-hover">
+                    <Headphones className="size-4" />
+                    Listen now
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+                    Read brief
+                    <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                  </span>
+                </div>
+              </div>
+            </article>
+          </Link>
+        </section>
+      )}
+
+      {/* ─── Filter bar ─────────────────────────────────────────────── */}
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-y border-border-subtle py-4">
         <LibraryFilters />
       </div>
 
-      <AuditBriefGrid auditBriefs={auditBriefData} />
+      {/* ─── Grid ───────────────────────────────────────────────────── */}
+      <div className="mt-6">
+        <AuditBriefGrid auditBriefs={gridBriefs} />
+      </div>
 
       <PaginationControls page={page} totalPages={totalPages} />
     </div>

@@ -21,7 +21,6 @@ interface AuditBriefItem {
   description: string | null;
   domain: string;
   year: number;
-  tags: string[];
 }
 
 interface HomeAuditBriefListProps {
@@ -40,7 +39,9 @@ export function HomeAuditBriefList({ auditBriefs }: HomeAuditBriefListProps) {
 
   if (auditBriefs.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-muted-foreground">No technical content yet.</p>
+      <p className="py-8 text-sm text-muted-foreground">
+        The first briefs are being prepared. Check back soon.
+      </p>
     );
   }
 
@@ -55,7 +56,6 @@ export function HomeAuditBriefList({ auditBriefs }: HomeAuditBriefListProps) {
           description={p.description}
           domain={p.domain}
           year={p.year}
-          tags={p.tags}
           isFavorite={isFavorite(p.id)}
           onToggleFavorite={() => toggleFavorite(p.id)}
         />
