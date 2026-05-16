@@ -92,7 +92,6 @@ export function AuditBriefDetailLayout({ auditBrief }: AuditBriefDetailLayoutPro
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
   const domainColor = getDomainColor(auditBrief.domain);
-  const badgeBg = isDark ? domainColor.darkBg : domainColor.bg;
   const badgeText = isDark ? domainColor.darkText : domainColor.text;
 
   const hasAttachments = auditBrief.bulletinUrls.length > 0;
@@ -269,7 +268,6 @@ export function AuditBriefDetailLayout({ auditBrief }: AuditBriefDetailLayoutPro
     domain: auditBrief.domain,
     year: auditBrief.year,
     tags: auditBrief.tags,
-    badgeBg,
     badgeText,
     isFavorite: isFavorite(auditBrief.id),
     onToggleFavorite: () => toggleFavorite(auditBrief.id),

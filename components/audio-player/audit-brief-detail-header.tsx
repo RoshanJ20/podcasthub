@@ -16,7 +16,6 @@
  *     domain="Audit"
  *     year={2024}
  *     tags={['IFRS', 'Revenue']}
- *     badgeBg="#e0f2fe"
  *     badgeText="#0369a1"
  *     sectionProps={{}}
  *   />
@@ -37,8 +36,6 @@ export interface AuditBriefDetailHeaderProps {
   year: number;
   /** Content tags rendered as small secondary chips. */
   tags: string[];
-  /** Resolved background color for the domain badge (light or dark variant). */
-  badgeBg: string;
   /** Resolved text color for the domain badge (light or dark variant). */
   badgeText: string;
   /** Whether this audit brief is favorited by the current user. */
@@ -65,8 +62,7 @@ export interface AuditBriefDetailHeaderProps {
  * @param props.domain - Domain label for the colored badge.
  * @param props.year - Publication year displayed as plain text.
  * @param props.tags - Array of content tag strings rendered as small chips.
- * @param props.badgeBg - Computed background color string for the domain badge.
- * @param props.badgeText - Computed text color string for the domain badge.
+ * @param props.badgeText - Computed text color string for the domain badge (and the dot color).
  * @param props.sectionProps - Motion variant props (or empty object) spread on the wrapper.
  * @param props.Section - Element type (div or motion.div) used as the wrapper.
  * @returns A section containing the back link, domain badge, year, and tag chips.
@@ -75,7 +71,6 @@ export function AuditBriefDetailHeader({
   domain,
   year,
   tags,
-  badgeBg,
   badgeText,
   isFavorite,
   onToggleFavorite,
@@ -86,30 +81,38 @@ export function AuditBriefDetailHeader({
     <Section {...sectionProps}>
       <Link
         href="/bulletins"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:text-foreground"
+        className="label-eyebrow mb-5 inline-flex items-center gap-1.5 transition-colors duration-150 hover:text-foreground"
       >
-        <ArrowLeft className="size-4" />
+        <ArrowLeft className="size-3" />
         Back to library
       </Link>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span
-          className="inline-flex rounded-md px-2.5 py-0.5 text-xs font-semibold"
-          style={{ backgroundColor: badgeBg, color: badgeText }}
-        >
-          {domain}
-        </span>
-        <span className="text-xs text-muted-foreground">{year}</span>
-        {tags.map((tag) => (
+      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="inline-flex items-center gap-2">
           <span
-            key={tag}
-            className="inline-flex rounded-md border border-border/60 bg-secondary/30 px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-          >
-            {tag}
+            className="size-2 shrink-0 rounded-full"
+            style={{ backgroundColor: badgeText }}
+            aria-hidden
+          />
+          <span className="text-xs font-medium text-foreground/85">{domain}</span>
+        </span>
+        <span className="text-xs text-muted-foreground">· {year}</span>
+        {tags.length > 0 && (
+          <span className="flex flex-wrap items-center gap-1.5">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex rounded-full bg-subtle px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+              >
+                {tag}
+              </span>
+            ))}
           </span>
-        ))}
+        )}
         {onToggleFavorite && (
-          <FavoriteToggleButton isFavorite={isFavorite ?? false} onToggle={onToggleFavorite} />
+          <span className="ml-auto">
+            <FavoriteToggleButton isFavorite={isFavorite ?? false} onToggle={onToggleFavorite} />
+          </span>
         )}
       </div>
     </Section>

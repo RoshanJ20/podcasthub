@@ -408,6 +408,87 @@
     text-transform: uppercase;
     color: var(--text-secondary);
   }
+
+  /* Editorial display scale — paired with Geist Sans variable weights. */
+  .text-mast {
+    font-size: clamp(28px, 4vw, 44px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+  }
+  .text-display-lg {
+    font-size: clamp(20px, 2.5vw, 28px);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    font-weight: 500;
+  }
+  .label-eyebrow {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  /* Brand glow — single source of truth for the auth-page radial.
+     Previously inlined as a 200-char Tailwind arbitrary on /login. */
+  .bg-brand-glow {
+    background:
+      radial-gradient(
+        ellipse at top,
+        oklch(from var(--brand-500) 95% 0.02 h / 0.35),
+        transparent 48%
+      ),
+      var(--bg-canvas);
+  }
+  .dark .bg-brand-glow {
+    background:
+      radial-gradient(
+        ellipse at top,
+        oklch(from var(--brand-500) 27% 0.06 h / 0.32),
+        transparent 48%
+      ),
+      var(--bg-canvas);
+  }
+
+  /* Domain-tinted band — used on home featured card and detail page hero.
+     Consumers set `style={{ '--domain-color': '#hex' }}` on the element. */
+  .gradient-domain {
+    background: linear-gradient(
+      135deg,
+      oklch(from var(--domain-color, var(--brand-500)) 96% 0.04 h / 0.65) 0%,
+      oklch(from var(--domain-color, var(--brand-500)) 98% 0.02 h / 0.3) 45%,
+      var(--bg-canvas) 100%
+    );
+  }
+  .dark .gradient-domain {
+    background: linear-gradient(
+      135deg,
+      oklch(from var(--domain-color, var(--brand-500)) 30% 0.09 h / 0.5) 0%,
+      oklch(from var(--domain-color, var(--brand-500)) 22% 0.05 h / 0.25) 45%,
+      var(--bg-canvas) 100%
+    );
+  }
+
+  /* Card hover tint — applied to an element inside a `.group` card link.
+     Card root sets `--domain-color` inline; this paints a subtle wash on hover. */
+  .card-domain-tint {
+    transition: background-color 200ms var(--ease-out);
+  }
+  .group:hover .card-domain-tint {
+    background-color: oklch(from var(--domain-color, var(--brand-500)) 98% 0.025 h);
+  }
+  .dark .group:hover .card-domain-tint {
+    background-color: oklch(from var(--domain-color, var(--brand-500)) 25% 0.05 h / 0.45);
+  }
+
+  /* Top band on cards (4px) — uses `--domain-color`. */
+  .domain-band {
+    background-color: var(--domain-color, var(--brand-500));
+  }
+  .domain-dot {
+    background-color: var(--domain-color, var(--brand-500));
+  }
 }
 
 /* Favorite-button burst animations.

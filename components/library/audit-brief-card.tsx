@@ -1,23 +1,21 @@
 /**
  * Audit brief card component for the public library grid.
  *
- * Horizontal layout: square thumbnail on the left, metadata on the right.
- * A domain-colored left strip slides over on hover to reveal a chevron,
- * matching the home page card interaction.
+ * Vertical-stacked layout: 4px domain-color top band, then a horizontal row of
+ * thumbnail + metadata. The whole card receives a subtle domain-tinted wash on
+ * hover via the `.card-domain-tint` utility, which reads `--domain-color` from
+ * the card root.
  *
  * Dependencies:
  * - next/link, next/image for navigation and optimised images
- * - lucide-react for the ChevronRight icon
- * - next-themes for dark/light mode color selection
- * - lib/domain-colors for per-domain color tokens
+ * - lib/domain-colors for per-domain color tokens (border hex used as --domain-color)
  * - lib/storage-url for resolving MinIO/Azure Blob URLs
  */
 'use client';
 
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronRight } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import { resolveStorageUrl } from '@/lib/storage-url';
 import { getDomainColor } from '@/lib/domain-colors';
 import { FavoriteButton } from '@/components/ui/favorite-button';
@@ -25,7 +23,6 @@ import { FavoriteButton } from '@/components/ui/favorite-button';
 export interface AuditBriefCardProps {
   id: string;
   title: string;
-  description: string;
   domain: string;
   year: number;
   /** Retained in interface for callers — not rendered on the card. */
@@ -40,63 +37,54 @@ export interface AuditBriefCardProps {
 export function AuditBriefCard({
   id,
   title,
-  description,
   domain,
   year,
   thumbnailUrl,
   isFavorite,
   onToggleFavorite,
 }: AuditBriefCardProps) {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
   const color = getDomainColor(domain);
-  const badgeBg = isDark ? color.darkBg : color.bg;
-  const badgeText = isDark ? color.darkText : color.text;
+  const cssVars = { '--domain-color': color.border } as CSSProperties;
 
   return (
-    <Link href={`/audit-brief/${id}`} className="group block" data-testid="audit-brief-card-link">
-      <div className="flex h-full overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-card-hover">
-        {/* Domain-colored left strip — expands on hover to reveal arrow */}
-        <div
-          className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"
-          style={{ backgroundColor: color.border }}
-        >
-          <ChevronRight
-            className="absolute text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-            size={18}
-            strokeWidth={2.5}
-          />
-        </div>
+    <Link
+      href={`/audit-brief/${id}`}
+      className="group block"
+      data-testid="audit-brief-card-link"
+      style={cssVars}
+    >
+      <div className="card-domain-tint flex h-full flex-col overflow-hidden rounded-xl border border-border-subtle bg-card shadow-card transition-shadow duration-200 hover:shadow-card-hover">
+        {/* 4px domain-color top band — replaces the old 1.5px hover-expanding strip */}
+        <div className="domain-band h-1 w-full shrink-0" />
 
-        {/* Square thumbnail */}
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden sm:h-28 sm:w-28">
-          <Image
-            src={resolveStorageUrl(thumbnailUrl)}
-            alt={title}
-            fill
-            className="object-cover"
-            sizes="112px"
-          />
-        </div>
+        <div className="flex min-h-0 flex-1">
+          {/* Thumbnail — larger for editorial weight */}
+          <div className="relative h-32 w-32 shrink-0 overflow-hidden sm:h-40 sm:w-40">
+            <Image
+              src={resolveStorageUrl(thumbnailUrl)}
+              alt={title}
+              fill
+              className="object-cover"
+              sizes="160px"
+            />
+          </div>
 
-        {/* Text content */}
-        <div className="flex min-w-0 flex-1 flex-col justify-center p-3">
-          <div className="mb-1.5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium"
-                style={{ backgroundColor: badgeBg, color: badgeText }}
-              >
-                {domain}
-              </span>
-              <span className="text-[11px] text-muted-foreground">{year}</span>
+          {/* Text content */}
+          <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 p-4">
+            <div className="min-w-0">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="domain-dot size-2 shrink-0 rounded-full" />
+                <span className="truncate text-xs font-medium text-muted-foreground">{domain}</span>
+                <span className="shrink-0 text-xs text-muted-foreground/70">· {year}</span>
+              </div>
+              <p className="line-clamp-2 text-[15px] font-medium leading-snug">{title}</p>
             </div>
             {onToggleFavorite && (
-              <FavoriteButton isFavorite={isFavorite ?? false} onToggle={onToggleFavorite} />
+              <div className="flex justify-end">
+                <FavoriteButton isFavorite={isFavorite ?? false} onToggle={onToggleFavorite} />
+              </div>
             )}
           </div>
-          <p className="line-clamp-1 text-sm font-medium leading-snug">{title}</p>
-          <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{description}</p>
         </div>
       </div>
     </Link>

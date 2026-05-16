@@ -1,22 +1,20 @@
 /**
  * Unified home page card for both audit brief and learning series content.
  *
- * Renders a text-based card with a domain-colored left strip that expands
- * on hover to reveal an arrow, pushing the card content to the right.
- * Domain badge uses dark-mode-aware colors.
+ * Vertical-stacked layout: 4px domain-color top band, then text content.
+ * Receives a subtle domain-tinted hover wash via `.card-domain-tint` utility,
+ * which reads `--domain-color` from the card root.
  *
  * Dependencies:
  * - next/link for navigation
- * - lucide-react for arrow icon
- * - lib/domain-colors for accent colors
+ * - lib/domain-colors for accent colors (border hex used as --domain-color)
  */
 'use client';
 
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
 import { getDomainColor } from '@/lib/domain-colors';
 import { FavoriteButton } from '@/components/ui/favorite-button';
-import { useTheme } from 'next-themes';
 
 interface HomeCardBaseProps {
   /** Unique ID used to build the detail page link. */
@@ -32,7 +30,6 @@ interface HomeCardBaseProps {
 interface AuditBriefCardProps extends HomeCardBaseProps {
   variant: 'auditBrief';
   year: number;
-  tags: string[];
   /** Whether this audit brief is favorited by the current user. */
   isFavorite?: boolean;
   /** Callback to toggle the favorite state. */
@@ -42,74 +39,53 @@ interface AuditBriefCardProps extends HomeCardBaseProps {
 interface SeriesCardProps extends HomeCardBaseProps {
   variant: 'series';
   episodeCount: number;
-  completedCount: number;
 }
 
 export type HomeCardProps = AuditBriefCardProps | SeriesCardProps;
 
 /**
- * Renders a unified home page card with domain-colored left strip.
+ * Renders a unified home page card with a 4px domain-color top band.
  *
- * On hover the strip expands to reveal a chevron arrow, pushing the
- * card content to the right with a smooth transition.
+ * On hover the card receives a subtle domain-tinted wash and an elevated shadow.
  *
  * @param props - Card props, discriminated by `variant`.
- * @returns A linked card element with domain accent styling and hover animation.
+ * @returns A linked card element with domain accent styling.
  */
 export function HomeCard(props: HomeCardProps) {
   const { id, variant, title, description, domain } = props;
   const color = getDomainColor(domain);
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
+  const cssVars = { '--domain-color': color.border } as CSSProperties;
   const href = variant === 'auditBrief' ? `/audit-brief/${id}` : `/learning-path/${id}`;
-
-  const badgeBg = isDark ? color.darkBg : color.bg;
-  const badgeText = isDark ? color.darkText : color.text;
+  const metadata = variant === 'auditBrief' ? `${props.year}` : `${props.episodeCount} episodes`;
 
   return (
-    <Link href={href as string}>
-      <div className="group flex overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 hover:shadow-card-hover">
-        {/* Domain-colored strip — expands on hover to show arrow */}
-        <div
-          className="relative flex w-1.5 shrink-0 items-center justify-center transition-[width] duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] group-hover:w-9"
-          style={{ backgroundColor: color.border }}
-        >
-          <ChevronRight
-            className="absolute text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-            size={18}
-            strokeWidth={2.5}
-          />
-        </div>
+    <Link href={href} className="group block" style={cssVars}>
+      <div className="card-domain-tint flex h-full flex-col overflow-hidden rounded-xl border border-border-subtle bg-card shadow-card transition-shadow duration-200 hover:shadow-card-hover">
+        {/* 4px domain-color top band */}
+        <div className="domain-band h-1 w-full shrink-0" />
 
-        {/* Card content */}
-        <div className="flex-1 p-4">
-          {/* Top row: domain badge + metadata + favorite */}
-          <div className="mb-2 flex items-center justify-between">
-            <span
-              className="inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium"
-              style={{ backgroundColor: badgeBg, color: badgeText }}
-            >
-              {domain}
-            </span>
-            <div className="flex items-center gap-1">
-              <span className="text-[11px] text-muted-foreground">
-                {variant === 'auditBrief' ? props.year : `${props.episodeCount} episodes`}
-              </span>
-              {variant === 'auditBrief' && props.onToggleFavorite && (
+        <div className="flex flex-1 flex-col p-4">
+          {/* Top row: domain dot + label + metadata + favorite */}
+          <div className="mb-2 flex items-center gap-2">
+            <span className="domain-dot size-2 shrink-0 rounded-full" />
+            <span className="truncate text-xs font-medium text-muted-foreground">{domain}</span>
+            <span className="shrink-0 text-xs text-muted-foreground/70">· {metadata}</span>
+            {variant === 'auditBrief' && props.onToggleFavorite && (
+              <span className="ml-auto">
                 <FavoriteButton
                   isFavorite={props.isFavorite ?? false}
                   onToggle={props.onToggleFavorite}
                 />
-              )}
-            </div>
+              </span>
+            )}
           </div>
 
           {/* Title */}
-          <p className="text-sm font-medium leading-snug">{title}</p>
+          <p className="line-clamp-2 text-[15px] font-medium leading-snug">{title}</p>
 
           {/* Description */}
           {description && (
-            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{description}</p>
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{description}</p>
           )}
         </div>
       </div>
