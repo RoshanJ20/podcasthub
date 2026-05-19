@@ -2,36 +2,48 @@ sequenceDiagram
     actor U as User
     participant B as Browser
     participant MW as Edge Middleware
-    participant API as /api/auth/login
-    participant Auth as lib/auth
+    participant NA as /api/auth/[...nextauth]
+    participant Auth as lib/auth (NextAuth options)
+    participant Adapter as lib/auth/prisma-adapter
     participant DB as PostgreSQL
 
+    %% --- Initial gated visit ---------------------------------------------
     U->>B: Navigate to /admin
-    B->>MW: GET /admin
-    MW->>MW: Extract access_token cookie
-    MW->>MW: Verify JWT (jose library)
-    alt No valid token
-        MW-->>B: 302 Redirect /login?redirectTo=/admin
-    end
+    B->>MW: GET /admin (no cookie)
+    MW->>MW: getToken() — no NextAuth session cookie
+    MW-->>B: 302 Redirect /login?callbackUrl=/admin
 
-    U->>B: Submit email + password
-    B->>API: POST /api/auth/login
-    API->>Auth: Validate loginSchema (Zod)
-    API->>DB: findUnique(email) + include UserRole
-    DB-->>API: User record
-    API->>Auth: verifyPassword(input, hash) via bcrypt
-    API->>Auth: signAccessToken({userId, email, role})
-    API->>Auth: signRefreshToken({userId, email, role})
-    Auth-->>API: JWT strings (HS256)
-    API-->>B: 200 + Set-Cookie access_token 15m and refresh_token 7d
+    %% --- Credentials sign-in ---------------------------------------------
+    U->>B: Submit email + password on /login
+    B->>NA: POST /api/auth/callback/credentials
+    NA->>Auth: authorize({ email, password })
+    Auth->>DB: findUnique({ email })
+    DB-->>Auth: User row
+    Auth->>Auth: verifyPassword(input, passwordHash) via bcryptjs
+    Auth->>Adapter: create/update Session row
+    Auth-->>NA: User payload { id, email, role }
+    NA->>Auth: signIn callback (link Azure AD if applicable)
+    NA->>Auth: jwt callback — inject { userId, role }
+    NA->>Auth: session callback — hydrate session
+    NA-->>B: 200 + Set-Cookie next-auth.session-token (HttpOnly, encrypted JWT, 30d)
 
-    B->>MW: GET /admin (with cookies)
-    MW->>MW: Verify access_token
+    %% --- Subsequent gated request ----------------------------------------
+    B->>MW: GET /admin (with session cookie)
+    MW->>MW: getToken() — decrypt session JWT
     MW->>MW: Check role in admin or superadmin
-    MW->>MW: Set headers x-user-id x-user-email x-user-role
-    MW-->>B: 200 Admin page
+    MW->>MW: Set headers x-request-id, x-nonce,\n  x-user-id, x-user-email, x-user-role
+    MW-->>B: 200 Admin page + per-request CSP header
 
-    Note over MW: On expired access_token
-    MW->>MW: Verify refresh_token
-    MW->>Auth: signAccessToken(payload)
-    MW-->>B: Response + new access_token cookie
+    %% --- Azure AD SSO branch ---------------------------------------------
+    Note over B,NA: SSO branch (Microsoft Entra ID)
+    U->>B: Click "Sign in with Microsoft"
+    B->>NA: GET /api/auth/signin/azure-ad
+    NA-->>B: 302 to Microsoft authorize endpoint
+    B->>NA: GET /api/auth/callback/azure-ad?code=...
+    NA->>Auth: signIn callback — link Account to existing User\n  (or create User if first sign-in)
+    NA->>Adapter: upsert Account row { provider: azure-ad }
+    NA-->>B: Set-Cookie session-token + redirect to callbackUrl
+
+    %% --- Token revocation / sign-out ------------------------------------
+    Note over Auth: lib/auth/token-revocation supports
+    Note over Auth: per-device sign-out via JWT id blacklist

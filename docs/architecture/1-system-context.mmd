@@ -1,19 +1,21 @@
 graph TB
     User["Audit Professional\n(Listener)"]
-    Admin["Admin\n(Content Manager)"]
+    Admin["Admin / Superadmin\n(Content Manager)"]
 
-    System["The Audit Brief\nNext.js Application\n\nAudio podcast platform with transcripts,\nbookmarks, learning paths, and AI search"]
+    System["The Audit Brief\nNext.js 15 Application\n\nAudio platform with transcripts, bookmarks,\nlearning paths, and AI-powered semantic search"]
 
-    PG[("PostgreSQL 16\n+ pgvector\n\nPodcasts, users, transcripts,\nlearning graphs, embeddings")]
-    S3["Object Storage\nMinIO dev / Azure Blob prod\n\nAudio files, images,\nPDF bulletins, HLS segments"]
+    PG[("PostgreSQL 16\n+ pgvector\n\nUsers, AuditBriefs, Transcripts,\nLearningGraphs, Episodes,\nBookmarks, Favorites, Progress,\nActivity, AdminAuditLog")]
+    Blob["Azure Blob Storage\n(Azurite locally · Azure Blob prod)\n\nAudio files, thumbnails,\nPDF bulletins, HLS segments\n— private container, SAS-signed"]
     OpenAI["Azure OpenAI\ntext-embedding-3-large\n\n1536-dim embeddings\nfor semantic search"]
+    EntraID["Microsoft Entra ID\n(optional SSO)\n\nOAuth2 / OIDC via NextAuth"]
 
-    User -->|"Browse bulletins, play audio,\nsearch, track learning progress"| System
-    Admin -->|"Upload podcasts, manage users,\nbuild learning paths, view analytics"| System
+    User -->|"Browse audit briefs, play audio,\nsearch, track learning progress"| System
+    Admin -->|"Upload briefs, manage users,\nbuild learning paths, view analytics,\nsweep orphan blobs"| System
 
     System -->|"Prisma ORM\n+ raw pgvector queries"| PG
-    System -->|"S3 API\npresigned URLs, media proxy"| S3
+    System -->|"Azure SDK\npresigned SAS + streaming proxy"| Blob
     System -->|"REST API\nembedding generation"| OpenAI
+    System -.->|"OAuth2 / OIDC\n(sign-in only)"| EntraID
 
     classDef person fill:#08427b,color:#fff,stroke:#08427b
     classDef system fill:#1168bd,color:#fff,stroke:#1168bd
@@ -21,4 +23,4 @@ graph TB
 
     class User,Admin person
     class System system
-    class PG,S3,OpenAI external
+    class PG,Blob,OpenAI,EntraID external

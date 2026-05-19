@@ -1,4 +1,22 @@
 ##
+# ⚠ NOT THE CANONICAL DEPLOYMENT WORKFLOW.
+#
+# The Audit Brief is currently deployed to an Azure VM (Ubuntu 22.04)
+# running Nginx + pm2 on port 3103. The canonical deployment procedure
+# lives in docs/deployment-guide.md and the README's Deployment section.
+#
+# This workflow targets Azure Container Apps via ACR and federated OIDC.
+# It remains in the repo as a reference for a possible future migration,
+# but the `push` trigger is OUT OF SYNC with production and should NOT be
+# enabled before the following are reconciled:
+#   (a) image build context vs. the runtime env on the VM;
+#   (b) zero-downtime migration strategy for `prisma migrate deploy`;
+#   (c) env vars / secrets parity (e.g. AZURE_OPENAI_API_KEY rename);
+#   (d) post-deploy health verification against /api/ready;
+#   (e) DNS / Nginx routing for the `/auditbrief` basePath.
+# Rename to cd.yml.disabled or remove the `on.push` trigger if accidental
+# triggering is a concern.
+# ---------------------------------------------------------------------------
 # CD — Continuous Deployment to Azure Container Apps
 #
 # Triggered on every push to main. Builds the Docker image, pushes to ACR,

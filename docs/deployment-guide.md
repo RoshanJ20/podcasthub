@@ -31,7 +31,7 @@ A step-by-step guide for deploying The Audit Brief on an Azure Virtual Machine. 
 
 **Tech stack:**
 
-- **Runtime:** Next.js 16 (Node.js 20 LTS) — standalone server managed by pm2
+- **Runtime:** Next.js 15.3 (Node.js 20 LTS) — standalone server managed by pm2
 - **Database:** Azure Database for PostgreSQL Flexible Server (16 + pgvector)
 - **Storage:** Azure Blob Storage (audio files, PDFs, images)
 - **Auth:** NextAuth v4 (email/password + optional Microsoft Entra ID SSO)
@@ -73,7 +73,7 @@ graph TB
     subgraph "Azure VM (Ubuntu 22.04 LTS)"
         Nginx["Nginx<br/>:80 / :443<br/>(SSL + reverse proxy)"]
         PM2["pm2 Process Manager"]
-        NextJS["Next.js 16 Standalone<br/>Node.js 20 LTS<br/>:3103"]
+        NextJS["Next.js 15.3 Standalone<br/>Node.js 20 LTS<br/>:3103"]
     end
 
     subgraph "Azure Managed Services"
@@ -84,7 +84,7 @@ graph TB
     subgraph "Optional"
         OpenAI["Azure OpenAI"]
         Entra["Microsoft Entra ID"]
-        Sentry["Sentry"]
+        Sentry["Sentry<br/>(reserved — SDK not initialized)"]
     end
 
     Browser -->|"HTTPS :443"| Nginx
@@ -350,18 +350,23 @@ AZURE_AD_TENANT_ID=""
 
 # Azure OpenAI (optional — for semantic search)
 AZURE_OPENAI_ENDPOINT=""
-AZURE_OPENAI_KEY=""
-AZURE_OPENAI_DEPLOYMENT=""
+AZURE_OPENAI_API_KEY=""
+AZURE_OPENAI_EMBEDDING_DEPLOYMENT=""
 
-# Sentry (optional — for error tracking)
+# Sentry (RESERVED — SDK not currently initialized; leave empty until sentry.*.config.ts exists)
 SENTRY_DSN=""
 NEXT_PUBLIC_SENTRY_DSN=""
 
 # App
 NEXT_PUBLIC_APP_URL="https://<YOUR_DOMAIN>"
+NEXT_PUBLIC_BASE_PATH="/auditbrief"
 NODE_ENV="production"
 PORT=3103
 LOG_LEVEL="info"
+
+# Performance tuning
+BCRYPT_SALT_ROUNDS=12          # Bcrypt cost factor; lib/auth/password.ts
+SLOW_QUERY_THRESHOLD_MS=500    # Slow-query log threshold; lib/db-instrumentation.ts
 ```
 
 Set restrictive file permissions:
@@ -388,6 +393,8 @@ npm run build
 ```
 
 ### 8.2 Create pm2 ecosystem config
+
+This file is **not committed to the repository** because log paths and `env_file` paths are VM-specific. Create it on the VM as shown below.
 
 Create `/opt/auditbrief/app/ecosystem.config.js`:
 
@@ -580,7 +587,8 @@ Skip this section if SSO is not needed. Users can still log in with email/passwo
 3. **Supported account types:** Single tenant (this organization only)
 4. **Redirect URI:**
    - **Platform:** Select **"Web"** (NOT "Single-page application")
-   - **URL:** `https://<YOUR_DOMAIN>/api/auth/callback/azure-ad`
+   - **URL:** `https://<YOUR_DOMAIN>/auditbrief/api/auth/callback/azure-ad`
+     (the `/auditbrief` segment is the app's basePath — it must be present or NextAuth will reject the callback)
 5. Click **Register**
 
 > **IMPORTANT:** The platform MUST be **"Web"**. The Audit Brief is a server-rendered
@@ -840,22 +848,27 @@ npx prisma migrate resolve --rolled-back <MIGRATION_NAME>
 
 ## 16. Environment Variables Reference
 
-| Variable                       | Required | Description                                                | Example                                               |
-| ------------------------------ | -------- | ---------------------------------------------------------- | ----------------------------------------------------- |
-| `DATABASE_URL`                 | Yes      | PostgreSQL connection string with SSL                      | `postgresql://user:pass@host:5432/db?sslmode=require` |
-| `NEXTAUTH_SECRET`              | Yes      | Secret for encrypting NextAuth JWT sessions (min 32 chars) | `openssl rand -base64 32`                             |
-| `NEXTAUTH_URL`                 | Yes      | Canonical URL including `/auditbrief` basePath             | `https://auditbrief.example.com/auditbrief`           |
-| `PORT`                         | Yes      | Port the Node.js server listens on                         | `3103`                                                |
-| `NODE_ENV`                     | Yes      | Runtime environment                                        | `production`                                          |
-| `AZURE_BLOB_CONNECTION_STRING` | Yes      | Azure Blob Storage connection string                       | `DefaultEndpointsProtocol=https;AccountName=...`      |
-| `AZURE_BLOB_CONTAINER`         | No       | Blob container name                                        | `the-audit-brief-uploads` (default)                   |
-| `AZURE_AD_CLIENT_ID`           | No       | Microsoft Entra ID app client ID (for SSO)                 | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                |
-| `AZURE_AD_CLIENT_SECRET`       | No       | Microsoft Entra ID app client secret                       | (secret value)                                        |
-| `AZURE_AD_TENANT_ID`           | No       | Microsoft Entra ID directory tenant ID                     | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                |
-| `AZURE_OPENAI_ENDPOINT`        | No       | Azure OpenAI service endpoint (for semantic search)        | `https://xxx.openai.azure.com`                        |
-| `AZURE_OPENAI_KEY`             | No       | Azure OpenAI API key                                       | (key value)                                           |
-| `AZURE_OPENAI_DEPLOYMENT`      | No       | Azure OpenAI embedding model deployment name               | `text-embedding-3-large`                              |
-| `SENTRY_DSN`                   | No       | Sentry error tracking DSN (server-side)                    | `https://xxx@sentry.io/xxx`                           |
-| `NEXT_PUBLIC_SENTRY_DSN`       | No       | Sentry DSN (client-side bundle)                            | `https://xxx@sentry.io/xxx`                           |
-| `NEXT_PUBLIC_APP_URL`          | No       | Public app URL (for CORS, metadata)                        | `https://auditbrief.example.com`                      |
-| `LOG_LEVEL`                    | No       | Pino log level                                             | `info` (default in production)                        |
+| Variable                            | Required | Description                                                                   | Example                                               |
+| ----------------------------------- | -------- | ----------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `DATABASE_URL`                      | Yes      | PostgreSQL connection string with SSL                                         | `postgresql://user:pass@host:5432/db?sslmode=require` |
+| `NEXTAUTH_SECRET`                   | Yes      | Secret for encrypting NextAuth JWT sessions (min 32 chars)                    | `openssl rand -base64 32`                             |
+| `NEXTAUTH_URL`                      | Yes      | Canonical URL including `/auditbrief` basePath                                | `https://auditbrief.example.com/auditbrief`           |
+| `PORT`                              | Yes      | Port the Node.js server listens on                                            | `3103`                                                |
+| `NODE_ENV`                          | Yes      | Runtime environment                                                           | `production`                                          |
+| `AZURE_BLOB_CONNECTION_STRING`      | Yes      | Azure Blob Storage connection string                                          | `DefaultEndpointsProtocol=https;AccountName=...`      |
+| `AZURE_BLOB_CONTAINER`              | No       | Blob container name                                                           | `the-audit-brief-uploads` (default)                   |
+| `AZURE_AD_CLIENT_ID`                | No       | Microsoft Entra ID app client ID (for SSO)                                    | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                |
+| `AZURE_AD_CLIENT_SECRET`            | No       | Microsoft Entra ID app client secret                                          | (secret value)                                        |
+| `AZURE_AD_TENANT_ID`                | No       | Microsoft Entra ID directory tenant ID                                        | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                |
+| `AZURE_OPENAI_ENDPOINT`             | No       | Azure OpenAI service endpoint (for semantic search)                           | `https://xxx.openai.azure.com`                        |
+| `AZURE_OPENAI_API_KEY`              | No       | Azure OpenAI API key (read by `lib/embeddings.ts:33`)                         | (key value)                                           |
+| `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | No       | Azure OpenAI embedding model deployment name (read by `lib/embeddings.ts:34`) | `text-embedding-3-large`                              |
+| `SENTRY_DSN`                        | No       | Sentry error tracking DSN — **reserved; SDK not currently initialized**       | `https://xxx@sentry.io/xxx`                           |
+| `NEXT_PUBLIC_SENTRY_DSN`            | No       | Sentry DSN (client bundle) — **reserved**                                     | `https://xxx@sentry.io/xxx`                           |
+| `NEXT_PUBLIC_APP_URL`               | No       | Origin URL (no basePath) — used for CORS, metadata                            | `https://auditbrief.example.com`                      |
+| `NEXT_PUBLIC_BASE_PATH`             | No       | Deployment subpath (must match `basePath` segment of `NEXTAUTH_URL`)          | `/auditbrief` (default)                               |
+| `BCRYPT_SALT_ROUNDS`                | No       | Bcrypt cost factor for password hashing (`lib/auth/password.ts`)              | `12` (default)                                        |
+| `SLOW_QUERY_THRESHOLD_MS`           | No       | Slow-query log threshold in ms (`lib/db-instrumentation.ts:26`)               | `500` (default)                                       |
+| `LOG_LEVEL`                         | No       | Pino log level                                                                | `info` (default in production)                        |
+
+> **Legacy variable names:** Bicep templates and earlier `.env` files emit `AZURE_OPENAI_KEY` and `AZURE_OPENAI_DEPLOYMENT`. The application code reads the new `_API_KEY` / `_EMBEDDING_DEPLOYMENT` names — populate the new names on the VM.

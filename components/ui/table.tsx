@@ -1,3 +1,13 @@
+/**
+ * Table — shadcn/ui primitive wrapping @base-ui/react (and cmdk for Command).
+ *
+ * Generated via the shadcn CLI and customized with our Tailwind 4 design tokens
+ * (see app/globals.css). See https://ui.shadcn.com/docs/components/table for the
+ * upstream API contract; component variants here may be more constrained.
+ *
+ * Exports: Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption
+ * Styling: cva() variants reference Tailwind 4 tokens; cn() merges class names.
+ */
 'use client';
 
 import * as React from 'react';

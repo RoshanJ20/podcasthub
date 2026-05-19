@@ -1,45 +1,45 @@
 sequenceDiagram
     actor A as Admin
     participant Upload as /api/upload
-    participant S3 as MinIO / Azure Blob
-    participant FFmpeg as FFmpeg
+    participant Blob as Azure Blob Storage
 
-    A->>Upload: POST filename, content_type, category audio
-    Upload->>Upload: Validate MIME type mp3/m4a/wav/ogg
-    Upload->>Upload: Check size under 500MB
-    Upload->>Upload: Generate key audio/uuid/filename
-    Upload->>S3: Generate presigned PUT URL 1hr
-    S3-->>Upload: Signed URL
-    Upload-->>A: upload_url, key, bucket
-    A->>S3: PUT raw audio file via presigned URL
-    Note over S3,FFmpeg: FFmpeg transcodes to HLS segments .m3u8 + .ts
+    A->>Upload: POST { fileName, contentType, category: "audio" }
+    Upload->>Upload: Validate MIME (mp3 / m4a / wav / ogg) via lib/upload.ts
+    Upload->>Upload: Check size under MAX_FILE_SIZES.audio
+    Upload->>Upload: Generate key "audio/<uuid>/<filename>"
+    Upload->>Blob: Generate presigned SAS PUT URL (1hr)
+    Blob-->>Upload: SAS URL
+    Upload-->>A: { upload_url, key, container }
+    A->>Blob: PUT raw audio file directly via SAS URL\n(client → blob, never proxied through Next.js)
+    Note over Blob: Object stored in private container.\nNo separate transcoding step today — HLS .m3u8\ncan be uploaded alongside the source if pre-transcoded.
 
     actor U as Listener
     participant Player as Audio Player
     participant Hook as useHlsPlayer
-    participant Media as /api/media
-    participant Store as Player Store Zustand
+    participant Media as /api/media (streaming proxy)
+    participant Store as Player Store (Zustand)
 
-    U->>Player: Click play on podcast
-    Player->>Store: loadPodcast with id, title, audioShortUrl, audioLongUrl
-    Store-->>Hook: currentPodcast changed
-    Hook->>Hook: Resolve URL via /api/media?key=encoded
-    alt HLS stream .m3u8
-        Hook->>Hook: new Hls loadSource attachMedia
-    else Direct file
-        Hook->>Hook: audio.src = url
+    U->>Player: Click play on AuditBrief
+    Player->>Store: loadAuditBrief({ id, title, audioShortUrl, audioLongUrl, ... })
+    Store-->>Hook: currentAuditBrief changed
+    Hook->>Hook: Resolve URL via /api/media?key=<encoded blob key>
+    alt HLS stream (.m3u8)
+        Hook->>Hook: new Hls() → loadSource() → attachMedia()
+    else Direct file (mp3 / m4a)
+        Hook->>Hook: audio.src = mediaProxyUrl
     end
 
-    Hook->>Media: GET /api/media?key=audio/uuid/file.mp3
-    Media->>S3: GetObject with Range header if seeking
-    S3-->>Media: Audio bytes + Content-Range
-    Media-->>Hook: 206 Partial Content
+    Hook->>Media: GET /api/media?key=audio/<uuid>/file.mp3
+    Media->>Blob: streamObject(key, range?) via Azure SDK\n  (Node ReadableStream → Web ReadableStream)
+    Blob-->>Media: Audio bytes + Content-Range (if range requested)
+    Media-->>Hook: 200 OK or 206 Partial Content
+    Note over Media: lib/storage.ts streams without buffering;\nsuitable for files up to several GB.
 
-    Hook->>Store: setDuration
+    Hook->>Store: setDuration(...)
     loop Every timeupdate event
-        Hook->>Store: setCurrentTime
+        Hook->>Store: setCurrentTime(...)
     end
 
-    U->>Player: Toggle Short/Long audio
-    Player->>Store: toggleAudioType
-    Store-->>Hook: audioType changed, new URL loaded
+    U->>Player: Toggle Short / Long audio
+    Player->>Store: toggleAudioType()
+    Store-->>Hook: audioType changed → new key resolved, source reattached

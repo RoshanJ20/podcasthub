@@ -11,26 +11,26 @@ graph TB
         direction LR
         UI["React 19 + shadcn/ui\nServer & Client Components"]
         Player["Audio Player\nHLS.js streaming"]
-        Editor["Learning Path Editor\nxyflow + Dagre"]
+        Editor["Learning Path Editor\n@dnd-kit sortable\n(drag-to-reorder)"]
     end
 
     %% ── Next.js Container ──
-    subgraph nextjs ["⚡ Next.js 16 Container"]
+    subgraph nextjs ["⚡ Next.js 15 Container"]
         direction TB
-        Middleware["Edge Middleware\nJWT auth · Route protection\nToken refresh"]
+        Middleware["Edge Middleware\nNextAuth JWT cookie verify\nRoute protection · CSP nonce"]
 
         subgraph app ["Application Layer"]
             direction LR
             Pages["Server Pages\nPublic · Auth · Admin"]
-            API["API Routes\nPodcasts · Search · Auth\nBookmarks · Progress\nMedia · Upload"]
+            API["API Routes\nAudit Briefs · Search · Auth\nBookmarks · Favorites · Progress\nMedia · Upload · Activity"]
         end
 
         subgraph libs ["Core Libraries"]
             direction LR
-            Auth["Auth\nJWT · bcrypt\nRBAC"]
+            Auth["Auth\nNextAuth v4 · bcrypt\nRBAC (public/admin/superadmin)"]
             Validation["Validation\nZod schemas"]
-            Embed["Embeddings\nAzure OpenAI\nclient"]
-            Storage["Storage\nS3 client\npresigned URLs"]
+            Embed["Embeddings\nAzure OpenAI\nclient (retry + backoff)"]
+            Storage["Storage\nAzure Blob SDK\npresigned SAS + streaming"]
             Log["Logger\nPino JSON"]
         end
     end
@@ -38,15 +38,15 @@ graph TB
     %% ── Data Stores ──
     subgraph data ["🗄️ Data Layer"]
         direction LR
-        PG[("PostgreSQL 16\n+ pgvector\n\nUsers · Podcasts\nTranscripts · Graphs\nBookmarks · Progress")]
-        S3[("Object Storage\nMinIO → Azure Blob\n\nAudio · Images\nPDFs · HLS segments")]
+        PG[("PostgreSQL 16\n+ pgvector\n\nUsers · AuditBriefs\nTranscripts · LearningGraphs\nEpisodes · Bookmarks · Favorites\nProgress · Activity · AdminAuditLog")]
+        Blob[("Azure Blob Storage\n(private container,\nSAS-signed access)\n\nAudio · Images\nPDFs · HLS segments")]
     end
 
     %% ── External Services ──
     subgraph external ["☁️ External Services"]
         direction LR
         OpenAI["Azure OpenAI\ntext-embedding-3-large\nSemantic search"]
-        Sentry["Sentry\nError tracking\nPerformance"]
+        Sentry["Sentry (reserved)\nSDK not initialized"]
     end
 
     %% ── Connections ──
@@ -62,10 +62,10 @@ graph TB
     Auth -->|"Prisma ORM"| PG
     Validation --> API
     Embed -->|"REST API"| OpenAI
-    Storage -->|"S3 protocol"| S3
+    Storage -->|"Azure SDK\n(SAS + streaming)"| Blob
     API -->|"Prisma ORM\n+ pgvector"| PG
-    Log -->|"Telemetry"| Sentry
-    Player -->|"Range requests\nmedia proxy"| API
+    Log -.->|"Telemetry\n(when SDK is added)"| Sentry
+    Player -->|"Range requests\n/api/media proxy"| API
 
     %% ── Styles ──
     classDef actor fill:#1e3a5f,color:#fff,stroke:#1e3a5f,stroke-width:2px
@@ -79,5 +79,5 @@ graph TB
     class UI,Player,Editor clientBox
     class Middleware,Pages,API serverBox
     class Auth,Validation,Embed,Storage,Log libBox
-    class PG,S3 dataStore
+    class PG,Blob dataStore
     class OpenAI,Sentry extService

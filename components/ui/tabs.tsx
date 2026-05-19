@@ -1,3 +1,13 @@
+/**
+ * Tabs — shadcn/ui primitive wrapping @base-ui/react (and cmdk for Command).
+ *
+ * Generated via the shadcn CLI and customized with our Tailwind 4 design tokens
+ * (see app/globals.css). See https://ui.shadcn.com/docs/components/tabs for the
+ * upstream API contract; component variants here may be more constrained.
+ *
+ * Exports: Tabs, TabsList, TabsTrigger, TabsContent
+ * Styling: cva() variants reference Tailwind 4 tokens; cn() merges class names.
+ */
 'use client';
 
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs';

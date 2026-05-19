@@ -2,69 +2,79 @@ graph TB
     subgraph Browser
         SPA["React 19 SPA\nshadcn/ui + Tailwind 4\nServer Components + Client Components"]
         PlayerUI["Audio Player\nHLS.js adaptive streaming\nZustand player store"]
-        GraphUI["Graph Viewer and Editor\nxyflow/react + Dagre\nZustand editor store"]
+        GraphUI["Linear Path Editor\n@dnd-kit/sortable\nZustand graph-editor store"]
     end
 
-    subgraph NextServer["Next.js 16 Server"]
-        MW["Edge Middleware\njose JWT verification\nRoute protection + token refresh\nHeader injection: x-user-*"]
+    subgraph NextServer["Next.js 15 Server"]
+        MW["Edge Middleware\nNextAuth JWT cookie via getToken\nRoute protection · CSP nonce\nHeader injection: x-request-id, x-nonce, x-user-*"]
 
         subgraph Pages["Server Components"]
-            PubPages["Public Pages\nHome, Bulletins, Podcast Detail,\nLearning Paths, Search, Profile"]
-            AuthPages["Auth Pages\nLogin, Register"]
-            AdminPages["Admin Pages\nDashboard, Upload, Edit,\nUsers, Analytics, Graph Editor"]
+            PubPages["Public Pages\nHome, Bulletins, AuditBrief Detail,\nLearning Paths, Search, Progress"]
+            AuthPages["Auth Pages\nLogin, Register, Unauthorized"]
+            AdminPages["Admin Pages\nDashboard, Upload, Edit, Transcript Edit,\nUsers, Analytics, Audit Log, Path Editor"]
         end
 
         subgraph APILayer["API Route Handlers"]
-            AuthAPI["/api/auth/*\nlogin, register, logout,\nrefresh, me"]
-            PodcastAPI["/api/podcasts/*\nCRUD, batch, transcript"]
-            GraphAPI["/api/learning-graphs/*\nCRUD, bulk episode+edge save"]
-            SearchAPI["/api/search\ntext search + semantic search"]
-            MediaAPI["/api/media\nS3 proxy with range requests"]
-            UploadAPI["/api/upload\npresigned URLs, file upload"]
+            AuthAPI["/api/auth/[...nextauth]\n/api/auth/register"]
+            BriefAPI["/api/audit-briefs/*\nCRUD, batch, transcript"]
+            GraphAPI["/api/learning-graphs/*\nCRUD, /data bulk episode+edge save"]
+            SearchAPI["/api/search\nGET (keyword) + POST (semantic)"]
+            MediaAPI["/api/media\nAzure Blob streaming proxy\n(HTTP Range support)"]
+            UploadAPI["/api/upload + /api/upload/file\npresigned SAS + multipart"]
             BookmarkAPI["/api/bookmarks/*\nCRUD per user"]
+            FavoriteAPI["/api/favorites +\n/api/learning-graph-favorites"]
             ProgressAPI["/api/progress/*\nepisode completion tracking"]
-            AdminAPI["/api/admin/analytics\n/api/users management"]
+            ActivityAPI["/api/activity\nfire-and-forget logging"]
+            HealthAPI["/api/health, /api/ready"]
+            AdminAPI["/api/admin/analytics\n/api/admin/blob-sweep\n/api/users management"]
         end
 
         subgraph LibLayer["Shared Libraries"]
-            AuthLib["lib/auth\nJWT sign/verify, bcrypt,\nHttpOnly cookies, RBAC helpers"]
-            APILib["lib/api\nApiError, ErrorCode enum,\npagination, rate limiting"]
-            Schemas["lib/schemas\nZod: user, podcast,\nlearning-graph, bookmark"]
-            EmbedLib["lib/embeddings\nAzure OpenAI client\nretry with backoff"]
-            StorageLib["lib/storage\nS3Client, presigned URLs,\nfile validation"]
-            DB["lib/db\nPrisma + pg.Pool singleton"]
+            AuthLib["lib/auth\nNextAuth options, password (bcryptjs),\nPrisma adapter, token revocation,\nsession helpers (requireAuth/requireRole)"]
+            APILib["lib/api\nApiError, errors, pagination,\nrate-limit, cors, request-logging"]
+            Schemas["lib/schemas\nZod: audit-brief, learning-graph,\nbookmark, user, common, admin"]
+            EmbedLib["lib/embeddings\nAzure OpenAI client\nretry + exponential backoff"]
+            StorageLib["lib/storage + lib/storage-*.ts\nAzure Blob SDK, presigned SAS,\nstreaming downloads, cleanup"]
+            AdminLib["lib/admin\naudit-log, blob-sweep,\nconcurrency, revalidate"]
+            SecurityLib["lib/security/csp.ts\nnonce + policy"]
+            DB["lib/db + lib/db-instrumentation\nPrisma client singleton +\nslow-query logging"]
             Logger["lib/logger\nPino structured JSON"]
         end
     end
 
-    PG[("PostgreSQL 16\npgvector extension\n\n10 models:\nUser, Podcast, Transcript,\nLearningGraph, Episode,\nEdge, Bookmark, Role,\nProgress, Activity")]
-    S3["MinIO / Azure Blob\nS3-compatible\n\nBuckets:\naudio, images, PDFs,\nHLS segments"]
+    PG[("PostgreSQL 16\npgvector extension\n\n14 models:\nUser, Account, Session,\nAuditBrief, Transcript,\nLearningGraph, Episode,\nLearningPathEdge, Bookmark,\nFavorite, LearningGraphFavorite,\nUserProgress, UserActivity, AdminAuditLog")]
+    Blob["Azure Blob Storage\n(private container,\nSAS-signed access)\n\nAudio, Images,\nPDFs, HLS segments"]
     AzureOAI["Azure OpenAI\ntext-embedding-3-large\n1536 dimensions"]
 
     SPA -->|"HTTP requests"| MW
     PlayerUI -->|"GET with Range header"| MediaAPI
-    GraphUI -->|"PUT bulk save"| GraphAPI
+    GraphUI -->|"PUT /data bulk save"| GraphAPI
 
     MW -->|"JWT valid"| Pages
     MW -->|"JWT valid + headers"| APILayer
 
     AuthAPI --> AuthLib
-    PodcastAPI --> DB
+    BriefAPI --> DB
     GraphAPI --> DB
     SearchAPI --> EmbedLib
     SearchAPI --> DB
     MediaAPI --> StorageLib
     UploadAPI --> StorageLib
     BookmarkAPI --> DB
+    FavoriteAPI --> DB
     ProgressAPI --> DB
+    ActivityAPI --> DB
+    AdminAPI --> AdminLib
     AdminAPI --> DB
 
     APILayer --> APILib
     APILayer --> Schemas
     APILayer --> Logger
+    Pages --> SecurityLib
+    MW --> SecurityLib
 
     DB -->|"Prisma queries\n+ raw pgvector SQL"| PG
-    StorageLib -->|"S3 protocol"| S3
+    StorageLib -->|"Azure SDK"| Blob
     EmbedLib -->|"POST /embeddings"| AzureOAI
 
     classDef browser fill:#438dd5,color:#fff,stroke:#438dd5
@@ -74,7 +84,7 @@ graph TB
     classDef mw fill:#d4456e,color:#fff,stroke:#d4456e
 
     class SPA,PlayerUI,GraphUI browser
-    class PubPages,AuthPages,AdminPages,AuthAPI,PodcastAPI,GraphAPI,SearchAPI,MediaAPI,UploadAPI,BookmarkAPI,ProgressAPI,AdminAPI server
-    class AuthLib,APILib,Schemas,EmbedLib,StorageLib,DB,Logger lib
-    class PG,S3,AzureOAI infra
+    class PubPages,AuthPages,AdminPages,AuthAPI,BriefAPI,GraphAPI,SearchAPI,MediaAPI,UploadAPI,BookmarkAPI,FavoriteAPI,ProgressAPI,ActivityAPI,HealthAPI,AdminAPI server
+    class AuthLib,APILib,Schemas,EmbedLib,StorageLib,AdminLib,SecurityLib,DB,Logger lib
+    class PG,Blob,AzureOAI infra
     class MW mw

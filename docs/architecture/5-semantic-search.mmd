@@ -14,9 +14,9 @@ sequenceDiagram
     Azure-->>Embed: float array 1536 dims
     Embed-->>API: embedding vector
 
-    API->>DB: Raw SQL with pgvector
-    Note over API,DB: SELECT p.*, t.fullText,<br/>1 - (t.embedding <=> query::vector) AS similarity<br/>FROM transcripts t JOIN podcasts p<br/>WHERE similarity > 0.7<br/>ORDER BY similarity DESC LIMIT 10
-    DB-->>API: Matching transcripts + podcasts
+    API->>DB: Raw SQL with pgvector ($queryRaw via lib/db.ts)
+    Note over API,DB: SELECT b.*, t.fullText,<br/>1 - (t.embedding <=> query::vector) AS similarity<br/>FROM transcripts t<br/>JOIN audit_briefs b ON b.id = t.audit_brief_id<br/>WHERE b.is_archived = false<br/>ORDER BY similarity DESC LIMIT 10
+    DB-->>API: Matching transcripts + AuditBriefs
 
-    API-->>Search: podcast, transcript, similarity_score array
+    API-->>Search: { auditBrief, transcriptSegment, similarityScore }[]
     Search-->>U: Ranked results with similarity scores

@@ -1,0 +1,3124 @@
+openapi: 3.0.3
+info:
+  title: The Audit Brief API
+  version: 0.2.0
+  description: >
+    Internal enterprise audio platform for audit professionals.
+
+
+    Authoritative machine-readable contract for every `/api/*` endpoint exposed by
+
+    **The Audit Brief** (internal brand name: *podcasthub*). Intended for:
+
+
+    - **Security testing (VAPT)** — every endpoint, every role boundary, every
+      request/response shape, and every response security header documented so
+      tools such as Burp Suite, OWASP ZAP, Postman, and Schemathesis can drive
+      targeted fuzzing and policy checks.
+    - **Integration work** — new clients can be generated from this spec.
+
+    - **Internal reference** — keeps documentation in lock-step with the Zod
+      schemas in `lib/schemas/` and the Prisma entities in `prisma/schema.prisma`.
+
+    ## Base URL
+
+
+    All paths below are relative to the Next.js `basePath`. The effective URL a
+
+    client hits is:
+
+        https://uat.uno.wcgt.in/auditbrief/api/<path>
+
+    ## Authentication
+
+
+    Sessions are established via **NextAuth v4** and carried in an httpOnly cookie
+
+    named `next-auth.session-token` (or `__Secure-next-auth.session-token` over
+
+    HTTPS). The cookie is a signed JWT containing `userId`, `role`, `email`, and a
+
+    `jti` used for server-side revocation.
+
+
+    The default security requirement for every operation is `cookieAuth`. Public
+
+    endpoints explicitly override this with `security: []`.
+
+
+    ## Authorization model
+
+
+    | Role         | Capabilities                                                           |
+
+    |--------------|------------------------------------------------------------------------|
+
+    | `public`     | Read public content, manage own bookmarks/favorites/progress/activity  |
+
+    | `admin`      | All `public` + create/update/delete audit briefs, learning graphs, uploads |
+
+    | `superadmin` | All `admin` + manage users, run blob-sweep                             |
+
+
+    Role requirements are noted in the `description` of each operation.
+
+
+    ## Error envelope
+
+
+    All errors share a single JSON shape (`ErrorResponse`):
+
+
+    ```json
+
+    {
+      "status": 422,
+      "error_code": "VALIDATION_FAILED",
+      "message": "Validation failed",
+      "details": [ /* Zod issues */ ],
+      "request_id": "3f2e7a6d-..."
+    }
+
+    ```
+
+
+    The `request_id` header (`x-request-id`) is echoed on every response for log
+
+    correlation.
+
+
+    ## Response security headers (applies to every response)
+
+
+    Every response from the application is wrapped in a layered set of security
+
+    headers. The list below is the **production contract** — VAPT scans should
+
+    verify each is present and correctly valued on a representative sample of
+
+    endpoints. Headers come from three sources: Next.js `middleware.ts` (per
+
+    request), `next.config.ts` (static), and nginx (server block + per-location
+
+    override for `/auditbrief`). The merged effective set seen by the browser is:
+
+
+    | Header                         | Source            | Value
+    (production)                                                   |
+
+    |--------------------------------|-------------------|----------------------------------------------------------------------|
+
+    | `Content-Security-Policy`      | `middleware.ts`   | Per-request, nonce-based (see below). Single header — never
+    duplicated. |
+
+    | `Strict-Transport-Security`    | `next.config.ts` + nginx | `max-age=31536000; includeSubDomains;
+    preload`                |
+
+    | `X-Frame-Options`              | nginx + Next.js   | `SAMEORIGIN` (nginx) — `DENY` (Next.js, applied
+    first)              |
+
+    | `X-Content-Type-Options`       | nginx + Next.js   |
+    `nosniff`                                                            |
+
+    | `Referrer-Policy`              | nginx + Next.js   |
+    `strict-origin-when-cross-origin`                                    |
+
+    | `Permissions-Policy`           | `next.config.ts`  | `camera=(), microphone=(),
+    geolocation=()`                           |
+
+    | `X-XSS-Protection`             | `next.config.ts`  | `0` (legacy filter explicitly disabled per OWASP
+    guidance)           |
+
+    | `Cache-Control`                | nginx             | `no-store, no-cache, must-revalidate,
+    proxy-revalidate`              |
+
+    | `Pragma`                       | nginx             |
+    `no-cache`                                                           |
+
+    | `Expires`                      | nginx             |
+    `0`                                                                  |
+
+    | `x-request-id`                 | `middleware.ts`   | UUID v4 — echoed in every error envelope's `request_id`
+    field.       |
+
+
+    ### Content-Security-Policy details
+
+
+    The CSP is generated **per response** by `lib/security/csp.ts`
+
+    (`buildContentSecurityPolicy(nonce)`). The nonce is a 22-character
+
+    base64 string from a cryptographically-random UUID, regenerated on every
+
+    request in `middleware.ts`. Effective directives:
+
+
+    ```
+
+    default-src 'self';
+
+    script-src 'self' 'nonce-<random>' 'strict-dynamic';
+
+    style-src 'self' 'nonce-<random>';
+
+    style-src-attr 'unsafe-inline';
+
+    img-src 'self' data: blob:;
+
+    media-src 'self' blob:;
+
+    font-src 'self' data:;
+
+    connect-src 'self';
+
+    worker-src 'self' blob:;
+
+    frame-ancestors 'self';
+
+    base-uri 'self';
+
+    form-action 'self';
+
+    object-src 'none';
+
+    upgrade-insecure-requests
+
+    ```
+
+
+    **VAPT validation checklist for CSP:**
+
+
+    - The browser MUST receive exactly **one** `Content-Security-Policy`
+      header (not two — duplicate headers would intersect and drop the
+      nonce; this was a deployment regression fixed by per-location nginx
+      header override).
+    - Two consecutive requests MUST return **different** nonce values.
+
+    - `'unsafe-inline'` MUST NOT appear in `script-src` (only nonce + strict-dynamic).
+
+    - `'unsafe-eval'` MUST NOT appear anywhere.
+
+    - `style-src-attr 'unsafe-inline'` is intentional and accepted: it permits
+      inline `style="…"` attributes only (not `<style>` tags). The risk
+      profile is materially lower than `script-src 'unsafe-inline'`.
+
+    ## Known pen-test focus areas
+
+
+    - `/api/media?key=...` is unauthenticated — key enumeration can expose any
+      stored blob. Range-request handling is delegated to the Azure SDK.
+    - `/api/upload/file` is excluded from the middleware matcher (bypasses the
+      10 MB edge-buffer cap). It authenticates itself internally.
+    - Rate limiting is **not wired up** on any route (the module exists but is
+      unused) — test for enumeration, credential stuffing, semantic-search DoS.
+    - JWT revocation is in-memory and not distributed (multi-instance gap).
+
+    - CSRF relies on `SameSite=Lax` + cookie auth; there are no explicit CSRF
+      tokens on custom API routes.
+    - The Credentials provider (email + password) is disabled in production —
+      only Microsoft Entra ID (Azure AD) SSO is accepted. Verify by attempting
+      `POST /api/auth/callback/credentials` against UAT/prod (must reject).
+    - `/api/admin/blob-sweep?dry-run=false` performs destructive Azure deletions.
+      Restricted to `superadmin`; verify role enforcement and audit-log emission.
+    - `/api/auth/[...nextauth]/signout` revokes the current JWT's `jti` only in
+      the local Node process — a parallel pm2 worker may still accept the token
+      until its TTL expires.
+
+    ## Changelog
+
+
+    - **0.2.0** (2026-04-30) — Document response security headers (CSP nonce,
+      HSTS, X-Frame-Options, etc.) added in commit `f1ad4dd`. Add reusable
+      `components.headers` definitions. Document `/api/admin/blob-sweep`
+      destructive-mode safeguards and the streaming `/api/media` proxy.
+    - **0.1.0** (2026-04-22) — Initial machine-readable contract for VAPT.
+  contact:
+    name: Audit Brief Platform Team
+  license:
+    name: Proprietary — internal use only
+servers:
+  - url: https://uat.uno.wcgt.in/auditbrief
+    description: UAT / production-equivalent (basePath `/auditbrief`).
+security:
+  - cookieAuth: []
+tags:
+  - name: Health
+    description: Liveness and readiness probes. Unauthenticated.
+  - name: Auth
+    description: Registration and the NextAuth sign-in / sign-out / session / CSRF flow.
+  - name: Audit Briefs
+    description: CRUD and soft/hard delete for audit brief content.
+  - name: Transcripts
+    description: Transcript retrieval and upsert (with pgvector embedding regeneration).
+  - name: Bookmarks
+    description: Per-user bookmarks on audit briefs and learning-path episodes.
+  - name: Favorites
+    description: Per-user favorited audit briefs.
+  - name: Learning Graphs
+    description: Linear or graph-shaped learning paths composed of episodes.
+  - name: Learning Graph Favorites
+    description: Per-user favorited learning graphs.
+  - name: Progress
+    description: Episode-level completion tracking per user.
+  - name: Activity
+    description: Fire-and-forget user activity logging for analytics.
+  - name: Search
+    description: Keyword and semantic search over audit briefs and transcripts.
+  - name: Users
+    description: User administration (superadmin only).
+  - name: Admin
+    description: Analytics dashboards and infrastructure maintenance (admin+).
+  - name: Upload
+    description: Presigned-URL and direct multipart file uploads to Azure Blob Storage.
+  - name: Media
+    description: Range-request streaming of stored blobs.
+paths:
+  /api/health:
+    get:
+      tags:
+        - Health
+      operationId: getHealth
+      summary: Liveness probe
+      description: |
+        Returns `200` as long as the Node.js process is alive. Does **not** check
+        downstream dependencies — use `/api/ready` for that.
+      security: []
+      responses:
+        '200':
+          description: Process is alive.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - timestamp
+                  - version
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - ok
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-04-22T09:15:00Z'
+                  version:
+                    type: string
+                    example: 0.1.0
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/ready:
+    get:
+      tags:
+        - Health
+      operationId: getReady
+      summary: Readiness probe (database check)
+      description: |
+        Runs a `SELECT 1` against PostgreSQL. Returns `200` when the database is
+        reachable, `503` otherwise. Load balancers and orchestrators should stop
+        routing traffic (but not restart the container) on `503`.
+      security: []
+      responses:
+        '200':
+          description: Application is ready to serve traffic.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyResponse'
+              example:
+                status: ready
+                timestamp: '2026-04-22T09:15:00Z'
+                checks:
+                  database: ok
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          description: Database unreachable — not ready to serve traffic.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadyResponse'
+              example:
+                status: not_ready
+                timestamp: '2026-04-22T09:15:00Z'
+                checks:
+                  database: failed
+  /api/auth/{nextauth}:
+    parameters:
+      - in: path
+        name: nextauth
+        required: true
+        description: |
+          NextAuth v4 catch-all. Valid sub-paths:
+            - `signin`              — GET: sign-in page, POST: begin sign-in flow
+            - `signin/credentials`  — POST: submit email+password (dev only)
+            - `signin/azure-ad`     — GET: kick off Azure AD OAuth
+            - `callback/credentials`— POST: NextAuth credentials callback
+            - `callback/azure-ad`   — GET: Azure AD OAuth return URL
+            - `signout`             — POST: invalidate session (adds `jti` to revocation list)
+            - `session`             — GET: current session `{ user, expires }`
+            - `csrf`                — GET: CSRF token for form-based POSTs
+            - `providers`           — GET: enabled providers
+
+          All sub-paths are handled by the NextAuth v4 framework — see
+          https://next-auth.js.org/configuration/initialization for the full
+          request/response contract.
+        schema:
+          type: string
+          example: session
+    get:
+      tags:
+        - Auth
+      operationId: nextAuthGet
+      summary: NextAuth catch-all (GET)
+      description: |
+        Framework-handled NextAuth endpoint. Shape of the response depends on
+        the sub-path. See the `nextauth` path parameter for sub-path reference.
+      security: []
+      responses:
+        '200':
+          description: Handler-specific success payload.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/NextAuthSession'
+                  - $ref: '#/components/schemas/NextAuthCsrfToken'
+                  - $ref: '#/components/schemas/NextAuthProviders'
+                  - type: object
+                    description: Free-form response for signin pages and other handlers.
+        '302':
+          description: Redirect to provider, callback, or post-login URL.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Auth
+      operationId: nextAuthPost
+      summary: NextAuth catch-all (POST)
+      description: |
+        Framework-handled NextAuth endpoint. Used for credential sign-in,
+        sign-out, and OAuth callbacks. Bodies are `application/x-www-form-urlencoded`
+        (NextAuth default) with fields that vary per sub-path.
+      security: []
+      requestBody:
+        required: false
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              description: Sub-path-specific fields (e.g. `email`, `password`, `csrfToken`, `callbackUrl`).
+              additionalProperties: true
+      responses:
+        '200':
+          description: Sign-in/sign-out result.
+        '302':
+          description: Redirect after successful flow.
+        '401':
+          description: Credentials rejected.
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      operationId: registerUser
+      summary: Register a new local user
+      description: |
+        Creates a user record with a bcrypt-hashed password (cost 12) and default
+        role `public`. The client is responsible for signing in via NextAuth
+        after a successful registration — this endpoint does **not** set a
+        session cookie. Disabled in production when the credentials provider is
+        turned off.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: newuser@example.com
+              password: Str0ng!Pass1234
+              displayName: Jane Doe
+      responses:
+        '201':
+          description: User created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - user
+                properties:
+                  user:
+                    $ref: '#/components/schemas/RegisteredUser'
+              example:
+                user:
+                  id: 3f2e7a6d-4b1a-4f9d-8a77-1b4c8e6d2a10
+                  email: newuser@example.com
+                  displayName: Jane Doe
+                  role: public
+                  createdAt: '2026-04-22T09:15:00Z'
+        '400':
+          description: Duplicate email (`A user with this email already exists`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/audit-briefs:
+    get:
+      tags:
+        - Audit Briefs
+      operationId: listAuditBriefs
+      summary: List non-archived audit briefs
+      description: Public. Supports domain / year / tag filters and pagination.
+      security: []
+      parameters:
+        - in: query
+          name: domain
+          schema:
+            $ref: '#/components/schemas/Domain'
+          description: Filter by knowledge domain.
+        - in: query
+          name: year
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2099
+          description: Filter by publication year.
+        - in: query
+          name: tags
+          schema:
+            type: string
+          description: Comma-separated list — matches briefs containing **any** of these tags.
+          example: ISA-240,fraud
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum:
+              - newest
+              - oldest
+              - title
+            default: newest
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Paginated list of audit briefs.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AuditBrief'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Audit Briefs
+      operationId: createAuditBrief
+      summary: Create an audit brief
+      description: Requires role `admin` or `superadmin`. Writes an audit-log row and revalidates public caches.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAuditBriefRequest'
+      responses:
+        '201':
+          description: Audit brief created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuditBrief'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/audit-briefs/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags:
+        - Audit Briefs
+      operationId: getAuditBrief
+      summary: Get a single audit brief (with transcripts)
+      description: Public. Returns the non-archived audit brief and all associated transcripts.
+      security: []
+      responses:
+        '200':
+          description: Audit brief with transcripts.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuditBriefWithTranscripts'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags:
+        - Audit Briefs
+      operationId: updateAuditBrief
+      summary: Update an audit brief
+      description: |
+        Requires role `admin` or `superadmin`. Optional-opt-in optimistic
+        concurrency: supplying `expectedUpdatedAt` causes the server to compare
+        with the stored `updatedAt` and respond `409 CONFLICT` when the client
+        view is stale. Replaced blob URLs are purged from Azure after the
+        update commits; an audit-log row is written; public caches are revalidated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAuditBriefRequest'
+      responses:
+        '200':
+          description: Updated audit brief.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuditBrief'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - Audit Briefs
+      operationId: deleteAuditBrief
+      summary: Soft-archive (default) or hard-delete an audit brief
+      description: |
+        Requires role `admin` or `superadmin`.
+
+        - **Soft archive** (default): flips `isArchived=true`. Blobs stay intact.
+          Reversible via PUT with `isArchived: false`.
+        - **Hard delete**: `?hard=true` with body `{"confirm":"DELETE"}`.
+          Cascades to transcripts, bookmarks, favorites; nulls the
+          `auditBriefId` on activity rows; purges every referenced blob. Not reversible.
+      parameters:
+        - in: query
+          name: hard
+          required: false
+          schema:
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+          description: Set to `true` for permanent deletion. Requires confirmation body.
+      requestBody:
+        required: false
+        description: Required only when `?hard=true`.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HardDeleteConfirmRequest'
+      responses:
+        '200':
+          description: Archive/delete succeeded.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        enum:
+                          - Audit brief archived successfully
+                          - Audit brief permanently deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/audit-briefs/{id}/transcript:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags:
+        - Transcripts
+      operationId: listTranscriptsForBrief
+      summary: List transcripts for an audit brief
+      description: Public. Returns all transcripts (short and/or long) attached to the brief.
+      security: []
+      responses:
+        '200':
+          description: Array of transcripts.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transcript'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags:
+        - Transcripts
+      operationId: upsertTranscript
+      summary: Upsert a transcript and regenerate its embedding
+      description: |
+        Requires role `admin` or `superadmin`. Uses the unique constraint
+        `[auditBriefId, transcriptType]` to upsert. After commit, the pgvector
+        embedding is regenerated from the new `fullText` via Azure OpenAI — a
+        failure there is logged at `warn` but does **not** fail the mutation,
+        so semantic search may be stale until the next successful regeneration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertTranscriptRequest'
+      responses:
+        '200':
+          description: Upserted transcript.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Transcript'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/audit-briefs/batch:
+    patch:
+      tags:
+        - Audit Briefs
+      operationId: batchUpdateAuditBriefSortOrder
+      summary: Batch-update audit brief sort orders
+      description: |
+        Requires role `admin` or `superadmin`. Runs all updates inside a single
+        database transaction. The entire array is applied atomically; a single
+        invalid row rejects the whole batch.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchUpdateSortOrderRequest'
+            example:
+              - id: 3f2e7a6d-4b1a-4f9d-8a77-1b4c8e6d2a10
+                sortOrder: 0
+              - id: c8a9f201-7d2e-4b3c-9f14-2a8b6d7e9c05
+                sortOrder: 1
+      responses:
+        '200':
+          description: Batch applied.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Sort orders updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/bookmarks:
+    get:
+      tags:
+        - Bookmarks
+      operationId: listBookmarks
+      summary: List the caller's bookmarks
+      description: Authenticated. Can filter by `auditBriefId` or `episodeId`.
+      parameters:
+        - in: query
+          name: auditBriefId
+          schema:
+            type: string
+            format: uuid
+          description: Return only bookmarks on this audit brief.
+        - in: query
+          name: episodeId
+          schema:
+            type: string
+            format: uuid
+          description: Return only bookmarks on this learning-path episode.
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Paginated bookmarks for the caller.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Bookmark'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Bookmarks
+      operationId: createBookmark
+      summary: Create a bookmark
+      description: |
+        Authenticated. Exactly one of `auditBriefId` or `episodeId` must be
+        supplied. The referenced parent must exist, otherwise `400`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookmarkRequest'
+      responses:
+        '201':
+          description: Bookmark created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Bookmark'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/bookmarks/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    put:
+      tags:
+        - Bookmarks
+      operationId: updateBookmark
+      summary: Update a bookmark (note only)
+      description: Authenticated, owner-scoped. Only `note` may be updated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookmarkRequest'
+      responses:
+        '200':
+          description: Updated bookmark.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Bookmark'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Caller does not own this bookmark.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - Bookmarks
+      operationId: deleteBookmark
+      summary: Delete a bookmark
+      description: Authenticated, owner-scoped.
+      responses:
+        '200':
+          description: Bookmark deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Bookmark deleted
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Caller does not own this bookmark.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/favorites:
+    get:
+      tags:
+        - Favorites
+      operationId: listFavoriteAuditBriefs
+      summary: List favorited audit brief IDs
+      description: |
+        Authenticated. Returns a **flat** array of audit brief IDs (not
+        paginated) because a user's favorites list is expected to remain small
+        and is loaded once on the client for UI state hydration.
+      responses:
+        '200':
+          description: Array of audit brief IDs favorited by the caller.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+                    example:
+                      - 3f2e7a6d-4b1a-4f9d-8a77-1b4c8e6d2a10
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Favorites
+      operationId: toggleFavoriteAuditBrief
+      summary: Toggle favorite on an audit brief (idempotent)
+      description: |
+        Authenticated. Idempotent toggle: creates the favorite (responds `201`,
+        `{favorited:true}`) if it does not exist; deletes it (responds `200`,
+        `{favorited:false}`) if it does. Races on concurrent toggles are
+        swallowed (P2002/P2025) and treated as the desired end-state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FavoriteAuditBriefToggleRequest'
+      responses:
+        '200':
+          description: Favorite removed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteToggleResponse'
+              example:
+                data:
+                  favorited: false
+        '201':
+          description: Favorite created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteToggleResponse'
+              example:
+                data:
+                  favorited: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/learning-graphs:
+    get:
+      tags:
+        - Learning Graphs
+      operationId: listLearningGraphs
+      summary: List learning graphs
+      description: Public. Filterable by domain.
+      security: []
+      parameters:
+        - in: query
+          name: domain
+          schema:
+            $ref: '#/components/schemas/Domain'
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Paginated list of learning graphs.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/PaginatedEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/LearningGraph'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Learning Graphs
+      operationId: createLearningGraph
+      summary: Create a learning graph
+      description: Requires role `admin` or `superadmin`. New graphs are auto-published.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLearningGraphRequest'
+      responses:
+        '201':
+          description: Learning graph created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LearningGraph'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/learning-graphs/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    get:
+      tags:
+        - Learning Graphs
+      operationId: getLearningGraph
+      summary: Get a learning graph (with episodes + edges)
+      description: Public.
+      security: []
+      responses:
+        '200':
+          description: Learning graph with episodes and edges.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LearningGraphWithData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags:
+        - Learning Graphs
+      operationId: updateLearningGraph
+      summary: Update a learning graph
+      description: |
+        Requires role `admin` or `superadmin`. Supports optional-opt-in
+        optimistic concurrency via `expectedUpdatedAt` — returns `409` when the
+        client's view is stale. Writes an audit-log row and revalidates public caches.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLearningGraphRequest'
+      responses:
+        '200':
+          description: Updated learning graph.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LearningGraph'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - Learning Graphs
+      operationId: deleteLearningGraph
+      summary: Hard-delete a learning graph (with confirmation body)
+      description: |
+        Requires role `admin` or `superadmin`. Always hard-deletes — learning
+        graphs have no soft-archive mode. Body **must** contain
+        `{"confirm":"DELETE"}` to prevent a bare DELETE from succeeding.
+        Cascades to episodes, edges, favorites, progress, bookmarks; purges all
+        referenced blobs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HardDeleteConfirmRequest'
+      responses:
+        '200':
+          description: Learning graph permanently deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Learning graph permanently deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/learning-graphs/{id}/data:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    put:
+      tags:
+        - Learning Graphs
+      operationId: upsertLearningGraphData
+      summary: Bulk upsert episodes and edges for a learning graph
+      description: |
+        Requires role `admin` or `superadmin`.
+
+        Upsert semantics preserve episode IDs across saves (protecting referencing
+        `UserProgress` and `UserActivity` rows from cascade deletion):
+
+        - Episodes whose `id` matches an existing row are **updated in place**.
+        - Episodes whose `id` starts with `temp-` (or is missing) are **created** and
+          the temp ID is returned so the client can reconcile.
+        - Episodes present in the database but absent from the payload are **deleted**,
+          along with any edges that referenced them; their blobs are purged.
+        - Edges are replaced wholesale — all old edges deleted, new ones created
+          with temp IDs resolved.
+
+        Revalidates the public learning-graph caches.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertGraphDataRequest'
+      responses:
+        '200':
+          description: Full saved graph with episodes (sorted) and edges.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/LearningGraphWithData'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/learning-graph-favorites:
+    get:
+      tags:
+        - Learning Graph Favorites
+      operationId: listFavoriteLearningGraphs
+      summary: List favorited learning graph IDs
+      description: Authenticated. Returns a flat array of graph IDs.
+      responses:
+        '200':
+          description: Array of learning graph IDs favorited by the caller.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Learning Graph Favorites
+      operationId: toggleFavoriteLearningGraph
+      summary: Toggle favorite on a learning graph (idempotent)
+      description: Same idempotent-toggle semantics as `/api/favorites`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FavoriteLearningGraphToggleRequest'
+      responses:
+        '200':
+          description: Favorite removed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteToggleResponse'
+              example:
+                data:
+                  favorited: false
+        '201':
+          description: Favorite created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FavoriteToggleResponse'
+              example:
+                data:
+                  favorited: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/progress:
+    get:
+      tags:
+        - Progress
+      operationId: listProgress
+      summary: List the caller's episode completion records
+      description: Authenticated. Ordered by `completedAt` descending. Includes related graph and episode titles.
+      responses:
+        '200':
+          description: Progress records for the caller.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProgressRecord'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Progress
+      operationId: markEpisodeComplete
+      summary: Mark an episode as complete (idempotent)
+      description: |
+        Authenticated. Uses an upsert on the unique constraint `[userId, episodeId]`.
+        The `episodeId` must exist and must belong to `graphId`, otherwise `400`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgressCreateRequest'
+      responses:
+        '201':
+          description: Progress record created or updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserProgress'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/progress/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    delete:
+      tags:
+        - Progress
+      operationId: deleteProgress
+      summary: Delete a progress record
+      description: Authenticated, owner-scoped.
+      responses:
+        '200':
+          description: Progress record deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Progress record deleted
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Caller does not own this progress record.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/activity:
+    post:
+      tags:
+        - Activity
+      operationId: logActivity
+      summary: Log a user activity event (fire-and-forget)
+      description: |
+        Authenticated. Records a single `UserActivity` row. The response body
+        is `null` — the client fires-and-forgets. This feeds `/api/admin/analytics`.
+
+        Note: `auditBriefId` / `episodeId` / `graphId` are accepted as free
+        strings (not validated as UUIDs at the schema level); the server will
+        null them out at persistence time rather than reject.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityEventRequest'
+            example:
+              activityType: listen
+              auditBriefId: 3f2e7a6d-4b1a-4f9d-8a77-1b4c8e6d2a10
+              metadata:
+                seconds: 42
+      responses:
+        '201':
+          description: |
+            Activity recorded. Response body is the JSON literal `null`
+            (OpenAPI 3.0.3 has no `null` type, so no body schema is declared).
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/search:
+    get:
+      tags:
+        - Search
+      operationId: keywordSearch
+      summary: Keyword search over audit briefs
+      description: |
+        Public. Case-insensitive `contains` match on title / description / tags
+        across non-archived audit briefs. Response is **not** wrapped in `data`.
+      security: []
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          example: revenue recognition
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Search hits.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KeywordSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags:
+        - Search
+      operationId: semanticSearch
+      summary: Semantic (pgvector) search over transcript text
+      description: |
+        Public. Generates an Azure OpenAI embedding for `query`, runs a cosine
+        similarity search over `transcripts.embedding`, and returns the top 10
+        results with similarity > 0.7. Response is **not** wrapped in `data`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  minLength: 1
+            example:
+              query: how do we handle going-concern uncertainty?
+      responses:
+        '200':
+          description: Semantic search hits.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SemanticSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/users:
+    get:
+      tags:
+        - Users
+      operationId: listUsers
+      summary: List users (superadmin only)
+      description: Requires role `superadmin`. Supports keyword search and pagination.
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Case-insensitive search across `displayName` and `email`.
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Paginated user list (superadmin view — flat envelope, not the standard `pagination` block).
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - total
+                  - page
+                  - limit
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserListEntry'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/users/{id}/role:
+    parameters:
+      - $ref: '#/components/parameters/IdPathParam'
+    put:
+      tags:
+        - Users
+      operationId: updateUserRole
+      summary: Update a user's role (superadmin only)
+      description: |
+        Requires role `superadmin`. Cannot target the calling user's own ID —
+        self-modification returns `400` to prevent privilege lock-out. Valid roles:
+        `public`, `admin`, `superadmin`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRoleUpdateRequest'
+      responses:
+        '200':
+          description: Updated user.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/UserRoleUpdateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/admin/analytics:
+    get:
+      tags:
+        - Admin
+      operationId: getAnalytics
+      summary: Analytics dashboard aggregates
+      description: |
+        Requires role `admin` or `superadmin`. Returns a **flat** (unwrapped)
+        object of counts and aggregates. Supports optional `from`/`to` ISO
+        date-range filters applied to `createdAt` on the underlying activity rows.
+      parameters:
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date-time
+          description: Inclusive range start (ISO-8601).
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date-time
+          description: Inclusive range end (ISO-8601).
+      responses:
+        '200':
+          description: Analytics summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAnalytics'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/admin/blob-sweep:
+    post:
+      tags:
+        - Admin
+      operationId: runBlobSweep
+      summary: Orphaned Azure blob sweep (superadmin only)
+      description: |
+        Requires role `superadmin`. Lists every blob in the configured Azure
+        container, diffs against the set of blob keys referenced by
+        `AuditBrief`, `LearningGraph`, and `Episode` rows, and returns the
+        orphan set. With `?dry-run=false` the orphans are deleted. Always
+        writes an audit-log row (`action: blob_sweep`, `entityType: blob_storage`).
+      parameters:
+        - in: query
+          name: dry-run
+          schema:
+            type: string
+            enum:
+              - 'true'
+              - 'false'
+            default: 'true'
+          description: Pass `false` to actually delete orphans. Any other value (including omission) is treated as dry-run.
+      responses:
+        '200':
+          description: Sweep results.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/BlobSweepResult'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/upload:
+    post:
+      tags:
+        - Upload
+      operationId: createPresignedUpload
+      summary: Generate a presigned Azure Blob Storage upload URL
+      description: >
+        Requires role `admin` or `superadmin`. Returns a short-lived (1 hour)
+
+        write-only SAS URL that the client can PUT the file to directly.
+
+
+        **Limits applied server-side:**
+
+        - `audio` — allowed MIME types: `audio/mpeg`, `audio/wav`, `audio/mp4`, `audio/ogg`, `audio/webm`,
+        `audio/x-m4a`, `audio/aac`, `audio/flac`; max 500 MB.
+
+        - `image` — allowed MIME types: `image/jpeg`, `image/png`, `image/webp`, `image/gif`; max 5 MB.
+
+        - `pdf`   — allowed MIME types: `application/pdf`; max 50 MB.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PresignedUploadRequest'
+            example:
+              filename: q1-bulletin.pdf
+              content_type: application/pdf
+              file_size: 1048576
+              category: pdf
+      responses:
+        '200':
+          description: Presigned SAS URL, blob key, and container name.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PresignedUploadResponse'
+              example:
+                data:
+                  upload_url: https://...blob.core.windows.net/the-audit-brief-uploads/pdf/UUID/q1-bulletin.pdf?sv=...&sig=...
+                  key: pdf/3f2e7a6d-4b1a-4f9d-8a77-1b4c8e6d2a10/q1-bulletin.pdf
+                  container: the-audit-brief-uploads
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/upload/file:
+    post:
+      tags:
+        - Upload
+      operationId: uploadFileDirect
+      summary: Server-side file upload (multipart)
+      description: |
+        Requires role `admin` or `superadmin`. Streams the file body into Azure
+        Blob Storage server-side to avoid CORS and to work around the 10 MB
+        edge-buffer cap on the Next.js middleware (this route is explicitly
+        excluded from the middleware matcher — it authenticates itself).
+
+        Applies the same MIME and size limits as `/api/upload`.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DirectUploadFormData'
+            encoding:
+              file:
+                contentType: >-
+                  audio/mpeg, audio/wav, audio/mp4, audio/ogg, audio/webm, audio/x-m4a, audio/aac, audio/flac,
+                  image/jpeg, image/png, image/webp, image/gif, application/pdf
+      responses:
+        '200':
+          description: File stored. Returns the generated blob key.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                        example: audio/UUID/lecture.mp3
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /api/media:
+    get:
+      tags:
+        - Media
+      operationId: streamMediaByKey
+      summary: Stream a stored blob by key (supports Range requests)
+      description: |
+        Public. Streams bytes directly from Azure Blob Storage so large audio
+        files are never buffered server-side. Responds `206 Partial Content`
+        when a `Range` request header is present, otherwise `200 OK`.
+
+        **Security note:** this endpoint is unauthenticated and accepts any
+        well-formed blob key. Pen-testers should treat it as an enumeration
+        surface (guessing UUIDs, directory traversal attempts, path injection).
+      security: []
+      parameters:
+        - in: query
+          name: key
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: Blob key (e.g. `audio/UUID/lecture.mp3`).
+        - in: header
+          name: Range
+          required: false
+          schema:
+            type: string
+            example: bytes=0-1048575
+          description: Standard HTTP range header; forwarded to Azure.
+      responses:
+        '200':
+          description: Full content (no Range requested).
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: Inferred from blob extension (see `MIME_MAP`).
+            Content-Length:
+              schema:
+                type: integer
+            Accept-Ranges:
+              schema:
+                type: string
+                example: bytes
+            Cache-Control:
+              schema:
+                type: string
+                example: public, max-age=3600
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '206':
+          description: Partial content (Range requested).
+          headers:
+            Content-Type:
+              schema:
+                type: string
+            Content-Length:
+              schema:
+                type: integer
+            Content-Range:
+              schema:
+                type: string
+                example: bytes 0-1048575/52428800
+            Accept-Ranges:
+              schema:
+                type: string
+                example: bytes
+            Cache-Control:
+              schema:
+                type: string
+                example: public, max-age=3600
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+      description: |
+        NextAuth v4 JWT session cookie. `httpOnly`, `SameSite=Lax`, and `Secure`
+        in production. Over HTTPS the cookie is named
+        `__Secure-next-auth.session-token`.
+
+        Issued by `POST /api/auth/callback/credentials` (dev) or the Azure AD
+        OAuth flow (`GET /api/auth/signin/azure-ad` → provider → `GET /api/auth/callback/azure-ad`).
+        Contains a signed JWT with `userId`, `role`, `email`, and `jti` (for
+        server-side revocation).
+  headers:
+    ContentSecurityPolicy:
+      description: >-
+        Per-request, nonce-based Content Security Policy emitted by `middleware.ts`. Exactly one of these headers MUST
+        appear on every response — duplicate CSP headers would intersect and drop the nonce. The nonce token is
+        regenerated on every request and is a 22-character base64 value.
+      schema:
+        type: string
+        example: >-
+          default-src 'self'; script-src 'self' 'nonce-NTBlOGEzNjJiNTNlNDNkNDg5OTI5MmMxMTFlYjE0YjY' 'strict-dynamic';
+          style-src 'self' 'nonce-NTBlOGEzNjJiNTNlNDNkNDg5OTI5MmMxMTFlYjE0YjY'; style-src-attr 'unsafe-inline'; img-src
+          'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self'
+          blob:; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none';
+          upgrade-insecure-requests
+    StrictTransportSecurity:
+      description: HSTS pin set by both `next.config.ts` and the nginx server block.
+      schema:
+        type: string
+        example: max-age=31536000; includeSubDomains; preload
+    XFrameOptions:
+      description: >-
+        Clickjacking protection. Next.js sets `DENY` (most restrictive); nginx sets `SAMEORIGIN`. Browsers honour the
+        first value seen.
+      schema:
+        type: string
+        enum:
+          - DENY
+          - SAMEORIGIN
+        example: DENY
+    XContentTypeOptions:
+      description: Prevents MIME sniffing.
+      schema:
+        type: string
+        enum:
+          - nosniff
+        example: nosniff
+    ReferrerPolicy:
+      description: Referrer leakage policy.
+      schema:
+        type: string
+        example: strict-origin-when-cross-origin
+    PermissionsPolicy:
+      description: Browser feature gating set by `next.config.ts`. Camera, microphone, and geolocation are explicitly disabled.
+      schema:
+        type: string
+        example: camera=(), microphone=(), geolocation=()
+    XXSSProtection:
+      description: Legacy XSS auditor explicitly disabled (`0`) per OWASP guidance — the modern CSP is the actual defence.
+      schema:
+        type: string
+        enum:
+          - '0'
+        example: '0'
+    CacheControl:
+      description: >-
+        VAPT-mandated no-cache for HTML/JSON responses. Nginx applies this to every response on the HTTPS server block.
+        Static assets under `/_next/static/*` may override with `public, max-age=31536000, immutable`.
+      schema:
+        type: string
+        example: no-store, no-cache, must-revalidate, proxy-revalidate
+    Pragma:
+      description: Legacy HTTP/1.0 no-cache directive.
+      schema:
+        type: string
+        enum:
+          - no-cache
+        example: no-cache
+    Expires:
+      description: Legacy HTTP/1.0 cache expiry. Always `0` — never cache.
+      schema:
+        type: string
+        example: '0'
+    XRequestId:
+      description: >-
+        Per-request UUID v4 correlation ID generated in `middleware.ts`. Echoed in the `request_id` field of every
+        `ErrorResponse` for log correlation across the stack (browser → nginx access log → pm2 stdout → Sentry).
+      schema:
+        type: string
+        format: uuid
+        example: 3f2e7a6d-4b1a-4f9d-8a77-1b4c8e6d2a10
+  parameters:
+    IdPathParam:
+      in: path
+      name: id
+      required: true
+      description: Canonical UUID (8-4-4-4-12 hex).
+      schema:
+        type: string
+        format: uuid
+      example: 3f2e7a6d-4b1a-4f9d-8a77-1b4c8e6d2a10
+    PageParam:
+      in: query
+      name: page
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: 1-based page index.
+    LimitParam:
+      in: query
+      name: limit
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Page size (max 100).
+  responses:
+    BadRequest:
+      description: Malformed request, missing required fields, or invalid values.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 400
+            error_code: BAD_REQUEST
+            message: key parameter required
+            request_id: 3f2e7a6d-4b1a-4f9d-8a77-1b4c8e6d2a10
+    UnauthorizedError:
+      description: No session cookie or the session has expired / been revoked.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 401
+            error_code: UNAUTHORIZED
+            message: Authentication required
+            request_id: 3f2e7a6d-4b1a-4f9d-8a77-1b4c8e6d2a10
+    ForbiddenError:
+      description: Authenticated but lacks the required role (or does not own the resource).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 403
+            error_code: FORBIDDEN
+            message: Insufficient role
+    NotFoundError:
+      description: Resource does not exist (or is archived where archived rows are hidden).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 404
+            error_code: NOT_FOUND
+            message: AuditBrief not found
+    ConflictError:
+      description: Optimistic-concurrency conflict — the client's `expectedUpdatedAt` is stale.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 409
+            error_code: CONFLICT
+            message: Resource has been modified since you loaded it. Please refresh and try again.
+    ValidationError:
+      description: Request body failed Zod validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 422
+            error_code: VALIDATION_FAILED
+            message: Validation failed
+            details:
+              - path:
+                  - password
+                message: Password must be at least 12 characters
+                code: too_small
+    RateLimitedError:
+      description: Too many requests (reserved — rate limiting is not currently wired into any route).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: Unhandled server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            status: 500
+            error_code: INTERNAL_ERROR
+            message: Internal server error
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - error_code
+        - message
+      properties:
+        status:
+          type: integer
+          description: HTTP status code.
+          example: 422
+        error_code:
+          type: string
+          enum:
+            - BAD_REQUEST
+            - UNAUTHORIZED
+            - FORBIDDEN
+            - NOT_FOUND
+            - CONFLICT
+            - VALIDATION_FAILED
+            - RATE_LIMITED
+            - INTERNAL_ERROR
+          description: Machine-readable error classification.
+        message:
+          type: string
+          description: Human-readable message. Safe to surface to end-users.
+        details:
+          description: |
+            Free-form diagnostic detail. For `VALIDATION_FAILED` this is a Zod
+            `issues` array; for other codes it is commonly absent. May be null.
+        request_id:
+          type: string
+          format: uuid
+          description: Echo of the `x-request-id` header — use for log correlation.
+    PaginatedEnvelope:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items: {}
+        pagination:
+          type: object
+          required:
+            - page
+            - limit
+            - total
+            - total_pages
+          properties:
+            page:
+              type: integer
+              minimum: 1
+              example: 1
+            limit:
+              type: integer
+              minimum: 1
+              maximum: 100
+              example: 20
+            total:
+              type: integer
+              minimum: 0
+              example: 137
+            total_pages:
+              type: integer
+              minimum: 0
+              example: 7
+    Domain:
+      type: string
+      description: Deduplicated union of podcast and learning-series knowledge domains.
+      enum:
+        - Audit Methodology
+        - Accounting and Reporting
+        - Audit Technology
+        - Quality and Risk
+        - LEAP
+        - Auditing
+    Role:
+      type: string
+      enum:
+        - public
+        - admin
+        - superadmin
+    UploadCategory:
+      type: string
+      enum:
+        - audio
+        - image
+        - pdf
+    PathType:
+      type: string
+      enum:
+        - linear
+        - graph
+    TranscriptType:
+      type: string
+      enum:
+        - short
+        - long
+    ActivityType:
+      type: string
+      enum:
+        - listen
+        - bookmark
+        - complete_episode
+        - view_path
+        - search
+    NextAuthSession:
+      type: object
+      description: Response of `GET /api/auth/session` when signed in.
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            email:
+              type: string
+              format: email
+            name:
+              type: string
+              nullable: true
+            image:
+              type: string
+              nullable: true
+            role:
+              $ref: '#/components/schemas/Role'
+        expires:
+          type: string
+          format: date-time
+    NextAuthCsrfToken:
+      type: object
+      description: Response of `GET /api/auth/csrf`.
+      properties:
+        csrfToken:
+          type: string
+    NextAuthProviders:
+      type: object
+      description: Response of `GET /api/auth/providers`.
+      additionalProperties: true
+    ReadyResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - checks
+      properties:
+        status:
+          type: string
+          enum:
+            - ready
+            - not_ready
+        timestamp:
+          type: string
+          format: date-time
+        checks:
+          type: object
+          required:
+            - database
+          properties:
+            database:
+              type: string
+              enum:
+                - ok
+                - failed
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 12
+          description: |
+            OWASP-compliant: minimum 12 characters, must contain at least one
+            uppercase letter, one lowercase letter, one digit, and one
+            non-alphanumeric character. Login uses a relaxed 1+ char check.
+          example: Str0ng!Pass1234
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          nullable: true
+    RegisteredUser:
+      type: object
+      required:
+        - id
+        - email
+        - role
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          nullable: true
+        role:
+          $ref: '#/components/schemas/Role'
+        createdAt:
+          type: string
+          format: date-time
+    CreateAuditBriefRequest:
+      type: object
+      required:
+        - title
+        - description
+        - domain
+        - year
+        - thumbnailUrl
+        - audioShortUrl
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        domain:
+          $ref: '#/components/schemas/Domain'
+        year:
+          type: integer
+          minimum: 2020
+          maximum: 2099
+        tags:
+          type: array
+          items:
+            type: string
+          nullable: true
+        thumbnailUrl:
+          type: string
+          minLength: 1
+          description: Blob key or absolute URL.
+        audioShortUrl:
+          type: string
+          minLength: 1
+        audioLongUrl:
+          type: string
+          minLength: 1
+          nullable: true
+        bulletinUrls:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          nullable: true
+    UpdateAuditBriefRequest:
+      type: object
+      description: |
+        All fields optional, but at least one *mutation* field must be supplied
+        (`expectedUpdatedAt` on its own is not a mutation). Constraints from
+        `CreateAuditBriefRequest` still apply.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        domain:
+          $ref: '#/components/schemas/Domain'
+        year:
+          type: integer
+          minimum: 2020
+          maximum: 2099
+        tags:
+          type: array
+          items:
+            type: string
+        thumbnailUrl:
+          type: string
+          minLength: 1
+        audioShortUrl:
+          type: string
+          minLength: 1
+        audioLongUrl:
+          type: string
+          nullable: true
+        bulletinUrls:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          nullable: true
+        isArchived:
+          type: boolean
+          description: Toggle the archived flag (used by the unarchive action).
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: Client's snapshot of `updatedAt`. Triggers a 409 if stale.
+    BatchUpdateSortOrderRequest:
+      type: array
+      minItems: 1
+      items:
+        type: object
+        required:
+          - id
+          - sortOrder
+        properties:
+          id:
+            type: string
+            format: uuid
+          sortOrder:
+            type: integer
+    AuditBrief:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - domain
+        - year
+        - thumbnailUrl
+        - audioShortUrl
+        - isArchived
+        - sortOrder
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        domain:
+          $ref: '#/components/schemas/Domain'
+        year:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+        thumbnailUrl:
+          type: string
+        audioShortUrl:
+          type: string
+        audioLongUrl:
+          type: string
+          nullable: true
+        bulletinUrls:
+          type: array
+          items:
+            type: string
+        sortOrder:
+          type: integer
+        isArchived:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    AuditBriefWithTranscripts:
+      allOf:
+        - $ref: '#/components/schemas/AuditBrief'
+        - type: object
+          properties:
+            transcripts:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transcript'
+    TranscriptSegment:
+      type: object
+      required:
+        - start
+        - end
+        - text
+      properties:
+        start:
+          type: number
+          description: Seconds.
+        end:
+          type: number
+          description: Seconds.
+        text:
+          type: string
+    UpsertTranscriptRequest:
+      type: object
+      required:
+        - fullText
+        - segments
+        - transcriptType
+      properties:
+        fullText:
+          type: string
+          minLength: 1
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptSegment'
+        transcriptType:
+          $ref: '#/components/schemas/TranscriptType'
+    Transcript:
+      type: object
+      required:
+        - id
+        - auditBriefId
+        - fullText
+        - segments
+        - transcriptType
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        auditBriefId:
+          type: string
+          format: uuid
+        fullText:
+          type: string
+        segments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TranscriptSegment'
+        transcriptType:
+          $ref: '#/components/schemas/TranscriptType'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    CreateBookmarkRequest:
+      type: object
+      required:
+        - timestampSeconds
+      description: Exactly one of `auditBriefId` or `episodeId` is required (enforced server-side).
+      properties:
+        auditBriefId:
+          type: string
+          format: uuid
+        episodeId:
+          type: string
+          format: uuid
+        timestampSeconds:
+          type: number
+          minimum: 0
+        note:
+          type: string
+          maxLength: 1000
+    UpdateBookmarkRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          maxLength: 1000
+    Bookmark:
+      type: object
+      required:
+        - id
+        - userId
+        - timestampSeconds
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        auditBriefId:
+          type: string
+          format: uuid
+          nullable: true
+        episodeId:
+          type: string
+          format: uuid
+          nullable: true
+        timestampSeconds:
+          type: number
+          minimum: 0
+        note:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    FavoriteAuditBriefToggleRequest:
+      type: object
+      required:
+        - auditBriefId
+      properties:
+        auditBriefId:
+          type: string
+          minLength: 1
+    FavoriteLearningGraphToggleRequest:
+      type: object
+      required:
+        - learningGraphId
+      properties:
+        learningGraphId:
+          type: string
+          minLength: 1
+    FavoriteToggleResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - favorited
+          properties:
+            favorited:
+              type: boolean
+    CreateLearningGraphRequest:
+      type: object
+      required:
+        - title
+        - domain
+        - pathType
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        domain:
+          $ref: '#/components/schemas/Domain'
+        pathType:
+          $ref: '#/components/schemas/PathType'
+        thumbnailUrl:
+          type: string
+          format: uri
+    UpdateLearningGraphRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        domain:
+          $ref: '#/components/schemas/Domain'
+        pathType:
+          $ref: '#/components/schemas/PathType'
+        thumbnailUrl:
+          type: string
+          format: uri
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: Client's snapshot of `updatedAt`. Triggers a 409 if stale.
+    LearningGraph:
+      type: object
+      required:
+        - id
+        - title
+        - domain
+        - pathType
+        - isPublished
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        domain:
+          $ref: '#/components/schemas/Domain'
+        pathType:
+          $ref: '#/components/schemas/PathType'
+        thumbnailUrl:
+          type: string
+          nullable: true
+        isPublished:
+          type: boolean
+        createdBy:
+          type: string
+          format: uuid
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    LearningGraphWithData:
+      allOf:
+        - $ref: '#/components/schemas/LearningGraph'
+        - type: object
+          properties:
+            episodes:
+              type: array
+              items:
+                $ref: '#/components/schemas/Episode'
+            edges:
+              type: array
+              items:
+                $ref: '#/components/schemas/GraphEdge'
+    Episode:
+      type: object
+      required:
+        - id
+        - graphId
+        - title
+        - audioUrl
+        - positionX
+        - positionY
+        - nodeType
+        - sortOrder
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        graphId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        thumbnailUrl:
+          type: string
+          nullable: true
+        audioUrl:
+          type: string
+        transcript:
+          description: Free-form transcript JSON (array of strings or structured segments).
+        positionX:
+          type: number
+        positionY:
+          type: number
+        nodeType:
+          type: string
+          example: default
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    GraphEdge:
+      type: object
+      required:
+        - id
+        - graphId
+        - sourceEpisodeId
+        - targetEpisodeId
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        graphId:
+          type: string
+          format: uuid
+        sourceEpisodeId:
+          type: string
+          format: uuid
+        targetEpisodeId:
+          type: string
+          format: uuid
+        label:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+    UpsertGraphDataRequest:
+      type: object
+      required:
+        - episodes
+      properties:
+        episodes:
+          type: array
+          description: Episodes to upsert. `id` starting with `temp-` (or missing) means create.
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: Existing UUID or client-side `temp-*` identifier.
+              title:
+                type: string
+              description:
+                type: string
+                nullable: true
+              audioUrl:
+                type: string
+              thumbnailUrl:
+                type: string
+                nullable: true
+              transcript:
+                description: String or array of strings; stored as JSON.
+                oneOf:
+                  - type: string
+                  - type: array
+                    items:
+                      type: string
+              positionX:
+                type: number
+              positionY:
+                type: number
+              nodeType:
+                type: string
+              sortOrder:
+                type: integer
+        edges:
+          type: array
+          description: Optional. Replaces all edges on the graph.
+          items:
+            type: object
+            required:
+              - sourceEpisodeId
+              - targetEpisodeId
+            properties:
+              sourceEpisodeId:
+                type: string
+                description: Existing UUID or client temp ID.
+              targetEpisodeId:
+                type: string
+                description: Existing UUID or client temp ID.
+              label:
+                type: string
+                nullable: true
+    ProgressCreateRequest:
+      type: object
+      required:
+        - graphId
+        - episodeId
+      properties:
+        graphId:
+          type: string
+          minLength: 1
+        episodeId:
+          type: string
+          minLength: 1
+    UserProgress:
+      type: object
+      required:
+        - id
+        - userId
+        - graphId
+        - episodeId
+        - completedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        graphId:
+          type: string
+          format: uuid
+        episodeId:
+          type: string
+          format: uuid
+        completedAt:
+          type: string
+          format: date-time
+    ProgressRecord:
+      allOf:
+        - $ref: '#/components/schemas/UserProgress'
+        - type: object
+          properties:
+            graph:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+            episode:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+    ActivityEventRequest:
+      type: object
+      required:
+        - activityType
+      properties:
+        activityType:
+          $ref: '#/components/schemas/ActivityType'
+        auditBriefId:
+          type: string
+          description: Not UUID-validated at schema level.
+        episodeId:
+          type: string
+        graphId:
+          type: string
+        metadata:
+          type: object
+          description: Free-form structured payload (e.g. playback position, search query).
+          additionalProperties: true
+    HardDeleteConfirmRequest:
+      type: object
+      required:
+        - confirm
+      properties:
+        confirm:
+          type: string
+          enum:
+            - DELETE
+          description: Must be the literal string `DELETE`.
+    KeywordSearchResponse:
+      type: object
+      required:
+        - results
+        - query
+        - total
+        - page
+        - limit
+      properties:
+        query:
+          type: string
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        results:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - title
+              - domain
+            properties:
+              id:
+                type: string
+                format: uuid
+              title:
+                type: string
+              description:
+                type: string
+              domain:
+                $ref: '#/components/schemas/Domain'
+              tags:
+                type: array
+                items:
+                  type: string
+              thumbnailUrl:
+                type: string
+    SemanticSearchResponse:
+      type: object
+      required:
+        - results
+        - query
+      properties:
+        query:
+          type: string
+        results:
+          type: array
+          description: Top 10 transcript hits with similarity > 0.7, ordered by similarity desc.
+          items:
+            type: object
+            required:
+              - id
+              - auditBriefId
+              - auditBriefTitle
+              - content
+              - similarity
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Transcript ID.
+              auditBriefId:
+                type: string
+                format: uuid
+              auditBriefTitle:
+                type: string
+              content:
+                type: string
+                description: Currently the full transcript text.
+              startTime:
+                type: number
+                description: Reserved for future segment-level scoring. Always 0.
+              endTime:
+                type: number
+                description: Reserved for future segment-level scoring. Always 0.
+              similarity:
+                type: number
+                description: Cosine similarity in [0, 1].
+    UserListEntry:
+      type: object
+      required:
+        - id
+        - email
+        - role
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          nullable: true
+          description: '`displayName` re-keyed as `name` for this list endpoint.'
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/Role'
+        createdAt:
+          type: string
+          format: date-time
+    UserRoleUpdateRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          $ref: '#/components/schemas/Role'
+    UserRoleUpdateResponse:
+      type: object
+      required:
+        - id
+        - email
+        - role
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          nullable: true
+          description: '`displayName` re-keyed as `name`.'
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/Role'
+    AdminAnalytics:
+      type: object
+      required:
+        - totalAuditBriefs
+        - totalPaths
+        - totalListens
+        - uniqueListeners
+        - listensByDomain
+        - monthlyTrends
+        - topTopics
+      properties:
+        totalAuditBriefs:
+          type: integer
+          description: Count of non-archived audit briefs (optionally date-filtered).
+        totalPaths:
+          type: integer
+          description: Count of published learning graphs.
+        totalListens:
+          type: integer
+          description: Count of `listen` activity rows.
+        uniqueListeners:
+          type: integer
+          description: Distinct userIds with `listen` activity.
+        listensByDomain:
+          type: array
+          items:
+            type: object
+            required:
+              - domain
+              - count
+            properties:
+              domain:
+                type: string
+                description: '`Unknown` when the audit brief was hard-deleted.'
+              count:
+                type: integer
+        monthlyTrends:
+          type: array
+          description: Calendar-month aggregates, chronologically sorted.
+          items:
+            type: object
+            required:
+              - month
+              - count
+            properties:
+              month:
+                type: string
+                example: 2026-04
+              count:
+                type: integer
+        topTopics:
+          type: array
+          description: Top 10 audit briefs by listen count (resolved to titles).
+          items:
+            type: object
+            required:
+              - topic
+              - count
+            properties:
+              topic:
+                type: string
+              count:
+                type: integer
+    BlobSweepResult:
+      type: object
+      required:
+        - dryRun
+        - totalBlobs
+        - referencedBlobs
+        - orphanedCount
+        - deletedCount
+        - failedCount
+        - orphanedKeys
+      properties:
+        dryRun:
+          type: boolean
+        totalBlobs:
+          type: integer
+        referencedBlobs:
+          type: integer
+        orphanedCount:
+          type: integer
+        deletedCount:
+          type: integer
+          description: Zero in dry-run mode.
+        failedCount:
+          type: integer
+        orphanedKeys:
+          type: array
+          items:
+            type: string
+          example:
+            - audio/old-uuid/leaked-audio.mp3
+    PresignedUploadRequest:
+      type: object
+      required:
+        - filename
+        - content_type
+        - file_size
+        - category
+      properties:
+        filename:
+          type: string
+          minLength: 1
+        content_type:
+          type: string
+          minLength: 1
+          description: Must be allowed for `category`.
+        file_size:
+          type: integer
+          minimum: 1
+          description: Bytes. Must not exceed the per-category max (audio 500 MB, image 5 MB, pdf 50 MB).
+        category:
+          $ref: '#/components/schemas/UploadCategory'
+    PresignedUploadResponse:
+      type: object
+      required:
+        - upload_url
+        - key
+        - container
+      properties:
+        upload_url:
+          type: string
+          format: uri
+          description: Short-lived (1 hour) write-only SAS URL for a direct PUT from the client.
+        key:
+          type: string
+          description: Generated blob key `{category}/{uuid}/{sanitized-filename}`.
+        container:
+          type: string
+          description: Azure Blob Storage container name (e.g. `the-audit-brief-uploads`).
+    DirectUploadFormData:
+      type: object
+      required:
+        - file
+        - category
+      properties:
+        file:
+          type: string
+          format: binary
+          description: The file bytes. MIME type is validated against the category.
+        category:
+          $ref: '#/components/schemas/UploadCategory'

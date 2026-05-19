@@ -1,3 +1,13 @@
+/**
+ * Breadcrumb — shadcn/ui primitive wrapping @base-ui/react (and cmdk for Command).
+ *
+ * Generated via the shadcn CLI and customized with our Tailwind 4 design tokens
+ * (see app/globals.css). See https://ui.shadcn.com/docs/components/breadcrumb for the
+ * upstream API contract; component variants here may be more constrained.
+ *
+ * Exports: Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis
+ * Styling: cva() variants reference Tailwind 4 tokens; cn() merges class names.
+ */
 import * as React from 'react';
 import { mergeProps } from '@base-ui/react/merge-props';
 import { useRender } from '@base-ui/react/use-render';

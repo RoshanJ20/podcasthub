@@ -12,39 +12,41 @@ Internal enterprise audio platform for managing, distributing, and tracking audi
 - [Authentication & SSO](#authentication--sso)
 - [User Roles](#user-roles)
 - [Testing](#testing)
+- [API Reference](#api-reference)
 - [Project Structure](#project-structure)
+- [Observability](#observability)
 - [Deployment](#deployment)
 - [Content Security Policy](#content-security-policy)
 - [Contributing](#contributing)
+- [Changelog](#changelog)
 
 ## Tech Stack
 
-| Layer         | Technology                                | Purpose                                               |
-| ------------- | ----------------------------------------- | ----------------------------------------------------- |
-| Framework     | Next.js 15 (App Router), TypeScript 5     | Full-stack React framework with SSR/SSG               |
-| Styling       | Tailwind CSS 4, shadcn/ui (Radix)         | Utility-first CSS with accessible component library   |
-| State         | Zustand                                   | Client-side state (audio player, graph editor)        |
-| Forms         | React Hook Form + Zod                     | Form state management and validation                  |
-| Charts        | Recharts                                  | Analytics dashboard visualizations                    |
-| Graph Editor  | @xyflow/react, Dagre                      | Visual learning path editor with auto-layout          |
-| Drag & Drop   | @dnd-kit                                  | Sortable lists (audit brief ordering, linear editor)  |
-| PDF Viewer    | react-pdf (pdfjs-dist)                    | In-app attachment/document viewing                    |
-| Audio         | HLS.js                                    | Adaptive audio streaming with native fallback         |
-| Database      | PostgreSQL 16, Prisma ORM (v6)            | Data persistence, migrations, pgvector search         |
-| Auth          | NextAuth v4 (Credentials + Azure AD)      | JWT session strategy, HttpOnly cookies, SSO support   |
-| Storage       | Azurite (dev) / Azure Blob Storage (prod) | File uploads (audio, images, PDFs) via Azure Blob API |
-| Logging       | Pino                                      | Structured JSON logging with child loggers            |
-| Validation    | Zod v4                                    | Request body + form validation (shared schemas)       |
-| Security      | CSP, HSTS, CORS, next.config headers      | HTTP security headers, XSS/clickjack prevention       |
-| Notifications | Sonner                                    | Toast notifications                                   |
-| Icons         | Lucide React                              | Consistent icon set                                   |
-| Theming       | next-themes                               | Dark/light mode switching                             |
-| Testing       | Vitest, RTL, Playwright, MSW              | Unit, component, E2E tests (706 tests)                |
-| Linting       | ESLint 9 (flat config), Prettier          | Code quality and formatting                           |
-| Git Hooks     | Husky + lint-staged                       | Pre-commit lint/format enforcement                    |
-| Monitoring    | Sentry                                    | Error tracking and performance monitoring             |
-| CI/CD         | GitHub Actions                            | Automated lint, test, build, deploy pipelines         |
-| Deployment    | Azure VM, Nginx, pm2                      | VM-based production deployment on port 3103           |
+| Layer         | Technology                                | Purpose                                                          |
+| ------------- | ----------------------------------------- | ---------------------------------------------------------------- |
+| Framework     | Next.js 15.3 (App Router), TypeScript 5   | Full-stack React framework with SSR + basePath deployment        |
+| Styling       | Tailwind CSS 4, shadcn/ui (Radix)         | Utility-first CSS with accessible component library              |
+| State         | Zustand 5                                 | Client-side state (`player-store`, `graph-editor-store`)         |
+| Forms         | React Hook Form + Zod 4                   | Form state management and validation                             |
+| Charts        | Recharts                                  | Admin analytics dashboard visualizations                         |
+| Sortable      | @dnd-kit/core + @dnd-kit/sortable         | Linear learning-path editor (drag-to-reorder episodes)           |
+| PDF Viewer    | react-pdf                                 | In-app bulletin/attachment viewing (pdfjs bundled transitively)  |
+| Audio         | HLS.js + HTML5 `<audio>`                  | Adaptive streaming with native fallback and HTTP-Range proxy     |
+| Database      | PostgreSQL 16 (pgvector), Prisma ORM 6    | Data persistence, migrations, semantic-search vectors            |
+| Auth          | NextAuth v4 (Credentials + Azure AD)      | JWT session cookie strategy, HttpOnly cookies, SSO support       |
+| Storage       | Azurite (dev) / Azure Blob Storage (prod) | Audio, PDFs, thumbnails — private container, SAS-signed access   |
+| Logging       | Pino                                      | Structured JSON logging with child loggers + request IDs         |
+| Validation    | Zod 4                                     | Request body + form validation (shared schemas)                  |
+| Security      | Per-request nonce CSP, HSTS, CORS         | XSS/clickjack prevention; see Content Security Policy section    |
+| Notifications | Sonner                                    | Toast notifications                                              |
+| Icons         | Lucide React                              | Consistent icon set                                              |
+| Theming       | next-themes                               | Dark/light mode switching (nonce-aware FOUC script)              |
+| Testing       | Vitest 4, RTL, Playwright, MSW            | ~90 test files / 850+ test cases across unit / integration / E2E |
+| Linting       | ESLint 9 (flat config), Prettier          | Code quality and formatting                                      |
+| Git Hooks     | Husky v9 + lint-staged                    | Pre-commit lint/format enforcement                               |
+| Monitoring    | Pino + pm2 logs                           | Sentry env vars reserved but **SDK not currently initialized**   |
+| CI/CD         | GitHub Actions                            | Automated lint, test, build (deploy currently runs on the VM)    |
+| Deployment    | Azure VM, Nginx, pm2                      | VM-based production deployment on port 3103                      |
 
 ## Architecture
 
@@ -68,7 +70,7 @@ graph TB
 
     subgraph "Optional Services"
         OpenAI["Azure OpenAI<br/>(Embeddings)"]
-        Sentry["Sentry<br/>(Error Tracking)"]
+        Sentry["Sentry<br/>(reserved — SDK not initialized)"]
         EntraID["Microsoft Entra ID<br/>(SSO)"]
     end
 
@@ -136,25 +138,30 @@ The app will be available at [http://localhost:3000/auditbrief](http://localhost
 
 ## Environment Variables
 
-| Variable                       | Description                                             | Default / Required                 |
-| ------------------------------ | ------------------------------------------------------- | ---------------------------------- |
-| `DATABASE_URL`                 | PostgreSQL connection string                            | (required)                         |
-| `NEXTAUTH_SECRET`              | NextAuth JWT encryption secret                          | (required, min 32 chars)           |
-| `NEXTAUTH_URL`                 | Canonical app URL (must include `/auditbrief` basePath) | `http://localhost:3000/auditbrief` |
-| `PORT`                         | Server listen port                                      | `3000` (prod: `3103`)              |
-| `AZURE_BLOB_CONNECTION_STRING` | Azure Blob Storage connection string                    | (required)                         |
-| `AZURE_BLOB_CONTAINER`         | Azure Blob container name                               | `the-audit-brief-uploads`          |
-| `AZURE_AD_CLIENT_ID`           | Microsoft Entra ID app client ID                        | (optional, for SSO)                |
-| `AZURE_AD_CLIENT_SECRET`       | Microsoft Entra ID app client secret                    | (optional, for SSO)                |
-| `AZURE_AD_TENANT_ID`           | Microsoft Entra ID tenant ID                            | (optional, for SSO)                |
-| `AZURE_OPENAI_ENDPOINT`        | Azure OpenAI service endpoint                           | (optional)                         |
-| `AZURE_OPENAI_KEY`             | Azure OpenAI API key                                    | (optional)                         |
-| `AZURE_OPENAI_DEPLOYMENT`      | Azure OpenAI deployment name                            | (optional)                         |
-| `SENTRY_DSN`                   | Sentry error tracking DSN (server)                      | (optional)                         |
-| `NEXT_PUBLIC_SENTRY_DSN`       | Sentry DSN (client bundle)                              | (optional)                         |
-| `NEXT_PUBLIC_APP_URL`          | Origin URL for CORS (no basePath)                       | `http://localhost:3000`            |
-| `NODE_ENV`                     | Runtime environment                                     | `development`                      |
-| `LOG_LEVEL`                    | Pino log level                                          | `debug`                            |
+| Variable                            | Description                                                             | Default / Required                 |
+| ----------------------------------- | ----------------------------------------------------------------------- | ---------------------------------- |
+| `DATABASE_URL`                      | PostgreSQL connection string                                            | (required)                         |
+| `NEXTAUTH_SECRET`                   | NextAuth JWT encryption secret                                          | (required, min 32 chars)           |
+| `NEXTAUTH_URL`                      | Canonical app URL (must include `/auditbrief` basePath)                 | `http://localhost:3000/auditbrief` |
+| `PORT`                              | Server listen port                                                      | `3000` (prod: `3103`)              |
+| `AZURE_BLOB_CONNECTION_STRING`      | Azure Blob Storage connection string                                    | (required)                         |
+| `AZURE_BLOB_CONTAINER`              | Azure Blob container name                                               | `the-audit-brief-uploads`          |
+| `AZURE_AD_CLIENT_ID`                | Microsoft Entra ID app client ID                                        | (optional, for SSO)                |
+| `AZURE_AD_CLIENT_SECRET`            | Microsoft Entra ID app client secret                                    | (optional, for SSO)                |
+| `AZURE_AD_TENANT_ID`                | Microsoft Entra ID tenant ID                                            | (optional, for SSO)                |
+| `AZURE_OPENAI_ENDPOINT`             | Azure OpenAI service endpoint                                           | (optional)                         |
+| `AZURE_OPENAI_API_KEY`              | Azure OpenAI API key (read by `lib/embeddings.ts:33`)                   | (optional)                         |
+| `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | Azure OpenAI embedding deployment name (read by `lib/embeddings.ts:34`) | (optional)                         |
+| `SENTRY_DSN`                        | Sentry error tracking DSN — **reserved; SDK not currently initialized** | (reserved)                         |
+| `NEXT_PUBLIC_SENTRY_DSN`            | Sentry DSN (client bundle) — **reserved**                               | (reserved)                         |
+| `NEXT_PUBLIC_APP_URL`               | Origin URL for CORS (no basePath)                                       | `http://localhost:3000`            |
+| `NEXT_PUBLIC_BASE_PATH`             | Deployment subpath (must match basePath of `NEXTAUTH_URL`)              | `/auditbrief`                      |
+| `BCRYPT_SALT_ROUNDS`                | Bcrypt cost factor for password hashing (`lib/auth/password.ts`)        | `12`                               |
+| `SLOW_QUERY_THRESHOLD_MS`           | Slow-query log threshold in ms (`lib/db-instrumentation.ts:26`)         | `500`                              |
+| `NODE_ENV`                          | Runtime environment                                                     | `development`                      |
+| `LOG_LEVEL`                         | Pino log level                                                          | `debug`                            |
+
+> **Legacy variable names:** Infrastructure templates may still emit `AZURE_OPENAI_KEY` / `AZURE_OPENAI_DEPLOYMENT`. Application code reads only the new `_API_KEY` / `_EMBEDDING_DEPLOYMENT` names; populate the new ones in `.env`.
 
 ## Authentication & SSO
 
@@ -221,60 +228,141 @@ Alternatively, a `superadmin` can change user roles from the admin UI at `/admin
 ## Testing
 
 ```bash
-# Run all unit and integration tests
+# Run all unit and integration tests (Vitest, jsdom)
 npm test
+npm run test:watch          # Watch mode
+npm run test:coverage       # v8 coverage report (lines 45 %, branches 40 %, fns 35 %)
 
-# Run tests in watch mode
-npm run test:watch
-
-# Run tests with coverage report
-npm run test:coverage
-
-# Run end-to-end tests
+# End-to-end tests (Playwright, Chromium)
 npm run test:e2e
+npm run test:e2e:ui         # Interactive Playwright UI
 
-# Run e2e tests with interactive UI
-npm run test:e2e:ui
+# Quality gates
+npm run typecheck           # tsc --noEmit (strict mode)
+npm run lint                # ESLint 9 flat config
+npm run lint:fix
+npm run format:check        # Prettier (verify)
+npm run format              # Prettier (write)
 ```
 
-A `.env.test` file is provided for CI test environments.
+- Test setup lives in [vitest.setup.ts](vitest.setup.ts) (mocks `server-only`, `window.matchMedia`).
+- CSP-specific E2E tests use the separate [playwright.csp.config.ts](playwright.csp.config.ts) suite.
+- A `.env.test` file is provided for CI test environments (test DB URL, dummy auth secrets, suppressed log level).
+- MSW (`msw@2`) is installed for API mocking; handlers are typically inline per test.
+
+## API Reference
+
+25 endpoints under `app/api/`. Source-of-truth specs: [`docs/openapi.yaml`](docs/openapi.yaml) (regenerate from JSON via `node scripts/regenerate-openapi-yaml.mjs`). For an auditable URL-by-URL index with file:line citations, see [`application-links.md`](application-links.md) §5.
+
+| Group       | Endpoints                                                                                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Health**  | `GET /api/health` (liveness), `GET /api/ready` (readiness + DB ping)                                                                                    |
+| **Auth**    | `GET\|POST /api/auth/[...nextauth]`, `POST /api/auth/register`                                                                                          |
+| **Content** | `audit-briefs` (CRUD + `/transcript` + `/batch`), `learning-graphs` (CRUD + `/data` bulk save)                                                          |
+| **Search**  | `GET /api/search` (keyword), `POST /api/search` (semantic — pgvector + Azure OpenAI embeddings)                                                         |
+| **Media**   | `GET /api/media?key=` (streaming proxy with HTTP Range support, no in-memory buffering)                                                                 |
+| **User**    | `bookmarks` (CRUD), `favorites` (toggle), `learning-graph-favorites` (toggle), `progress` (GET/POST/PUT), `activity` (fire-and-forget activity logging) |
+| **Upload**  | `POST /api/upload` (presigned SAS URL), `POST /api/upload/file` (multipart, excluded from edge middleware due to body cap)                              |
+| **Admin**   | `users` + `users/[id]/role` (superadmin), `admin/analytics`, `admin/blob-sweep` (orphan blob cleanup, superadmin, dry-run by default)                   |
+
+A rendered Swagger UI for VAPT consumers is at [`openapi-auditbrief.html`](openapi-auditbrief.html).
 
 ## Project Structure
 
-```
+```text
 the-audit-brief/
 ├── app/
-│   ├── (admin)/          # Admin dashboard routes
-│   ├── (auth)/           # Login and authentication pages
-│   ├── (public)/         # Public-facing routes
-│   └── api/              # API route handlers
-│       ├── admin/        # Admin management endpoints
-│       ├── auth/         # Authentication endpoints
-│       ├── bookmarks/    # Bookmark endpoints
-│       ├── health/       # Health check
-│       ├── learning-graphs/
-│       ├── audit-briefs/ # Audit Brief CRUD
-│       ├── progress/     # Listening progress
-│       ├── search/       # Search endpoints
-│       ├── upload/       # File upload
-│       └── users/        # User management
-├── components/           # React UI components
-├── hooks/                # Custom React hooks
-├── lib/                  # Shared utilities and services
-│   ├── api/              # API helpers (errors, pagination, rate limiting, CORS)
-│   ├── auth/             # JWT and authentication logic
-│   ├── schemas/          # Zod validation schemas
-│   └── ...               # DB client, logger, storage, etc.
-├── stores/               # Zustand state stores
-├── prisma/               # Prisma schema and migrations
-├── __tests__/            # Test suites
-│   ├── unit/             # Unit tests
-│   ├── integration/      # Integration tests
-│   └── e2e/              # Playwright end-to-end tests
-├── Dockerfile            # Production container image
-├── docker-compose.yml    # Local development infrastructure
-└── middleware.ts          # Next.js edge middleware (auth)
+│   ├── (auth)/                       # login, register, unauthorized
+│   ├── (public)/                     # /, bulletins, audit-brief/[id], search,
+│   │                                 #   learning-path[/[id]], progress
+│   ├── (admin)/                      # /admin, upload, edit/[id][/transcript],
+│   │                                 #   learning-graphs[/new|/[id]], users,
+│   │                                 #   analytics, audit-log
+│   └── api/                          # 25 endpoints (see "API Reference")
+│       ├── activity/                 # Fire-and-forget user activity log
+│       ├── admin/
+│       │   ├── analytics/            # Admin analytics aggregations
+│       │   └── blob-sweep/           # Orphan blob cleanup (superadmin)
+│       ├── audit-briefs/             # CRUD + transcript + batch
+│       ├── auth/                     # NextAuth + register
+│       ├── bookmarks/                # User bookmark CRUD
+│       ├── favorites/                # AuditBrief favorite toggle
+│       ├── health/                   # Liveness probe
+│       ├── learning-graph-favorites/ # LearningGraph favorite toggle
+│       ├── learning-graphs/          # CRUD + bulk graph save
+│       ├── media/                    # Streaming Azure Blob proxy (HTTP Range)
+│       ├── progress/                 # Per-user episode completion
+│       ├── ready/                    # Readiness probe (DB ping)
+│       ├── search/                   # Keyword + semantic search
+│       ├── upload/                   # Presigned SAS + multipart file
+│       └── users/                    # User CRUD + role assignment
+├── components/
+│   ├── ui/                           # shadcn primitives (Radix wrappers)
+│   ├── audio-player/                 # Global player, transcript, bulletin viewer
+│   ├── admin/                        # Upload wizard, tables, transcript editor
+│   ├── learning-path/                # Linear editor, episode sidebar, path viewer
+│   ├── layout/                       # Sidebar, mobile bars, command palette
+│   ├── auth/                         # Login/register forms, SSO button
+│   ├── search/, progress/, home/,    # Feature-scoped UI
+│   │   library/
+│   └── providers/                    # Session, Theme, Nonce, Audio providers
+├── hooks/                            # 13 custom React hooks
+├── lib/
+│   ├── db.ts                         # Prisma client singleton
+│   ├── db-instrumentation.ts         # Slow-query Pino logging
+│   ├── api/                          # errors, pagination, rate-limit, cors,
+│   │                                 #   request-context, request-logging
+│   ├── auth/                         # NextAuth config, password, token revocation,
+│   │                                 #   Prisma adapter, env validation
+│   ├── admin/                        # audit-log, blob-sweep, concurrency, revalidate
+│   ├── security/                     # csp.ts (nonce + policy)
+│   ├── config/                       # base-path.ts (`withBasePath()`)
+│   ├── schemas/                      # Zod entity schemas
+│   ├── storage.ts + storage-*.ts     # Azure Blob ops + support family
+│   ├── embeddings.ts                 # Azure OpenAI embeddings (retry + backoff)
+│   ├── upload.ts                     # File-type / size validation
+│   ├── logger.ts                     # Pino logger
+│   └── file-to-data-url.ts,          # Misc utilities
+│       attachment-utils.ts,
+│       domain-colors.ts,
+│       navigation-config.ts,
+│       format-time.ts, utils.ts
+├── stores/                           # player-store, graph-editor-store, helpers
+├── prisma/                           # schema.prisma (14 models), migrations/, seed.ts
+├── scripts/                          # bootstrap-azure.sh, migrate-production.sh,
+│                                     #   backfill-transcript-embeddings.ts,
+│                                     #   regenerate-openapi-yaml.mjs
+├── __tests__/
+│   ├── unit/                         # Pure / function unit tests
+│   ├── integration/                  # API + component integration tests (RTL + MSW)
+│   └── e2e/                          # Playwright (Chromium)
+├── docs/
+│   ├── deployment-guide.md           # Canonical VM + Nginx + pm2 deployment
+│   ├── architecture-diagrams.md      # Top-level system mermaid diagrams
+│   ├── architecture/                 # C4 .mmd source diagrams
+│   ├── csp-nonce-nginx-integration-guide.md
+│   ├── openapi.{json,yaml}           # OpenAPI 3 spec
+│   ├── PRD_PODCAST_HUB_V2.md         # Historical product spec
+│   └── superpowers/{plans,specs}/    # Historical planning artefacts
+├── application-links.md              # Exhaustive URL / route / env index
+├── openapi-auditbrief.html           # Rendered Swagger UI
+├── Dockerfile                        # Multi-stage build (deps → builder → runner)
+├── docker-compose.yml                # Local dev: PostgreSQL + Azurite
+├── middleware.ts                     # Auth + CSP nonce + request-id propagation
+├── next.config.ts                    # basePath, standalone output, security headers
+├── vitest.config.ts                  # Vitest + jsdom + coverage thresholds
+├── playwright.config.ts              # Playwright (Chromium)
+└── playwright.csp.config.ts          # CSP-specific E2E suite
 ```
+
+## Observability
+
+- **Structured logging via Pino.** Every API route is wrapped in `lib/api/request-logging-middleware.ts`, which emits a JSON log per request with `request_id`, `method`, `path`, `status`, `duration_ms`, and (when authenticated) `user_id` + `user_role`. Use `lib/logger.ts` to obtain child loggers; never call `console.log` in production code.
+- **Request correlation.** The middleware (`middleware.ts`) generates an `x-request-id` for every request and propagates it as a response header. The same ID is attached to all Pino logs in the request scope via `lib/api/request-context.ts`.
+- **Slow-query logging.** `lib/db-instrumentation.ts` wraps Prisma with a middleware that emits a `warn`-level log whenever a query exceeds `SLOW_QUERY_THRESHOLD_MS` (default `500`).
+- **Health probes.** `GET /api/health` is a lightweight liveness check (always 200 if the process is up). `GET /api/ready` performs a `SELECT 1` against the database and returns 503 if it fails — wire this to Nginx / your load balancer for traffic gating.
+- **Admin audit log.** Mutating admin operations write to the `AdminAuditLog` table via `lib/admin/audit-log.ts` with before/after JSON snapshots. View at `/admin/audit-log`.
+- **Sentry.** Env vars (`SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`) are reserved in `.env.example` but the Sentry SDK is **not currently initialized** — there is no `sentry.client.config.ts` / `sentry.server.config.ts` / `instrumentation.ts`. Add these files in a separate PR if you want error tracking.
 
 ## Deployment
 
@@ -312,73 +400,69 @@ npx prisma migrate deploy   # Apply pending migrations (not 'migrate dev')
 pm2 start ecosystem.config.js
 ```
 
+> **`ecosystem.config.js` is not committed to the repository** — its log paths and `env_file` paths are VM-specific. Create it on the VM following [docs/deployment-guide.md §8.2](docs/deployment-guide.md#82-create-pm2-ecosystem-config).
+>
+> **`.github/workflows/cd.yml` is currently out of sync** with production. It targets Azure Container Apps via ACR and federated OIDC, which is not the active deployment path. Do not enable it on `push` triggers without first updating image build, migrations strategy, env vars, and post-deploy health checks. The canonical path is the VM procedure described here and in [docs/deployment-guide.md](docs/deployment-guide.md).
+
 For the complete step-by-step deployment guide, see [docs/deployment-guide.md](docs/deployment-guide.md).
 
 ### Required Nginx Configuration
 
-The app generates its own per-request, nonce-based `Content-Security-Policy` header in middleware (see [Content Security Policy](#content-security-policy) below for why). For the nonce mechanism to work end-to-end, **nginx must not add its own `Content-Security-Policy` header for the `/auditbrief` location**, otherwise the browser intersects the two policies and drops the nonce.
+> **Other apps on the same VM (uno, xray, etc.) that want to adopt this nonce-based CSP pattern:** read [docs/csp-nonce-nginx-integration-guide.md](docs/csp-nonce-nginx-integration-guide.md). It is the standalone playbook covering symptoms, root cause, exact app-side code, the nginx snippet, verification, and an FAQ — written for engineers from other teams who have never seen this codebase.
 
-Add `proxy_hide_header Content-Security-Policy;` to **both** `/auditbrief` location blocks. The full diff against the current production config:
+The `/auditbrief` app generates its own per-request, nonce-based `Content-Security-Policy` header in middleware (see [Content Security Policy](#content-security-policy) below). The nginx server block on the shared VM has a different, strict server-wide CSP that applies to the other apps. We need nginx to stop adding that server-wide CSP **only** for `/auditbrief`, so the app's nonce-based CSP reaches the browser unchanged. Every other app keeps the existing CSP.
+
+#### What to change
+
+Inside **both** `/auditbrief` location blocks (`location = /auditbrief` and `location ^~ /auditbrief/`), add the following lines just after the existing `proxy_set_header` lines:
 
 ```nginx
-# location = /auditbrief  (exact-match block)
-location = /auditbrief {
-    proxy_pass http://cs_audit_upstream;
-    proxy_http_version 1.1;
-
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-
-    # Let the upstream Next.js app set its own per-request CSP with a nonce.
-    # The server-level CSP applied above is strict but lacks a nonce, which
-    # would block the framework's inline RSC/hydration scripts.
-    proxy_hide_header Content-Security-Policy;
-}
-
-# location ^~ /auditbrief/  (prefix-match block)
-location ^~ /auditbrief/ {
-    proxy_pass http://cs_audit_upstream;
-    proxy_http_version 1.1;
-
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-
-    # See note in `location = /auditbrief` above.
-    proxy_hide_header Content-Security-Policy;
-}
+# Re-add server-wide security headers EXCEPT Content-Security-Policy.
+# The /auditbrief app sets its own per-request CSP with a nonce.
+# Do NOT add Content-Security-Policy here, and do NOT use
+# `proxy_hide_header Content-Security-Policy;` — both break the nonce.
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+add_header X-Frame-Options            "SAMEORIGIN" always;
+add_header Referrer-Policy            "strict-origin-when-cross-origin" always;
+add_header X-Content-Type-Options     "nosniff" always;
+add_header Cache-Control              "no-store, no-cache, must-revalidate, proxy-revalidate" always;
+add_header Pragma                     "no-cache" always;
+add_header Expires                    "0" always;
 ```
+
+#### Why these seven lines
+
+Nginx rule: any `add_header` inside a `location` block cancels **all** `add_header` inheritance from the surrounding `server` block. Re-listing every header we want (and omitting `Content-Security-Policy`) is how we tell nginx "everything except CSP" for `/auditbrief` without touching the rest of the file.
 
 This is **not** a relaxation of the security policy. The app emits a strict policy that:
 
 - forbids inline scripts and styles by default,
 - only permits the framework's own RSC/hydration scripts via a per-request, cryptographically-random `nonce`,
 - adds `'strict-dynamic'` so chunk loaders work without an explicit allowlist,
-- keeps `default-src`, `connect-src`, `img-src`, `font-src`, `worker-src`, `frame-ancestors` at least as strict as nginx's.
+- keeps `default-src`, `connect-src`, `img-src`, `font-src`, `worker-src`, `frame-ancestors` at least as strict as the nginx server-wide policy.
 
-The other server-level VAPT headers (HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Cache-Control: no-store, etc.) **must remain in place** at the nginx server block — they are unaffected by this change and still apply to the `/auditbrief` location because nginx `add_header` directives at the server block flow through to all locations that don't define their own.
-
-After applying, validate from a workstation:
+#### Apply
 
 ```bash
-# Should show exactly ONE Content-Security-Policy header, with `nonce-…` in script-src + style-src
-curl -sI https://uat.uno.wcgt.in/auditbrief/login | grep -i 'content-security-policy'
-
-# Two consecutive requests must return DIFFERENT nonce values
-curl -sI https://uat.uno.wcgt.in/auditbrief/login | grep -oE 'nonce-[A-Za-z0-9+/=]+' | head -1
-curl -sI https://uat.uno.wcgt.in/auditbrief/login | grep -oE 'nonce-[A-Za-z0-9+/=]+' | head -1
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
-If you see two CSP headers in the response, or only the strict no-nonce one, the nginx change has not taken effect (`nginx -t && systemctl reload nginx` after editing).
+#### Validate from a workstation
+
+```bash
+# Exactly ONE Content-Security-Policy header, containing nonce-... and strict-dynamic.
+curl -sI https://uat.uno.wcgt.in/auditbrief/login | grep -i 'content-security-policy'
+
+# Two consecutive requests must return DIFFERENT nonce values.
+curl -sI https://uat.uno.wcgt.in/auditbrief/login | grep -oE 'nonce-[A-Za-z0-9+/=]+' | head -1
+curl -sI https://uat.uno.wcgt.in/auditbrief/login | grep -oE 'nonce-[A-Za-z0-9+/=]+' | head -1
+
+# Other apps still get the original strict CSP — confirms only /auditbrief was changed.
+curl -sI https://uat.uno.wcgt.in/ | grep -i 'content-security-policy'
+```
+
+If you see two CSP headers, or one without `nonce-...`, the change has not taken effect — re-check the edits and run `sudo nginx -t && sudo systemctl reload nginx` again.
 
 ## Content Security Policy
 
@@ -438,29 +522,16 @@ If a library uses a different injection mechanism (e.g. `innerHTML`, `insertAdja
 
 ## Contributing
 
-### Branch Naming
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide.
 
-```
-feat/short-description
-fix/short-description
-chore/short-description
-```
+**Quick summary:**
 
-### Commit Messages
+- Branches: `feat/<scope>`, `fix/<scope>`, `chore/<scope>`, `docs/<scope>`, `refactor/<scope>`, `test/<scope>`, `perf/<scope>`, `security/<scope>`.
+- Commits: [Conventional Commits](https://www.conventionalcommits.org/).
+- Pre-commit hooks (Husky v9 + lint-staged) auto-run ESLint + Prettier on staged files.
+- All PRs against `main` must pass CI (lint, typecheck, vitest, build) and have at least one reviewer approval.
+- TDD is mandatory — see [.claude/rules/checklist.md](.claude/rules/checklist.md).
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+## Changelog
 
-```
-feat: add audit brief search endpoint
-fix: correct token expiry calculation
-chore: update dependencies
-```
-
-### Pull Request Process
-
-1. Create a feature branch from `main`.
-2. Make changes and ensure all tests pass (`npm test`).
-3. Run linting and formatting checks (`npm run lint && npm run format:check`).
-4. Run type checking (`npm run typecheck`).
-5. Open a pull request with a clear description of changes.
-6. Obtain at least one approval before merging.
+See [CHANGELOG.md](CHANGELOG.md) for release notes (Keep-a-Changelog format). Every user-facing change must add an entry under `## [Unreleased]`.
