@@ -3,8 +3,11 @@
  *
  * - GET: Returns the authenticated user's favorited learning graph IDs as a flat array.
  * - POST: Toggles a favorite — adds it if it does not exist, removes it if it does.
+ *   Emits a `favorite` or `unfavorite` UserActivity row on every toggle branch
+ *   (including P2025/P2002 race recovery) so the activity stream preserves
+ *   intent regardless of race outcome.
  *
- * @dependencies prisma, requireAuth, ApiError utilities
+ * @dependencies prisma, requireAuth, trackActivity, ApiError utilities
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -12,6 +15,7 @@ import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, createErrorResponse, internalError, badRequest } from '@/lib/api/errors';
+import { trackActivity } from '@/lib/analytics/track-activity';
 
 /**
  * Handles GET requests to retrieve the authenticated user's favorited learning graph IDs.
@@ -66,6 +70,14 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(badRequest('learningGraphId must be a non-empty string'));
     }
 
+    const emit = async (activityType: 'favorite' | 'unfavorite') => {
+      await trackActivity({
+        userId: user.userId,
+        activityType,
+        graphId: learningGraphId,
+      });
+    };
+
     try {
       const existing = await prisma.learningGraphFavorite.findUnique({
         where: { userId_learningGraphId: { userId: user.userId, learningGraphId } },
@@ -75,19 +87,23 @@ export async function POST(request: NextRequest) {
         await prisma.learningGraphFavorite.delete({
           where: { userId_learningGraphId: { userId: user.userId, learningGraphId } },
         });
+        await emit('unfavorite');
         return NextResponse.json({ data: { favorited: false } });
       }
 
       await prisma.learningGraphFavorite.create({
         data: { userId: user.userId, learningGraphId },
       });
+      await emit('favorite');
       return NextResponse.json({ data: { favorited: true } }, { status: 201 });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
+          await emit('unfavorite');
           return NextResponse.json({ data: { favorited: false } });
         }
         if (error.code === 'P2002') {
+          await emit('favorite');
           return NextResponse.json({ data: { favorited: true } });
         }
       }

@@ -17,6 +17,7 @@ import {
   badRequest,
 } from '@/lib/api/errors';
 import { updateBookmarkSchema } from '@/lib/schemas/bookmark';
+import { trackActivity } from '@/lib/analytics/track-activity';
 
 /**
  * Handles PUT requests to update an existing bookmark's note.
@@ -94,6 +95,17 @@ export async function DELETE(
     }
 
     await prisma.bookmark.delete({ where: { id } });
+
+    await trackActivity({
+      userId: user.userId,
+      activityType: 'unbookmark',
+      auditBriefId: bookmark.auditBriefId,
+      episodeId: bookmark.episodeId,
+      metadata: {
+        bookmarkId: id,
+        timestampSeconds: bookmark.timestampSeconds,
+      },
+    });
 
     return NextResponse.json({ message: 'Bookmark deleted' });
   } catch (error) {

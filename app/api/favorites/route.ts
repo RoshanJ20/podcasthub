@@ -3,8 +3,11 @@
  *
  * - GET: Returns the authenticated user's favorited audit brief IDs as a flat array.
  * - POST: Toggles a favorite — adds it if it does not exist, removes it if it does.
+ *   Emits a `favorite` or `unfavorite` UserActivity row on every toggle so the
+ *   activity stream captures both intent directions (Favorite rows are
+ *   hard-deleted on unfavorite, so without this we'd lose the unfavorite signal).
  *
- * @dependencies prisma, requireAuth, ApiError utilities
+ * @dependencies prisma, requireAuth, trackActivity, ApiError utilities
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
@@ -12,6 +15,7 @@ import { prisma } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, createErrorResponse, internalError, badRequest } from '@/lib/api/errors';
+import { trackActivity } from '@/lib/analytics/track-activity';
 
 /**
  * Handles GET requests to retrieve the authenticated user's favorited audit brief IDs.
@@ -48,7 +52,9 @@ export async function GET(request: NextRequest) {
  *
  * Implements an idempotent toggle: if the favorite already exists it is deleted
  * and `{ favorited: false }` is returned; if it does not exist it is created and
- * `{ favorited: true }` is returned with HTTP 201.
+ * `{ favorited: true }` is returned with HTTP 201. Each branch (including
+ * race-condition recovery for P2025/P2002) emits the matching activity row so
+ * intent is preserved regardless of race outcome.
  *
  * @param request - The incoming Next.js request object with `{ auditBriefId: string }` body
  * @returns JSON response `{ data: { favorited: boolean } }`, 201 on creation, 200 on removal
@@ -62,10 +68,17 @@ export async function POST(request: NextRequest) {
 
     const { auditBriefId } = body as { auditBriefId?: unknown };
 
-    // Validate that auditBriefId is present and is a non-empty string
     if (typeof auditBriefId !== 'string' || auditBriefId.trim() === '') {
       return createErrorResponse(badRequest('auditBriefId must be a non-empty string'));
     }
+
+    const emit = async (activityType: 'favorite' | 'unfavorite') => {
+      await trackActivity({
+        userId: user.userId,
+        activityType,
+        auditBriefId,
+      });
+    };
 
     try {
       const existing = await prisma.favorite.findUnique({
@@ -76,21 +89,25 @@ export async function POST(request: NextRequest) {
         await prisma.favorite.delete({
           where: { userId_auditBriefId: { userId: user.userId, auditBriefId } },
         });
+        await emit('unfavorite');
         return NextResponse.json({ data: { favorited: false } });
       }
 
       await prisma.favorite.create({
         data: { userId: user.userId, auditBriefId },
       });
+      await emit('favorite');
       return NextResponse.json({ data: { favorited: true } }, { status: 201 });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2025') {
-          // Record deleted between find and delete — treat as already unfavorited
+          /* Record deleted between find and delete — intent was unfavorite. */
+          await emit('unfavorite');
           return NextResponse.json({ data: { favorited: false } });
         }
         if (error.code === 'P2002') {
-          // Record created between find and create — treat as already favorited
+          /* Record created between find and create — intent was favorite. */
+          await emit('favorite');
           return NextResponse.json({ data: { favorited: true } });
         }
       }

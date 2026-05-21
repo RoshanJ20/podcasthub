@@ -9,6 +9,7 @@ import { prisma } from '@/lib/db';
 import { notFound } from 'next/navigation';
 import { PathViewerWrapper } from '@/components/learning-path/path-viewer-wrapper';
 import { isUuid } from '@/lib/schemas/common';
+import { PageViewTracker } from '@/components/analytics/page-view-tracker';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,14 +54,17 @@ export default async function LearningPathViewerPage({
   }));
 
   return (
-    <PathViewerWrapper
-      graphId={graph.id}
-      title={graph.title}
-      description={graph.description}
-      domain={graph.domain ?? ''}
-      pathType={graph.pathType as 'graph' | 'linear'}
-      episodes={episodes}
-      edges={edges}
-    />
+    <>
+      <PageViewTracker entityType="learning_path" entityId={graph.id} />
+      <PathViewerWrapper
+        graphId={graph.id}
+        title={graph.title}
+        description={graph.description}
+        domain={graph.domain ?? ''}
+        pathType={graph.pathType as 'graph' | 'linear'}
+        episodes={episodes}
+        edges={edges}
+      />
+    </>
   );
 }

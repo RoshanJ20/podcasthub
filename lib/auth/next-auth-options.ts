@@ -32,6 +32,7 @@ import { linkAzureAdAccount } from '@/lib/auth/account-linking';
 import { prisma } from '@/lib/db';
 import { createLogger } from '@/lib/logger';
 import { revokeToken, isTokenRevoked } from '@/lib/auth/token-revocation';
+import { trackActivity } from '@/lib/analytics/track-activity';
 
 const log = createLogger('next-auth');
 
@@ -71,15 +72,32 @@ function buildProviders(): NextAuthOptions['providers'] {
             where: { email: credentials.email },
           });
 
-          if (!user) return null;
+          /* Unknown email: do not persist signin_failed to avoid building an
+           * enumeration corpus of attempted addresses. Pino warn only. */
+          if (!user) {
+            log.warn({ email: credentials.email }, 'Login attempt for unknown email');
+            return null;
+          }
 
           if (!user.passwordHash) {
             log.warn({ email: credentials.email }, 'SSO-only user attempted password login');
+            await trackActivity({
+              userId: user.id,
+              activityType: 'signin_failed',
+              metadata: { provider: 'credentials', reason: 'sso_only_user' },
+            });
             return null;
           }
 
           const isValid = await verifyPassword(credentials.password, user.passwordHash);
-          if (!isValid) return null;
+          if (!isValid) {
+            await trackActivity({
+              userId: user.id,
+              activityType: 'signin_failed',
+              metadata: { provider: 'credentials', reason: 'invalid_password' },
+            });
+            return null;
+          }
 
           return {
             id: user.id,
@@ -245,12 +263,34 @@ export const authOptions: NextAuthOptions = {
 
   events: {
     /**
-     * Revokes the JWT on sign-out so it cannot be reused if stolen.
+     * Persists a `signin` UserActivity row capturing the provider and whether
+     * this is a first-time signup. Used for sign-in volume, provider mix, and
+     * cohort analytics.
+     */
+    async signIn({ user, account, isNewUser }) {
+      if (!user?.id || !account?.provider) return;
+      const provider = account.provider === 'azure-ad' ? 'azure-ad' : 'credentials';
+      await trackActivity({
+        userId: user.id,
+        activityType: 'signin',
+        metadata: { provider, isNewUser: Boolean(isNewUser) },
+      });
+    },
+
+    /**
+     * Revokes the JWT on sign-out so it cannot be reused if stolen, and
+     * persists a `signout` UserActivity row for session-duration analytics.
      */
     async signOut({ token }) {
       if (token?.jti) {
         revokeToken(token.jti as string);
         log.info({ userId: token.userId }, 'Token revoked on sign-out');
+      }
+      if (token?.userId) {
+        await trackActivity({
+          userId: token.userId as string,
+          activityType: 'signout',
+        });
       }
     },
   },

@@ -26,6 +26,9 @@ vi.mock('@/lib/db', () => ({
     episode: {
       findUnique: vi.fn(),
     },
+    userActivity: {
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -283,6 +286,111 @@ describe('POST /api/bookmarks', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('emits a `bookmark` UserActivity row on successful create', async () => {
+    vi.mocked(prisma.auditBrief.findUnique).mockResolvedValue({
+      id: validBody.auditBriefId,
+    } as never);
+    const created = { ...mockBookmark, ...validBody, id: 'bm-new', userId: 'user-1' };
+    vi.mocked(prisma.bookmark.create).mockResolvedValue(created as never);
+    vi.mocked(prisma.userActivity.create).mockResolvedValue({} as never);
+
+    const req = createRequest('/api/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify(validBody),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await POST(req);
+
+    expect(prisma.userActivity.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'user-1',
+        activityType: 'bookmark',
+        auditBriefId: validBody.auditBriefId,
+        episodeId: null,
+        metadata: {
+          bookmarkId: 'bm-new',
+          timestampSeconds: validBody.timestampSeconds,
+          hasNote: true,
+        },
+      }),
+    });
+  });
+
+  it('emits `bookmark` activity with hasNote=false when note is omitted', async () => {
+    vi.mocked(prisma.auditBrief.findUnique).mockResolvedValue({
+      id: validBody.auditBriefId,
+    } as never);
+    const created = {
+      ...mockBookmark,
+      auditBriefId: validBody.auditBriefId,
+      timestampSeconds: 30,
+      note: null,
+      id: 'bm-no-note',
+      userId: 'user-1',
+    };
+    vi.mocked(prisma.bookmark.create).mockResolvedValue(created as never);
+    vi.mocked(prisma.userActivity.create).mockResolvedValue({} as never);
+
+    const req = createRequest('/api/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify({
+        auditBriefId: validBody.auditBriefId,
+        timestampSeconds: 30,
+      }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await POST(req);
+
+    expect(prisma.userActivity.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        metadata: expect.objectContaining({ hasNote: false }),
+      }),
+    });
+  });
+
+  it('emits `bookmark` activity with episodeId when bookmarking an episode', async () => {
+    const episodeId = '660e8400-e29b-41d4-a716-446655440000';
+    vi.mocked(prisma.episode.findUnique).mockResolvedValue({ id: episodeId } as never);
+    const created = {
+      ...mockBookmark,
+      auditBriefId: null,
+      episodeId,
+      timestampSeconds: 45,
+      id: 'bm-ep',
+      userId: 'user-1',
+    };
+    vi.mocked(prisma.bookmark.create).mockResolvedValue(created as never);
+    vi.mocked(prisma.userActivity.create).mockResolvedValue({} as never);
+
+    const req = createRequest('/api/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify({ episodeId, timestampSeconds: 45 }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await POST(req);
+
+    expect(prisma.userActivity.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        activityType: 'bookmark',
+        episodeId,
+        auditBriefId: null,
+      }),
+    });
+  });
+
+  it('does not emit activity when validation fails', async () => {
+    vi.mocked(prisma.userActivity.create).mockResolvedValue({} as never);
+
+    const req = createRequest('/api/bookmarks', {
+      method: 'POST',
+      body: JSON.stringify({}),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await POST(req);
+
+    expect(prisma.userActivity.create).not.toHaveBeenCalled();
+  });
 });
 
 // ─── PUT /api/bookmarks/[id] ─────────────────────────────────────────────────
@@ -386,5 +494,50 @@ describe('DELETE /api/bookmarks/[id]', () => {
     const res = await DELETE(req, { params: Promise.resolve({ id: 'bm-1' }) });
 
     expect(res.status).toBe(403);
+  });
+
+  it('emits an `unbookmark` UserActivity row on successful delete', async () => {
+    vi.mocked(prisma.bookmark.findUnique).mockResolvedValue(mockBookmark as never);
+    vi.mocked(prisma.bookmark.delete).mockResolvedValue(mockBookmark as never);
+    vi.mocked(prisma.userActivity.create).mockResolvedValue({} as never);
+
+    const req = createRequest('/api/bookmarks/bm-1', { method: 'DELETE' });
+    await DELETE(req, { params: Promise.resolve({ id: 'bm-1' }) });
+
+    expect(prisma.userActivity.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'user-1',
+        activityType: 'unbookmark',
+        auditBriefId: mockBookmark.auditBriefId,
+        episodeId: mockBookmark.episodeId,
+        metadata: {
+          bookmarkId: 'bm-1',
+          timestampSeconds: mockBookmark.timestampSeconds,
+        },
+      }),
+    });
+  });
+
+  it('does not emit activity when delete is forbidden', async () => {
+    vi.mocked(prisma.bookmark.findUnique).mockResolvedValue({
+      ...mockBookmark,
+      userId: 'other-user',
+    } as never);
+    vi.mocked(prisma.userActivity.create).mockResolvedValue({} as never);
+
+    const req = createRequest('/api/bookmarks/bm-1', { method: 'DELETE' });
+    await DELETE(req, { params: Promise.resolve({ id: 'bm-1' }) });
+
+    expect(prisma.userActivity.create).not.toHaveBeenCalled();
+  });
+
+  it('does not emit activity when bookmark is missing', async () => {
+    vi.mocked(prisma.bookmark.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.userActivity.create).mockResolvedValue({} as never);
+
+    const req = createRequest('/api/bookmarks/missing', { method: 'DELETE' });
+    await DELETE(req, { params: Promise.resolve({ id: 'missing' }) });
+
+    expect(prisma.userActivity.create).not.toHaveBeenCalled();
   });
 });

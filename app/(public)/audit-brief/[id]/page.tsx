@@ -8,6 +8,7 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { AuditBriefDetailLayout } from '@/components/audio-player/audit-brief-detail-layout';
+import { PageViewTracker } from '@/components/analytics/page-view-tracker';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,25 +27,28 @@ export default async function AuditBriefPage({ params }: Props) {
   if (!auditBrief) notFound();
 
   return (
-    <AuditBriefDetailLayout
-      auditBrief={{
-        id: auditBrief.id,
-        title: auditBrief.title,
-        description: auditBrief.description,
-        domain: auditBrief.domain,
-        year: auditBrief.year,
-        tags: auditBrief.tags,
-        thumbnailUrl: auditBrief.thumbnailUrl,
-        audioShortUrl: auditBrief.audioShortUrl,
-        audioLongUrl: auditBrief.audioLongUrl,
-        bulletinUrls: auditBrief.bulletinUrls,
-        transcripts: auditBrief.transcripts.map((t) => ({
-          id: t.id,
-          fullText: t.fullText,
-          segments: t.segments,
-          transcriptType: t.transcriptType,
-        })),
-      }}
-    />
+    <>
+      <PageViewTracker entityType="audit_brief" entityId={auditBrief.id} />
+      <AuditBriefDetailLayout
+        auditBrief={{
+          id: auditBrief.id,
+          title: auditBrief.title,
+          description: auditBrief.description,
+          domain: auditBrief.domain,
+          year: auditBrief.year,
+          tags: auditBrief.tags,
+          thumbnailUrl: auditBrief.thumbnailUrl,
+          audioShortUrl: auditBrief.audioShortUrl,
+          audioLongUrl: auditBrief.audioLongUrl,
+          bulletinUrls: auditBrief.bulletinUrls,
+          transcripts: auditBrief.transcripts.map((t) => ({
+            id: t.id,
+            fullText: t.fullText,
+            segments: t.segments,
+            transcriptType: t.transcriptType,
+          })),
+        }}
+      />
+    </>
   );
 }

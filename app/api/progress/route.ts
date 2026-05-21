@@ -6,9 +6,11 @@
  */
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, createErrorResponse, internalError, badRequest } from '@/lib/api/errors';
+import { trackActivity } from '@/lib/analytics/track-activity';
 import { z } from 'zod';
 
 const markCompleteSchema = z.object({
@@ -50,11 +52,14 @@ export async function GET(request: NextRequest) {
 /**
  * Handles POST requests to mark an episode as complete.
  *
- * Creates or updates a progress record for the authenticated user. Uses an upsert
- * on the unique [userId, episodeId] constraint to ensure idempotency.
+ * Attempts to create a progress record; on a uniqueness violation (P2002) the
+ * episode is already complete and the existing record is returned with status
+ * 200. A `complete_episode` UserActivity row is emitted only on first
+ * completion so the activity stream cleanly distinguishes new completions
+ * from idempotent re-marks.
  *
  * @param request - The incoming Next.js request object with graphId and episodeId in the body
- * @returns JSON response with the progress record and 201 status
+ * @returns JSON response with the progress record (201 on first completion, 200 on re-mark)
  * @throws {ApiError} 400 if the progress data fails schema validation
  * @throws {ApiError} 401 if the user is not authenticated
  */
@@ -81,22 +86,36 @@ export async function POST(request: NextRequest) {
       return createErrorResponse(badRequest('Episode does not belong to the specified graph'));
     }
 
-    const progress = await prisma.userProgress.upsert({
-      where: {
-        userId_episodeId: {
+    try {
+      const progress = await prisma.userProgress.create({
+        data: {
           userId: user.userId,
+          graphId,
           episodeId,
         },
-      },
-      create: {
+      });
+
+      await trackActivity({
         userId: user.userId,
+        activityType: 'complete_episode',
         graphId,
         episodeId,
-      },
-      update: {},
-    });
+      });
 
-    return NextResponse.json({ data: progress }, { status: 201 });
+      return NextResponse.json({ data: progress }, { status: 201 });
+    } catch (createError) {
+      if (
+        createError instanceof Prisma.PrismaClientKnownRequestError &&
+        createError.code === 'P2002'
+      ) {
+        /* Episode already complete — preserve idempotency without re-emitting. */
+        const existing = await prisma.userProgress.findUnique({
+          where: { userId_episodeId: { userId: user.userId, episodeId } },
+        });
+        return NextResponse.json({ data: existing }, { status: 200 });
+      }
+      throw createError;
+    }
   } catch (error) {
     const requestId = request.headers.get('x-request-id') ?? undefined;
     if (error instanceof ApiError) return createErrorResponse(error, requestId);

@@ -12,6 +12,7 @@ import { requireAuth } from '@/lib/auth/session-helpers';
 import { ApiError, createErrorResponse, internalError, badRequest } from '@/lib/api/errors';
 import { parsePaginationParams, createPaginatedResponse } from '@/lib/api/pagination';
 import { createBookmarkSchema } from '@/lib/schemas/bookmark';
+import { trackActivity } from '@/lib/analytics/track-activity';
 
 /**
  * Handles GET requests to retrieve the authenticated user's bookmarks.
@@ -112,6 +113,18 @@ export async function POST(request: NextRequest) {
         episodeId: episodeId ?? null,
         timestampSeconds,
         note,
+      },
+    });
+
+    await trackActivity({
+      userId: user.userId,
+      activityType: 'bookmark',
+      auditBriefId: bookmark.auditBriefId,
+      episodeId: bookmark.episodeId,
+      metadata: {
+        bookmarkId: bookmark.id,
+        timestampSeconds: bookmark.timestampSeconds,
+        hasNote: Boolean(bookmark.note),
       },
     });
 

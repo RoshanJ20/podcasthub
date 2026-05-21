@@ -14,11 +14,15 @@ vi.mock('@/lib/db', () => ({
     userProgress: {
       findMany: vi.fn(),
       upsert: vi.fn(),
+      create: vi.fn(),
       delete: vi.fn(),
       findUnique: vi.fn(),
     },
     episode: {
       findUnique: vi.fn(),
+    },
+    userActivity: {
+      create: vi.fn(),
     },
   },
 }));
@@ -128,12 +132,13 @@ describe('POST /api/progress', () => {
     POST = mod.POST;
   });
 
-  it('marks episode complete and returns 201', async () => {
+  it('marks episode complete (first time) and returns 201 with new record', async () => {
     vi.mocked(prisma.episode.findUnique).mockResolvedValue({
       id: 'ep-1',
       graphId: 'graph-1',
     } as never);
-    vi.mocked(prisma.userProgress.upsert).mockResolvedValue(mockProgress as never);
+    vi.mocked(prisma.userProgress.create).mockResolvedValue(mockProgress as never);
+    vi.mocked(prisma.userActivity.create).mockResolvedValue({} as never);
 
     const req = createRequest('/api/progress', {
       method: 'POST',
@@ -145,22 +150,67 @@ describe('POST /api/progress', () => {
 
     expect(res.status).toBe(201);
     expect(body.data).toBeDefined();
-    expect(prisma.userProgress.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          userId_episodeId: {
-            userId: 'user-1',
-            episodeId: 'ep-1',
-          },
-        },
-        create: expect.objectContaining({
-          userId: 'user-1',
-          graphId: 'graph-1',
-          episodeId: 'ep-1',
-        }),
-        update: {},
+    expect(prisma.userProgress.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-1',
+        graphId: 'graph-1',
+        episodeId: 'ep-1',
+      },
+    });
+  });
+
+  it('emits a `complete_episode` UserActivity on first completion', async () => {
+    vi.mocked(prisma.episode.findUnique).mockResolvedValue({
+      id: 'ep-1',
+      graphId: 'graph-1',
+    } as never);
+    vi.mocked(prisma.userProgress.create).mockResolvedValue(mockProgress as never);
+    vi.mocked(prisma.userActivity.create).mockResolvedValue({} as never);
+
+    const req = createRequest('/api/progress', {
+      method: 'POST',
+      body: JSON.stringify(validBody),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    await POST(req);
+
+    expect(prisma.userActivity.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'user-1',
+        activityType: 'complete_episode',
+        graphId: 'graph-1',
+        episodeId: 'ep-1',
+      }),
+    });
+  });
+
+  it('is idempotent on re-completion: returns 200 with existing record, emits NO new activity', async () => {
+    const { Prisma } = await import('@prisma/client');
+    vi.mocked(prisma.episode.findUnique).mockResolvedValue({
+      id: 'ep-1',
+      graphId: 'graph-1',
+    } as never);
+    // Simulate uniqueness violation (P2002): record already exists
+    vi.mocked(prisma.userProgress.create).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '6.0.0',
       })
     );
+    vi.mocked(prisma.userProgress.findUnique).mockResolvedValue(mockProgress as never);
+    vi.mocked(prisma.userActivity.create).mockResolvedValue({} as never);
+
+    const req = createRequest('/api/progress', {
+      method: 'POST',
+      body: JSON.stringify(validBody),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.data).toBeDefined();
+    expect(prisma.userActivity.create).not.toHaveBeenCalled();
   });
 
   it('returns 401 when not authenticated', async () => {
@@ -187,6 +237,37 @@ describe('POST /api/progress', () => {
     const res = await POST(req);
 
     expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when episode is not found', async () => {
+    vi.mocked(prisma.episode.findUnique).mockResolvedValue(null);
+
+    const req = createRequest('/api/progress', {
+      method: 'POST',
+      body: JSON.stringify(validBody),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
+    expect(prisma.userActivity.create).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when episode does not belong to the specified graph', async () => {
+    vi.mocked(prisma.episode.findUnique).mockResolvedValue({
+      id: 'ep-1',
+      graphId: 'other-graph',
+    } as never);
+
+    const req = createRequest('/api/progress', {
+      method: 'POST',
+      body: JSON.stringify(validBody),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const res = await POST(req);
+
+    expect(res.status).toBe(400);
+    expect(prisma.userActivity.create).not.toHaveBeenCalled();
   });
 });
 
