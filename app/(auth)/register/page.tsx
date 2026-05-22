@@ -46,7 +46,7 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
     <main className="flex min-h-screen items-center justify-center bg-background">
       <LoginPageCard>
         <div className="flex flex-col items-center gap-3 text-center">
-          <AuditBriefLogo className="h-12 w-auto text-foreground" />
+          <AuditBriefLogo className="h-14 w-auto text-foreground md:h-16" />
           <p className="text-sm text-muted-foreground">Create your account</p>
         </div>
         <RegisterForm redirectTo={redirectTo} />

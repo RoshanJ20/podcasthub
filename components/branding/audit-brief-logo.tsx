@@ -52,7 +52,7 @@ export function AuditBriefLogo({
       role="img"
       aria-label={ariaLabel}
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 1002.23 414.68"
+      viewBox="130 128 755 162"
       {...rest}
     >
       <text

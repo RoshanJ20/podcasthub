@@ -11,7 +11,7 @@ import { AuditBriefLogo } from '@/components/branding/audit-brief-logo';
 export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
-      <AuditBriefLogo className="h-8 w-auto text-foreground" />
+      <AuditBriefLogo className="h-10 w-auto text-foreground md:h-12" />
       <h1 className="text-4xl font-bold">404</h1>
       <p className="text-muted-foreground">The page you are looking for does not exist.</p>
       <Link

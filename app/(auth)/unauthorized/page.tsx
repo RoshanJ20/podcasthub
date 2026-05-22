@@ -22,7 +22,7 @@ export default function UnauthorizedPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center space-y-4">
-        <AuditBriefLogo className="mx-auto h-8 w-auto text-foreground" />
+        <AuditBriefLogo className="mx-auto h-10 w-auto text-foreground md:h-12" />
         <h1 className="text-6xl font-bold text-muted-foreground">403</h1>
         <h2 className="text-2xl font-semibold">Access Denied</h2>
         <p className="text-muted-foreground max-w-md">

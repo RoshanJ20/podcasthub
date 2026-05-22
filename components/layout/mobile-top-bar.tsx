@@ -99,7 +99,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
           <div className="flex h-full flex-col overflow-hidden">
             {/* Drawer header */}
             <div className="flex items-center gap-2 px-4 py-4">
-              <AuditBriefLogo className="h-7 w-auto text-foreground" />
+              <AuditBriefLogo className="h-8 w-auto text-foreground" />
             </div>
 
             <Separator />
@@ -178,7 +178,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
       </Sheet>
 
       {/* ── Centre: brand wordmark ──────────────────────────────────────── */}
-      <AuditBriefLogo className="h-6 w-auto text-foreground" />
+      <AuditBriefLogo className="h-7 w-auto text-foreground" />
 
       {/* ── Right: theme toggle ──────────────────────────────────────────── */}
       <Button

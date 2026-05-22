@@ -125,9 +125,9 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className={cn('flex items-center gap-2 px-3 py-4', collapsed && 'justify-center px-2')}>
         {collapsed ? (
-          <AuditBriefMark className="size-7 shrink-0" />
+          <AuditBriefMark className="size-8 shrink-0" />
         ) : (
-          <AuditBriefLogo className="h-7 w-auto text-foreground" />
+          <AuditBriefLogo className="h-8 w-auto text-foreground" />
         )}
       </div>
 
