@@ -20,11 +20,12 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Menu, Library, Sun, Moon } from 'lucide-react';
+import { Menu, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { AuditBriefLogo } from '@/components/branding/audit-brief-logo';
 import { SidebarNavItem } from '@/components/layout/sidebar-nav-item';
 import { SidebarNowPlaying } from '@/components/layout/sidebar-now-playing';
 import { SidebarUserProfile } from '@/components/layout/sidebar-user-profile';
@@ -98,10 +99,7 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
           <div className="flex h-full flex-col overflow-hidden">
             {/* Drawer header */}
             <div className="flex items-center gap-2 px-4 py-4">
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-orange-500">
-                <Library className="size-4 text-white" />
-              </div>
-              <span className="text-sm font-semibold tracking-tight">The Audit Brief</span>
+              <AuditBriefLogo className="h-7 w-auto text-foreground" />
             </div>
 
             <Separator />
@@ -179,13 +177,8 @@ export function MobileTopBar({ userName, userRole, isAdmin = false }: MobileTopB
         </SheetContent>
       </Sheet>
 
-      {/* ── Centre: logo + app name ─────────────────────────────────────── */}
-      <div className="flex items-center gap-2">
-        <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-orange-500">
-          <Library className="size-3.5 text-white" />
-        </div>
-        <span className="text-sm font-semibold tracking-tight">The Audit Brief</span>
-      </div>
+      {/* ── Centre: brand wordmark ──────────────────────────────────────── */}
+      <AuditBriefLogo className="h-6 w-auto text-foreground" />
 
       {/* ── Right: theme toggle ──────────────────────────────────────────── */}
       <Button

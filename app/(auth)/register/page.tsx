@@ -12,6 +12,7 @@
  */
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { AuditBriefLogo } from '@/components/branding/audit-brief-logo';
 import { RegisterForm } from '@/components/auth/register-form';
 import { LoginPageCard } from '@/components/auth/login-page-card';
 
@@ -44,9 +45,9 @@ export default async function RegisterPage({ searchParams }: RegisterPageProps) 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background">
       <LoginPageCard>
-        <div className="text-center">
-          <h1 className="text-lg font-semibold tracking-tight">The Audit Brief</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Create your account</p>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <AuditBriefLogo className="h-12 w-auto text-foreground" />
+          <p className="text-sm text-muted-foreground">Create your account</p>
         </div>
         <RegisterForm redirectTo={redirectTo} />
         <p className="text-center text-sm text-muted-foreground">

@@ -14,6 +14,7 @@
  * @route /login
  */
 import Link from 'next/link';
+import { AuditBriefLogo } from '@/components/branding/audit-brief-logo';
 import { LoginForm } from '@/components/auth/login-form';
 import { LoginPageCard } from '@/components/auth/login-page-card';
 import { SsoButton } from '@/components/auth/sso-button';
@@ -55,12 +56,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   return (
     <main className="bg-brand-glow flex min-h-screen items-center justify-center px-4 py-10">
       <LoginPageCard>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <p className="label-eyebrow">
-            The <span className="text-brand-500">·</span>
-          </p>
-          <h1 className="text-mast text-foreground">Audit Brief</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Continue to your account</p>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <AuditBriefLogo className="h-12 w-auto text-foreground" />
+          <p className="text-sm text-muted-foreground">Continue to your account</p>
         </div>
 
         {errorMessage && (

@@ -55,9 +55,10 @@ beforeEach(() => {
 
 describe('UnifiedSidebar', () => {
   describe('branding', () => {
-    it('renders the app name "The Audit Brief"', () => {
+    it('renders the Audit Brief brand mark as an accessible SVG', () => {
       const { container } = render(<UnifiedSidebar {...DEFAULT_PROPS} />);
-      expect(container.textContent).toContain('The Audit Brief');
+      const brandSvg = container.querySelector('svg[aria-label="The Audit Brief"]');
+      expect(brandSvg).not.toBeNull();
     });
   });
 

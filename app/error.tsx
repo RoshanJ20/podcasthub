@@ -10,6 +10,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { AuditBriefLogo } from '@/components/branding/audit-brief-logo';
 import { createLogger } from '@/lib/logger';
 
 const log = createLogger('global-error');
@@ -27,6 +28,7 @@ export default function GlobalError({
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
+      <AuditBriefLogo className="h-8 w-auto text-foreground" />
       <h1 className="text-2xl font-bold">Something went wrong</h1>
       <p className="text-muted-foreground max-w-md text-center">
         An unexpected error occurred. Please try again or contact support if the problem persists.

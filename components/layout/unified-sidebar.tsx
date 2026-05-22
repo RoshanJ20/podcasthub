@@ -23,10 +23,11 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
-import { Library, ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { AuditBriefLogo, AuditBriefMark } from '@/components/branding/audit-brief-logo';
 import { SidebarNavItem } from '@/components/layout/sidebar-nav-item';
 import { SidebarNowPlaying } from '@/components/layout/sidebar-now-playing';
 import { SidebarUserProfile } from '@/components/layout/sidebar-user-profile';
@@ -123,15 +124,10 @@ export function UnifiedSidebar({ userName, userRole, isAdmin = false }: UnifiedS
     <div className="flex h-full flex-col overflow-hidden">
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className={cn('flex items-center gap-2 px-3 py-4', collapsed && 'justify-center px-2')}>
-        {/* Logo mark */}
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary">
-          <Library className="size-4 text-white" />
-        </div>
-
-        {!collapsed && (
-          <div className="flex min-w-0 flex-1 items-center justify-between">
-            <span className="text-sm font-semibold tracking-tight">The Audit Brief</span>
-          </div>
+        {collapsed ? (
+          <AuditBriefMark className="size-7 shrink-0" />
+        ) : (
+          <AuditBriefLogo className="h-7 w-auto text-foreground" />
         )}
       </div>
 
