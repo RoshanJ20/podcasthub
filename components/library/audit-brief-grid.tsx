@@ -86,7 +86,7 @@ export function AuditBriefGrid({ auditBriefs }: AuditBriefGridProps) {
   }
 
   return (
-    <StaggeredGrid className="grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <StaggeredGrid className="grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {auditBriefs.map((auditBrief) => (
         <StaggeredGridItem key={auditBrief.id}>
           <AuditBriefCard

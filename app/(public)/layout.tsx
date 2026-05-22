@@ -48,7 +48,7 @@ export default async function PublicLayout({ children }: { children: React.React
       <UnifiedSidebar userName={userName} userRole={userRole} isAdmin={isAdmin} />
       <div className="flex flex-1 flex-col">
         <MobileTopBar userName={userName} userRole={userRole} isAdmin={isAdmin} />
-        <main className="flex-1 gradient-brand-light p-4 md:p-6 lg:p-8">
+        <main className="flex-1 gradient-brand-light p-4 md:p-6 lg:p-6 xl:p-8">
           <div className="mx-auto w-full max-w-[1200px]">
             <PageTransition>{children}</PageTransition>
           </div>

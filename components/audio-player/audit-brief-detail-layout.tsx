@@ -287,7 +287,7 @@ export function AuditBriefDetailLayout({ auditBrief }: AuditBriefDetailLayoutPro
 
   /** Two-column layout: main content + attachment sidebar/PDF panel. */
   return (
-    <Wrapper className="mx-auto px-4 py-8 lg:py-12" {...wrapperProps}>
+    <Wrapper className="mx-auto max-w-6xl px-4 py-8 lg:py-12" {...wrapperProps}>
       {/* Back link + badges — above the flex row so sidebar aligns with hero card */}
       {!isAttachmentOpen && <AuditBriefDetailHeader {...headerProps} />}
 

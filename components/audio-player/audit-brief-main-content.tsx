@@ -123,25 +123,27 @@ export function AuditBriefMainContent({
     <motion.div key="full" {...mercuryIn}>
       <div className="flex overflow-hidden rounded-xl border border-border bg-card">
         <div className="w-1.5 shrink-0" style={{ backgroundColor: domainColor.border }} />
-        <div className="flex flex-1 flex-col gap-6 p-5 lg:flex-row lg:items-center lg:p-6">
+        <div className="flex flex-1 flex-col gap-5 p-5 xl:flex-row xl:items-center xl:gap-6 xl:p-6">
           <div className="flex min-w-0 flex-1 items-start gap-5">
-            <div className="relative hidden size-32 shrink-0 overflow-hidden rounded-xl sm:block lg:size-40">
+            <div className="relative hidden size-28 shrink-0 overflow-hidden rounded-xl sm:block lg:size-32">
               <Image
                 src={resolveStorageUrl(thumbnailUrl)}
                 alt={title}
                 fill
                 className="object-cover"
-                sizes="160px"
+                sizes="128px"
               />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">{title}</h1>
-              <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
+              <h1 className="line-clamp-2 text-xl font-bold tracking-tight sm:text-2xl xl:text-[1.75rem] xl:leading-[1.15]">
+                {title}
+              </h1>
+              <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
                 {description}
               </p>
             </div>
           </div>
-          <div className="w-full lg:w-100 lg:shrink-0">
+          <div className="w-full xl:w-96 xl:shrink-0">
             <AudioPlayer domainColor={domainColor} onSeek={onSeek} onBookmark={onBookmark} />
           </div>
         </div>
